@@ -1,0 +1,5 @@
+*.o
+sfeed
+sfeed_plain
+sfeed_html
+sfeed_opml_config

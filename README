@@ -1,0 +1,143 @@
+sfeed v0.8
+----------
+
+Simple RSS and Atom parser (and some format programs).
+
+
+Dependencies
+------------
+
+- C compiler.
+- expat library (used by sfeed.c and sfeed_opml_config.c,
+                 http://expat.sourceforge.net/).
+
+
+Optional dependencies
+---------------------
+
+- POSIX shell (used by sfeed_update).
+- curl  (used by sfeed_update, http://curl.haxx.se/).
+- iconv (used by sfeed_update, http://www.gnu.org/software/libiconv/).
+
+
+Files
+-----
+
+sfeed             - Binary (from sfeed.c); read XML RSS or Atom feed data from
+                    stdin. Write feed data in tab-separated format to stdout.
+sfeed_update      - Shellscript; update feeds and merge with old feeds in the
+                    file $HOME/.sfeed/feeds by default.
+sfeed_plain       - Format feeds file (TSV) from sfeed_update to plain text.
+sfeed_html        - Format feeds file (TSV) from sfeed_update to HTMLi.
+sfeed_opml_config - Generate a sfeedrc config file based on an opml file.
+sfeedrc.example   - Example config file.
+
+
+Files read at runtime by sfeed_update
+-------------------------------------
+
+sfeedrc        - Config file. This file is evaluated as a shellscript in
+                 sfeed_update. You can for example override the fetchfeed()
+                 function to use wget, fetch or an other download program or
+                 you can override the merge() function to change the merge
+                 logic. The function feeds() is called to fetch the feeds.
+                 The function feed() can safely be executed as a parallel
+                 job in your sfeedrc config file to speedup updating.
+
+
+Files written at runtime by sfeed_update
+----------------------------------------
+
+feeds          - Tab-separated format containing all feeds.
+                 The sfeed_update script merges new items with this file.
+feeds.new      - Temporary file used by sfeed_update to merge items.
+
+
+TAB-SEPARATED format
+--------------------
+
+The items are saved in a TSV-like format except newlines, tabs and
+backslash are escaped with \ (\n, \t and \\). Other whitespace except
+spaces are removed.
+
+The timestamp field is converted to a unix timestamp. The timestamp is also
+stored as formatted as a separate field. The other fields are left untouched
+(including HTML).
+
+The order and format of the fields are:
+
+item unix timestamp      - string unix timestamp (GMT+0)
+item formatted timestamp - string timestamp (YYYY-mm-dd HH:MM:SS tz[+-]HHMM)
+item title               - string
+item link                - string
+item description         - string
+item contenttype         - string ("html" or "plain")
+item id                  - string
+item author              - string
+feed type                - string ("rss" or "atom")
+feed name                - string (extra field added by sfeed_update)
+feed url                 - string (extra field added by sfeed_update)
+
+
+Usage
+-----
+
+To build and install (respects DESTDIR and PREFIX variable):
+
+make install
+
+
+Generate a sfeedrc config file from your exported list of feeds in opml
+format:
+
+sfeed_opml_config < opmlfile.xml > $HOME/.sfeed/sfeedrc
+
+
+To update feeds and format the feeds file (configfile argument is optional):
+
+sfeed_update "configfile"
+sfeed_plain < $HOME/.sfeed/feeds > $HOME/.sfeed/feeds.txt
+sfeed_html < $HOME/.sfeed/feeds > $HOME/.sfeed/feeds.html
+
+
+Example script to view feeds with dmenu, opens selected url in $BROWSER:
+
+url=$(sfeed_plain < "$HOME/.sfeed/feeds" | dmenu -l 35 -i |
+	sed 's@^.* \([a-zA-Z]*://\)\(.*\)$@\1\2@')
+[ ! "$url" = "" ] && $BROWSER "$url"
+
+
+or to view in your browser:
+
+$BROWSER "$HOME/.sfeed/feeds.html"
+
+
+or to view in your editor:
+
+$EDITOR "$HOME/.sfeed/feeds.txt"
+
+
+tip to remove feeds older than a date (change time="YYYY mm dd HH mm ss")
+
+gawk -F '\t' 'BEGIN {
+	time = mktime("2012 01 01 12 34 56");
+}
+{
+	if(int($1) >= int(time)) {
+		print $0;
+	}
+}' < feeds > feeds.clean
+
+mv feeds.clean feeds
+
+
+License
+-------
+
+MIT, see LICENSE file.
+
+
+Author
+------
+
+Hiltjo Posthuma <hiltjo@codemadness.org>

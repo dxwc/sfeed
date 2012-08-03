@@ -1,0 +1,44 @@
+.TH SFEED 1 sfeed\-VERSION
+.SH NAME
+sfeed \- simple RSS and Atom parser
+.SH SYNOPSIS
+.B sfeed
+.SH DESCRIPTION
+Read XML RSS or Atom feed data from stdin. Write feed data in a
+tab-separated format to stdout.
+.SH TAB-SEPARATED FORMAT
+The items are saved in a TSV-like format except newlines, tabs and
+backslash are escaped with \\ (\\n, \\t and \\\\). Carriage returns (\\r) are
+removed.
+.TP
+.B item timestamp (unix timestamp in GMT+0)
+string
+.TP
+.B item timestamp (formatted)
+string (YYYY-mm-dd HH:MM:SS tzname[+-]HHMM)
+.TP
+.B item title
+string
+.TP
+.B item link
+string
+.TP
+.B item description
+string
+.TP
+.B item contenttype
+string (html or plain)
+.TP
+.B item id
+string
+.TP
+.B item author
+string
+.TP
+.B feed type
+string (rss or atom)
+.SH SEE ALSO
+.BR sh(1)
+.BR sfeed_update(1)
+.SH BUGS
+Please report them!

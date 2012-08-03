@@ -1,0 +1,17 @@
+# paths
+# NOTE: make sure to uncomment all these if you change it.
+#sfeedpath="$HOME/.sfeed"
+#sfeedfile="$sfeedpath/feeds"
+#sfeedfilenew="$sfeedfile.new"
+
+# list of feeds to fetch:
+feeds() {
+	# feed <name> <url> [encoding]
+	feed "codemadness" "http://www.codemadness.nl/blog/rss.xml"
+	feed "explosm" "http://feeds.feedburner.com/Explosm"
+	feed "linux kernel" "http://kernel.org/kdist/rss.xml" "iso-8859-1"
+	feed "phoronix" "http://feeds.feedburner.com/Phoronix"
+	feed "slashdot" "http://rss.slashdot.org/Slashdot/slashdot"
+	feed "tweakers" "http://feeds.feedburner.com/tweakers/mixed" "iso-8859-1"
+	feed "xkcd" "http://xkcd.com/atom.xml"
+}

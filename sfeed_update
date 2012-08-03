@@ -1,0 +1,116 @@
+#!/bin/sh
+# update feeds, merge with old feeds.
+# NOTE: assumes "sfeed_*" files are in $PATH.
+
+# defaults
+sfeedpath="$HOME/.sfeed"
+sfeedfile="$sfeedpath/feeds"
+# temporary file for new feeds (for merging).
+sfeedfilenew="$sfeedfile.new"
+
+# load config (evaluate shellscript).
+# loadconfig(configfile)
+loadconfig() {
+	# allow to specify config via argv[1].
+	if [ ! "$1" = "" ]; then
+		# get absolute path of config file.
+		config=$(readlink -f "$1")
+	else
+		# default config location.
+		config="$HOME/.sfeed/sfeedrc"
+	fi
+
+	# load config: config is loaded here to be able to override above variables
+	# (sfeedpath, sfeedfile, etc).
+	if [ -r "$config" ]; then
+		. "$config"
+	else
+		echo "Configuration file \"$config\" does not exist or is not readable." >&2
+		echo "See sfeedrc.example for an example." >&2
+		exit 1
+	fi
+}
+
+# merge raw files.
+# merge(oldfile, newfile)
+merge() {
+	# unique sort by id, link, title.
+	# order by feedname (asc), feedurl (asc) and timestamp (desc).
+	(cat "$1" "$2" 2> /dev/null) |
+		sort -t '	' -u -k7,7 -k4,4 -k3,3 |
+		sort -t '	' -k10,10 -k11,11 -k1r,1
+}
+
+# fetch a feed via HTTP/HTTPS etc.
+# fetchfeed(url, name)
+fetchfeed() {
+	if (curl -f -s -S -L --max-time 30 -z "$lastupdated" "$1"); then
+		printf "%s\n" "[`date`] Fetching $2 [$1] ... done" >&2
+	else
+		printf "%s\n" "[`date`] Fetching $2 [$1] ... fail" >&2
+	fi
+}
+
+# add field after line, output to stdout.
+# addfield(field)
+addfield() {
+	# NOTE: IFS is set and restored to prevent stripping whitespace.
+	OLDIFS="$IFS"
+	IFS="
+"
+	while read -r line; do
+		printf "%s	%s\n" "${line}" "$1"
+	done
+	IFS="$OLDIFS"
+}
+
+# fetch and parse feed.
+# feed(name, url, encoding)
+feed() {
+	tmpfile=$(mktemp -p "$TMPDIR")
+	(if [ "$3" = "" ]; then
+		# don't use iconv if encoding not set in config.
+		fetchfeed "$2" "$1" | sfeed | addfield "$1	$2"
+	else
+		# use iconv to convert encoding to UTF-8.
+		fetchfeed "$2" "$1" | iconv -cs -f "$3" -t "utf-8" | sfeed | addfield "$1	$2"
+	fi) > "$tmpfile"
+}
+
+terminated() {
+	isrunning="0"
+}
+
+cleanup() {
+	# remove temporary files
+	rm -rf "$tmpfile" "$TMPDIR"
+}
+
+# load config file.
+loadconfig "$1"
+# fetch feeds and store in temporary file.
+TMPDIR=$(mktemp -d -t "sfeed_XXXXXX")
+# get date of last modified feedfile in format:
+# YYYYmmdd HH:MM:SS [+-][0-9]*
+lastupdated=$(stat -c "%y" "$sfeedfile" 2> /dev/null | cut -c 1-4,6-7,9-10,11-19,30-)
+# Kill whole current process group on ^C.
+isrunning="1"
+trap -- "terminated" "15" # SIGTERM: signal to terminate parent.
+trap -- "kill -TERM -$$" "2" # SIGINT: kill all running childs >:D
+# fetch feeds specified in config file.
+feeds
+# make sure path exists.
+mkdir -p "$sfeedpath"
+# wait till all feeds are fetched (allows running in parallel).
+wait
+[ "$isrunning" = "0" ] && cleanup && exit 1 # if terminated cleanup.
+# concat all individual feed files to a single file.
+# NOTE: mktemp uses $TMPDIR for temporary directory.
+tmpfile=$(mktemp -t "sfeed_XXXXXX")
+find "$TMPDIR" -type f -exec cat {} \; > "$tmpfile"
+# get new data and merge with old.
+merge "$sfeedfile" "$tmpfile" > "$sfeedfilenew"
+# overwrite old file with updated file
+mv "$sfeedfilenew" "$sfeedfile"
+# cleanup temporary files etc.
+cleanup
