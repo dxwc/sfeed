@@ -8,14 +8,14 @@ Dependencies
 ------------
 
 - C compiler.
-- expat library (used by sfeed.c and sfeed_opml_config.c,
+- expat library (used by sfeed.c and sfeed_opml_import.c,
                  http://expat.sourceforge.net/).
 
 
 Optional dependencies
 ---------------------
 
-- POSIX shell (used by sfeed_update).
+- POSIX shell (used by sfeed_update and sfeed_opml_export).
 - curl  (used by sfeed_update, http://curl.haxx.se/).
 - iconv (used by sfeed_update, http://www.gnu.org/software/libiconv/).
 
@@ -29,7 +29,8 @@ sfeed_update      - Shellscript; update feeds and merge with old feeds in the
                     file $HOME/.sfeed/feeds by default.
 sfeed_plain       - Format feeds file (TSV) from sfeed_update to plain text.
 sfeed_html        - Format feeds file (TSV) from sfeed_update to HTMLi.
-sfeed_opml_config - Generate a sfeedrc config file based on an opml file.
+sfeed_opml_import - Generate a sfeedrc config file based on an opml file.
+sfeed_opml_export - Generate an opml file based on a sfeedrc config file.
 sfeedrc.example   - Example config file.
 
 
@@ -77,6 +78,7 @@ item author              - string
 feed type                - string ("rss" or "atom")
 feed name                - string (extra field added by sfeed_update)
 feed url                 - string (extra field added by sfeed_update)
+item baseurl site        - string (extra field added by sfeed_update)
 
 
 Usage
@@ -85,12 +87,6 @@ Usage
 To build and install (respects DESTDIR and PREFIX variable):
 
 make install
-
-
-Generate a sfeedrc config file from your exported list of feeds in opml
-format:
-
-sfeed_opml_config < opmlfile.xml > $HOME/.sfeed/sfeedrc
 
 
 To update feeds and format the feeds file (configfile argument is optional):
@@ -117,6 +113,18 @@ or to view in your editor:
 $EDITOR "$HOME/.sfeed/feeds.txt"
 
 
+Generate a sfeedrc config file from your exported list of feeds in opml
+format:
+
+sfeed_opml_import < opmlfile.xml > $HOME/.sfeed/sfeedrc
+
+
+Export an opml file of your feeds from a sfeedrc config file (configfile
+arguments is optional):
+
+sfeed_opml_export configfile > myfeeds.opml
+
+
 tip to remove feeds older than a date (change time="YYYY mm dd HH mm ss")
 
 gawk -F '\t' 'BEGIN {
@@ -129,6 +137,25 @@ gawk -F '\t' 'BEGIN {
 }' < feeds > feeds.clean
 
 mv feeds.clean feeds
+
+
+Common errors and solutions
+---------------------------
+
+If you execute sfeed_update and see the error:
+
+	"sfeed: error parsing xml not well-formed (invalid token) at line <linenumber>
+	column <column>"
+
+it's possible sfeed is trying to parse a feed which is non-UTF8 encoded. You can
+specify the encoding in your sfeedrc file so it will be converted to UTF-8
+using iconv, for example for iso-8859-1 change:
+
+	feed "feedname" "feedurl" "baseurl"
+
+to:
+
+	feed "feedname" "feedurl" "baseurl" "iso-8859-1"
 
 
 License
