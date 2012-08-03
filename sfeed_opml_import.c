@@ -23,15 +23,17 @@ getattrvalue(const char **atts, const char *name) {
 
 void XMLCALL
 xml_handler_start_element(void *data, const char *name, const char **atts) {
-	char *feedurl = NULL, *feedname = NULL;;
+	char *feedurl = NULL, *feedname = NULL, *basesiteurl = NULL;
 
 	if(!strcasecmp(name, "outline")) {
 		if(!(feedname = getattrvalue(atts, "text")) &&
 		   !(feedname = getattrvalue(atts, "title")))
 			feedname = "unnamed";
+		if(!(basesiteurl = getattrvalue(atts, "htmlurl")))
+			basesiteurl = "";
 		if(!(feedurl = getattrvalue(atts, "xmlurl")))
 			feedurl = "";
-		printf("\tfeed \"%s\" \"%s\"\n", feedname, feedurl);
+		printf("\tfeed \"%s\" \"%s\" \"%s\"\n", feedname, feedurl, basesiteurl);
 	}
 }
 
