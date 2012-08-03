@@ -44,7 +44,7 @@ dist: clean
 	@echo creating dist tarball
 	@mkdir -p ${NAME}-${VERSION}
 	@cp -R LICENSE Makefile README config.mk \
-		TODO CREDITS sfeedrc.example ${SRC} common.c sfeed_update \
+		TODO CREDITS sfeedrc.example ${SRC} common.c sfeed_update sfeed_opml_export \
 		sfeed.1 sfeed_update.1 sfeed_plain.1 sfeed_html.1 sfeed_opml_import.1 \
 		sfeed_opml_export.1 ${NAME}-${VERSION}
 	@tar -cf ${NAME}-${VERSION}.tar ${NAME}-${VERSION}
