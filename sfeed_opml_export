@@ -25,11 +25,7 @@ loadconfig() {
 # override feeds function to ouput opml XML.
 # feed(name, feedurl, basesiteurl, [encoding])
 feed() {
-	cat <<!
-        <outline
-            title="$1" text="$1"
-            xmlUrl="$2" htmlUrl="$3"/>
-!
+	printf '\t\t<outline title="%s" text="%s" xmlUrl="%s" htmlUrl="%s"/>\n' "$1" "$1" "$2" "$3"
 }
 
 # load config file.
