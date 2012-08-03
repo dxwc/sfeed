@@ -52,7 +52,7 @@ xml_parse_stream(XML_Parser parser, FILE *fp) {
 		if(XML_Parse(parser, buffer, len, done) == XML_STATUS_ERROR && (len > 0)) {
 			if(XML_GetErrorCode(parser) == XML_ERROR_NO_ELEMENTS)
 				return 1; /* Ignore "no elements found" / empty document as an error */
-			fprintf(stderr, "sfeed_opml_config: error parsing xml %s at line %lu column %lu\n",
+			fprintf(stderr, "sfeed_opml_import: error parsing xml %s at line %lu column %lu\n",
 			        XML_ErrorString(XML_GetErrorCode(parser)), (unsigned long)XML_GetCurrentLineNumber(parser),
 			        (unsigned long)XML_GetCurrentColumnNumber(parser));
 			return 0;
@@ -65,7 +65,7 @@ int main(void) {
 	int status;
 
 	if(!(parser = XML_ParserCreate("UTF-8"))) {
-		fputs("sfeed_opml_config: can't create parser", stderr);
+		fputs("sfeed_opml_import: can't create parser", stderr);
 		exit(EXIT_FAILURE);
 	}
 	XML_SetElementHandler(parser, xml_handler_start_element, xml_handler_end_element);
