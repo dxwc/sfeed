@@ -34,7 +34,10 @@ main(void) {
 		fputs("  ", stdout);
 		printutf8padded(fields[FieldTitle], 70);
 		fputs("  ", stdout);
-		printlink(fields[FieldLink], fields[FieldFeedUrl]);
+		if(fields[FieldBaseSiteUrl][0] != '\0')
+			printlink(fields[FieldLink], fields[FieldBaseSiteUrl]);
+		else
+			printlink(fields[FieldLink], fields[FieldFeedUrl]);
 		putchar('\n');
 	}
 	free(line);

@@ -65,15 +65,15 @@ addfield() {
 }
 
 # fetch and parse feed.
-# feed(name, url, encoding)
+# feed(name, feedurl, basesiteurl, [encoding])
 feed() {
 	tmpfile=$(mktemp -p "$TMPDIR")
-	(if [ "$3" = "" ]; then
+	(if [ "$4" = "" ]; then
 		# don't use iconv if encoding not set in config.
-		fetchfeed "$2" "$1" | sfeed | addfield "$1	$2"
+		fetchfeed "$2" "$1" | sfeed | addfield "$1	$2	$3"
 	else
 		# use iconv to convert encoding to UTF-8.
-		fetchfeed "$2" "$1" | iconv -cs -f "$3" -t "utf-8" | sfeed | addfield "$1	$2"
+		fetchfeed "$2" "$1" | iconv -cs -f "$4" -t "utf-8" | sfeed | addfield "$1	$2	$3"
 	fi) > "$tmpfile"
 }
 

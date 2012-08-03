@@ -183,7 +183,10 @@ main(void) {
 			fputs("<b><u>", stdout);
 		if(islink) {
 			fputs("<a href=\"", stdout);
-			printlink(fields[FieldLink], fields[FieldFeedUrl]);
+			if(fields[FieldBaseSiteUrl][0] != '\0')
+				printlink(fields[FieldLink], fields[FieldBaseSiteUrl]);
+			else
+				printlink(fields[FieldLink], fields[FieldFeedUrl]);
 			fputs("\">", stdout);
 		}
 		printhtmlencoded(fields[FieldTitle]);

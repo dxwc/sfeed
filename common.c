@@ -6,7 +6,7 @@
 
 enum { FieldUnixTimestamp = 0, FieldTimeFormatted, FieldTitle, FieldLink,
        FieldContent, FieldContentType, FieldId, FieldAuthor, FieldFeedType,
-       FieldFeedName, FieldFeedUrl, FieldLast };
+       FieldFeedName, FieldFeedUrl, FieldBaseSiteUrl, FieldLast };
 
 const int FieldSeparator = '\t';
 
