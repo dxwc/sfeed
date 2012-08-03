@@ -26,7 +26,7 @@ loadconfig() {
 # feed(name, feedurl, basesiteurl, [encoding])
 feed() {
 	cat <<!
-        <outline 
+        <outline
             title="$1" text="$1"
             xmlUrl="$2" htmlUrl="$3"/>
 !
@@ -47,7 +47,7 @@ cat <<!
 feeds
 # wait till all items are processed (in parallel).
 wait
-	
+
 cat <<!
     </body>
 </opml>
