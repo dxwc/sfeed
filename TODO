@@ -1,4 +1,0 @@
-[ ] opml export script (WIP).
-[ ] rename sfeed_opml_config to sfeed_opml_import.
-[ ] sfeed_update / sfeedrc: add base siteurl as parameter for feed function for feeds located at an other domain, for example feedburner.com
-[ ] test opml import / export scripts with thunderbird, google reader, snownews and rssowl.
