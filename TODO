@@ -1,0 +1,4 @@
+[ ] in documentation etc: change 'description' field to 'content' (nick)
+[ ] Perhaps you could prioritise content:encoded where it exists over description? (nick)
+	[ ] test this (it prioritises whatever comes first.
+[ ] rewrite to use a non-validating XML parser (pancake)
