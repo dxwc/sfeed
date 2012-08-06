@@ -292,8 +292,10 @@ xml_handler_start_element(void *data, const char *name, const char **atts) {
 				}
 			}
 		} else if(feeditem.feedtype == FeedTypeRSS) {
-			if(istag(feeditemtag, "description"))
+			if((istag(feeditemtag, "description") && !feeditem.content.len) || istag(feeditemtag, "content:encoded")) {
+				string_clear(&feeditem.content);
 				XML_DefaultCurrent(parser); /* pass to default handler to process inline HTML etc */
+			}
 		}
 		if(feeditemtag[0] == '\0') /* set tag if not already set. */
 			strncpy(feeditemtag, name, sizeof(feeditemtag) - 1);
@@ -425,7 +427,7 @@ xml_parse_stream(XML_Parser parser, FILE *fp) {
 void
 xml_handler_default(void *data, const XML_Char *s, int len) {
 	if((feeditem.feedtype == FeedTypeAtom && (istag(feeditemtag, "summary") || istag(feeditemtag, "content"))) ||
-	   (feeditem.feedtype == FeedTypeRSS && istag(feeditemtag, "description")))
+	   (feeditem.feedtype == FeedTypeRSS && (istag(feeditemtag, "description") || istag(feeditemtag, "content:encoded"))))
 		/*if(!istag(tag, "script") && !istag(tag, "style"))*/ /* ignore data in inline script and style */
 			string_append(&feeditem.content, s, len);
 }
