@@ -28,7 +28,7 @@ sfeed             - Binary (from sfeed.c); read XML RSS or Atom feed data from
 sfeed_update      - Shellscript; update feeds and merge with old feeds in the
                     file $HOME/.sfeed/feeds by default.
 sfeed_plain       - Format feeds file (TSV) from sfeed_update to plain text.
-sfeed_html        - Format feeds file (TSV) from sfeed_update to HTMLi.
+sfeed_html        - Format feeds file (TSV) from sfeed_update to HTML.
 sfeed_opml_import - Generate a sfeedrc config file based on an opml file.
 sfeed_opml_export - Generate an opml file based on a sfeedrc config file.
 sfeedrc.example   - Example config file.
@@ -71,7 +71,7 @@ item unix timestamp      - string unix timestamp (GMT+0)
 item formatted timestamp - string timestamp (YYYY-mm-dd HH:MM:SS tz[+-]HHMM)
 item title               - string
 item link                - string
-item description         - string
+item content             - string
 item contenttype         - string ("html" or "plain")
 item id                  - string
 item author              - string
