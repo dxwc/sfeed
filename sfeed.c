@@ -375,7 +375,7 @@ xml_handler_data(void *data, const XML_Char *s, int len) {
 			string_append(&feeditem.title, s, len);
 		else if(istag(feeditemtag, "link"))
 			string_append(&feeditem.link, s, len);
-		else if(istag(feeditemtag, "description")) {
+		else if(istag(feeditemtag, "description") || istag(feeditemtag, "content:encoded")) {
 			if(incdata)
 				XML_DefaultCurrent(parser); /* pass to default handler to process inline HTML etc */
 			else
