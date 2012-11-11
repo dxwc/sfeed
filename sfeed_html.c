@@ -177,7 +177,7 @@ main(void) {
 		feedcurrent->total++;
 
 		fputs("<tr><td>", stdout);
-		printtime(parsedtime);
+		fputs(fields[FieldTimeFormatted], stdout);
 		fputs("</td><td>", stdout);
 		if(isnew)
 			fputs("<b><u>", stdout);

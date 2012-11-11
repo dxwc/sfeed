@@ -321,7 +321,7 @@ xml_handler_end_element(void *data, const char *name) {
 			printf("%ld", (long)parsetime((&feeditem.timestamp)->data, timebuf,
 			       sizeof(timebuf) - 1));
 			fputc(FieldSeparator, stdout);
-			printf("%s", timebuf);
+			fputs(timebuf, stdout);
 			fputc(FieldSeparator, stdout);
 			string_print_trimmed(&feeditem.title);
 			fputc(FieldSeparator, stdout);

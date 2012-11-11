@@ -30,7 +30,7 @@ main(void) {
 		printf(" %c  ", (parsedtime >= comparetime) ? 'N' : ' ');
 		if(fields[FieldFeedName][0] != '\0')
 			printf("%-15.15s  ", fields[FieldFeedName]);
-		printtime(parsedtime);
+		fputs(fields[FieldTimeFormatted], stdout);
 		fputs("  ", stdout);
 		printutf8padded(fields[FieldTitle], 70);
 		fputs("  ", stdout);
