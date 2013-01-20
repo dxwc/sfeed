@@ -10,6 +10,15 @@ enum { FieldUnixTimestamp = 0, FieldTimeFormatted, FieldTitle, FieldLink,
 
 const int FieldSeparator = '\t';
 
+void *
+xstrdup(const char *s) {
+	size_t len = strlen(s) + 1;
+	void *p = malloc(len);
+	if(p)
+		memcpy(p, s, len);
+	return p;
+}
+
 char *
 afgets(char **p, size_t *size, FILE *fp) {
 	char buf[BUFSIZ], *alloc = NULL;
@@ -54,7 +63,7 @@ printlink(const char *link, const char *baseurl) {
 	int isrelative;
 
 	/* protocol part */
-	for(p = link; *p && (isalpha(*p) || isdigit(*p) || *p == '+' || *p == '-' || *p == '.'); p++);
+	for(p = link; *p && (isalpha((int)*p) || isdigit((int)*p) || *p == '+' || *p == '-' || *p == '.'); p++);
 	isrelative = strncmp(p, "://", strlen("://"));
 	if(isrelative) { /* relative link (baseurl is used). */
 		if((ebaseproto = strstr(baseurl, "://"))) {
