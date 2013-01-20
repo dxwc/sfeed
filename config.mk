@@ -1,5 +1,5 @@
 # sfeed version
-VERSION = 0.8
+VERSION = 0.9
 
 # customize below to fit your system
 
@@ -9,16 +9,15 @@ MANPREFIX = ${PREFIX}/share/man
 
 # includes and libs
 INCS =
-LIBEXPAT = -lexpat
 LIBS = -lc
 
-# flags
-#CFLAGS = -Os -D_POSIX_C_SOURCE=200112L -D_XOPEN_SOURCE=500 -DVERSION=\"${VERSION}\"
-#LDFLAGS = -s ${LIBS}
-
 # debug
-CFLAGS = -g -O0 -pedantic -Wall -Wextra -D_POSIX_C_SOURCE=200112L -D_XOPEN_SOURCE=700 -DVERSION=\"${VERSION}\"
+CFLAGS = -O0 -g -ansi -Wall -Wextra -pedantic -DVERSION=\"${VERSION}\"
 LDFLAGS = ${LIBS}
+
+# optimized
+#CFLAGS = -O2 -ansi -DVERSION=\"${VERSION}\" -DVERSION=\"${VERSION}\"
+#LDFLAGS = -s ${LIBS}
 
 # Solaris
 #CFLAGS = -fast ${INCS} -DVERSION=\"${VERSION}\"
