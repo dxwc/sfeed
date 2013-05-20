@@ -26,6 +26,7 @@ typedef struct xmlparser {
 	/* private; internal state */
 	char tag[1024]; /* current tag */
 	size_t taglen;
+	char name[256]; /* current attribute name */
 	char data[BUFSIZ]; /* data buffer used for tag and attribute data */
 	size_t readoffset;
 	size_t readlastbytes;
