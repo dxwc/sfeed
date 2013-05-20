@@ -3,15 +3,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <ctype.h>
-#include "common.c"
-
-/* Feed info. */
-struct feed {
-	char *name; /* feed name */
-	unsigned long new; /* amount of new items per feed */
-	unsigned long total; /* total items */
-	struct feed *next; /* linked list */
-};
+#include "common.h"
+#include "compat.h"
 
 static int showsidebar = 1; /* show sidebar ? */
 
@@ -23,173 +16,84 @@ die(const char *s) {
 	exit(EXIT_FAILURE);
 }
 
-struct feed *
-feednew(void) {
-	struct feed *f;
-	if(!(f = calloc(1, sizeof(struct feed))))
-		die("can't allocate enough memory");
-	return f;
-}
-
-void
-feedsfree(struct feed *f) {
-	struct feed *next;
-	while(f) {
-		next = f->next;
-		free(f->name);
-		free(f);
-		f = next;
-	}
-}
-
-/* print feed name for id; spaces and tabs in string as "-" (spaces in anchors are not valid). */
-void
-printfeednameid(const char *s) {
-	for(; *s; s++)
-		putchar(isspace(*s) ? '-' : *s);
-}
-
-void
-printhtmlencoded(const char *s) {
-	for(; *s; s++) {
-		switch(*s) {
-		case '<': fputs("&lt;", stdout); break;
-		case '>': fputs("&gt;", stdout); break;
-		case '&': fputs("&amp;", stdout); break;
-		default:
-			putchar(*s);
-		}
-	}
-}
-
 int
 main(void) {
 	char *line = NULL, *fields[FieldLast];
 	unsigned long totalfeeds = 0, totalnew = 0;
-	unsigned int islink, isnew;
+	int islink, isnew;
 	struct feed *feedcurrent = NULL, *feeds = NULL; /* start of feeds linked-list. */
 	time_t parsedtime, comparetime;
 	size_t size = 0;
 
-	tzset();
 	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
 	fputs(
 		"<!DOCTYPE HTML>\n"
 		"<html dir=\"ltr\" lang=\"en\">\n"
 		"	<head>\n"
 		"		<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
-		"		<style type=\"text/css\">\n"
-		"			body {\n"
-		"				font-family: monospace;\n"
-		"				font-size: 9pt;\n"
-		"				color: #333;\n"
-		"				background-color: #fff;\n"
-		"				overflow: hidden;\n"
-		"			}\n"
-		"			#feedcontent td {\n"
-		"				white-space: nowrap;\n"
-		"			}\n"
-		"			#feedcontent h2 {\n"
-		"				font-size: 14pt;\n"
-		"			}\n"
-		"			#feedcontent a {\n"
-		"				display: block;\n"
-		"			}\n"
-		"			#feedcontent ul, #feedcontent li {\n"
-		"				list-style: none;\n"
-		"				padding: 0;\n"
-		"				margin: 0;\n"
-		"			}\n"
-		"			#feedcontent h2 a, #feedcontent ul li a {\n"
-		"				color: inherit;\n"
-		"			}\n"
-		"			#feedcontent ul li a {\n"
-		"				padding: 5px 3px 5px 10px;\n"
-		"			}\n"
-		"			#feedcontent div#sidebar {\n"
-		"				background-color: inherit;\n"
-		"				position: fixed;\n"
-		"				top: 0;\n"
-		"				left: 0;\n"
-		"				width: 175px;\n"
-		"				height: 100%;\n"
-		"				overflow: hidden;\n"
-		"				overflow-y: auto;\n"
-		"				z-index: 999;\n"
-		"			}\n"
-		"			#feedcontent div#items {\n"
-		"				left: 175px;\n"
-		"			}\n"
-		"			#feedcontent div#items-nosidebar {\n"
-		"				left: 0px;\n"
-		"			}\n"
-		"			#feedcontent div#items-nosidebar,\n"
-		"			#feedcontent div#items {\n"
-		"				position: absolute;\n"
-		"				height: 100%;\n"
-		"				top: 0;\n"
-		"				right: 0;\n"
-		"				overflow: auto;\n"
-		"				padding: 0 15px;\n"
-		"			}\n"
-		"		</style>\n"
+		"		<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />\n"
 		"	</head>\n"
-		"	<body>\n"
-		"		<div id=\"feedcontent\">\n",
+		"	<body class=\"noframe\">\n",
 	stdout);
 
-	while(parseline(&line, &size, fields, FieldLast, stdin, FieldSeparator) > 0) {
+	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
+		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
+		isnew = (parsedtime >= comparetime);
+		islink = (fields[FieldLink][0] != '\0');
 		/* first of feed section or new feed section. */
 		if(!totalfeeds || strcmp(feedcurrent->name, fields[FieldFeedName])) {
 			if(totalfeeds) { /* end previous one. */
 				fputs("</table>\n", stdout);
-				feedcurrent->next = feednew();
+				if(!(feedcurrent->next = calloc(1, sizeof(struct feed))))
+					die("can't allocate enough memory");
 				feedcurrent = feedcurrent->next;
 			} else {
-				feedcurrent = feednew();
+				if(!(feedcurrent = calloc(1, sizeof(struct feed))))
+					die("can't allocate enough memory");
 				feeds = feedcurrent; /* first item. */
-				fputs("\t\t<div id=\"items", stdout);
-				if(fields[FieldFeedName][0] == '\0') {
-					fputs("-nosidebar", stdout); /* set other id on div if no sidebar for styling */
+				if(fields[FieldFeedName][0] == '\0' || !showsidebar) {
+					/* set nosidebar class on div for styling */
+					fputs("\t\t<div id=\"items\" class=\"nosidebar\">\n", stdout);
 					showsidebar = 0;
-				}
-				fputs("\">\n", stdout);
+				} else
+					fputs("\t\t<div id=\"items\">\n", stdout);
 			}
-			if(!(feedcurrent->name = strdup(fields[FieldFeedName])))
+			if(!(feedcurrent->name = xstrdup(fields[FieldFeedName])))
 				die("can't allocate enough memory");
 			if(fields[FieldFeedName][0] != '\0') {
 				fputs("<h2 id=\"", stdout);
-				printfeednameid(feedcurrent->name);
+				printfeednameid(feedcurrent->name, stdout);
 				fputs("\"><a href=\"#", stdout);
-				printfeednameid(feedcurrent->name);
+				printfeednameid(feedcurrent->name, stdout);
 				fputs("\">", stdout);
 				fputs(feedcurrent->name, stdout);
 				fputs("</a></h2>\n", stdout);
 			}
-			fputs("<table>", stdout);
+			fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", stdout);
 			totalfeeds++;
 		}
-		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
-		isnew = (parsedtime >= comparetime);
-		islink = (strlen(fields[FieldLink]) > 0);
 		totalnew += isnew;
-		feedcurrent->new += isnew;
+		feedcurrent->totalnew += isnew;
 		feedcurrent->total++;
 
-		fputs("<tr><td>", stdout);
+		if(isnew)
+			fputs("<tr class=\"n\"><td nowrap valign=\"top\">", stdout);
+		else
+			fputs("<tr><td nowrap valign=\"top\">", stdout);
 		fputs(fields[FieldTimeFormatted], stdout);
-		fputs("</td><td>", stdout);
+		fputs("</td><td nowrap valign=\"top\">", stdout);
+
 		if(isnew)
 			fputs("<b><u>", stdout);
 		if(islink) {
 			fputs("<a href=\"", stdout);
 			if(fields[FieldBaseSiteUrl][0] != '\0')
-				printlink(fields[FieldLink], fields[FieldBaseSiteUrl]);
+				printlink(fields[FieldLink], fields[FieldBaseSiteUrl], stdout);
 			else
-				printlink(fields[FieldLink], fields[FieldFeedUrl]);
+				printlink(fields[FieldLink], fields[FieldFeedUrl], stdout);
 			fputs("\">", stdout);
 		}
-		printhtmlencoded(fields[FieldTitle]);
+		printhtmlencoded(fields[FieldTitle], stdout);
 		if(islink)
 			fputs("</a>", stdout);
 		if(isnew)
@@ -201,27 +105,29 @@ main(void) {
 		fputs("\t\t</div>\n", stdout); /* div items */
 	}
 	if(showsidebar) {
-		fputs("\t\t<div id=\"sidebar\">\n\t\t\t<ul>\n", stdout);
+		fputs("\t<div id=\"sidebar\">\n\t\t<ul>\n", stdout);
 		for(feedcurrent = feeds; feedcurrent; feedcurrent = feedcurrent->next) {
 			if(!feedcurrent->name || feedcurrent->name[0] == '\0')
 				continue;
-			fputs("<li><a href=\"#", stdout);
-			printfeednameid(feedcurrent->name);
+			if(feedcurrent->totalnew)
+				fputs("<li class=\"n\"><a href=\"#", stdout);
+			else
+				fputs("<li><a href=\"#", stdout);
+			printfeednameid(feedcurrent->name, stdout);
 			fputs("\">", stdout);
-			if(feedcurrent->new > 0)
+			if(feedcurrent->totalnew > 0)
 				fputs("<b><u>", stdout);
 			fputs(feedcurrent->name, stdout);
-			fprintf(stdout, " (%lu)", feedcurrent->new);
-			if(feedcurrent->new > 0)
+			fprintf(stdout, " (%lu)", feedcurrent->totalnew);
+			if(feedcurrent->totalnew > 0)
 				fputs("</u></b>", stdout);
 			fputs("</a></li>\n", stdout);
 		}
-		fputs("\t\t\t</ul>\n\t\t</div>\n", stdout);
+		fputs("\t\t</ul>\n\t</div>\n", stdout);
 	}
 	fputs(
-		"		</div>\n"
 		"	</body>\n"
-		"		<title>Newsfeeds (",
+		"	<title>Newsfeed (",
 	stdout);
 	fprintf(stdout, "%lu", totalnew);
 	fputs(")</title>\n</html>", stdout);
