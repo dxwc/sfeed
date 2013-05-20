@@ -70,11 +70,11 @@ feed() {
 	tmpfile=$(mktemp -p "$TMPDIR")
 	(if [ "$4" = "" ]; then
 		# don't use iconv if encoding not set in config.
-		fetchfeed "$2" "$1" | sfeed | addfield "$1	$2	$3"
+		fetchfeed "$2" "$1"
 	else
 		# use iconv to convert encoding to UTF-8.
-		fetchfeed "$2" "$1" | iconv -cs -f "$4" -t "utf-8" | sfeed | addfield "$1	$2	$3"
-	fi) > "$tmpfile"
+		fetchfeed "$2" "$1" | iconv -cs -f "$4" -t "utf-8"
+	fi) | sfeed | addfield "$1	$2	$3" > "$tmpfile"
 }
 
 terminated() {
