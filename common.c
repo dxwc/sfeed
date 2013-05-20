@@ -3,21 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <ctype.h>
-
-enum { FieldUnixTimestamp = 0, FieldTimeFormatted, FieldTitle, FieldLink,
-       FieldContent, FieldContentType, FieldId, FieldAuthor, FieldFeedType,
-       FieldFeedName, FieldFeedUrl, FieldBaseSiteUrl, FieldLast };
-
-const int FieldSeparator = '\t';
-
-void *
-xstrdup(const char *s) {
-	size_t len = strlen(s) + 1;
-	void *p = malloc(len);
-	if(p)
-		memcpy(p, s, len);
-	return p;
-}
+#include "common.h"
 
 char *
 afgets(char **p, size_t *size, FILE *fp) {
@@ -58,7 +44,7 @@ afgets(char **p, size_t *size, FILE *fp) {
 }
 
 void /* print link; if link is relative use baseurl to make it absolute */
-printlink(const char *link, const char *baseurl) {
+printlink(const char *link, const char *baseurl, FILE *fp) {
 	const char *ebaseproto, *ebasedomain, *p;
 	int isrelative;
 
@@ -68,32 +54,32 @@ printlink(const char *link, const char *baseurl) {
 	if(isrelative) { /* relative link (baseurl is used). */
 		if((ebaseproto = strstr(baseurl, "://"))) {
 			ebaseproto += strlen("://");
-			fwrite(baseurl, 1, ebaseproto - baseurl, stdout);
+			fwrite(baseurl, 1, ebaseproto - baseurl, fp);
 		} else {
 			ebaseproto = baseurl;
 			if(*baseurl || (link[0] == '/' && link[1] == '/'))
-				fputs("http://", stdout);
+				fputs("http://", fp);
 		}
 		if(link[0] == '/') { /* relative to baseurl domain (not path).  */
 			if(link[1] == '/') /* absolute url but with protocol from baseurl. */
 				link += 2;
 			else if((ebasedomain = strchr(ebaseproto, '/'))) /* relative to baseurl and baseurl path. */
-				fwrite(ebaseproto, 1, ebasedomain - ebaseproto, stdout);
+				fwrite(ebaseproto, 1, ebasedomain - ebaseproto, fp);
 			else
 				fputs(ebaseproto, stdout);
 		} else if((ebasedomain = strrchr(ebaseproto, '/'))) /* relative to baseurl and baseurl path. */
-			fwrite(ebaseproto, 1, ebasedomain - ebaseproto + 1, stdout);
+			fwrite(ebaseproto, 1, ebasedomain - ebaseproto + 1, fp);
 		else {
-			fputs(ebaseproto, stdout);
+			fputs(ebaseproto, fp);
 			if(*baseurl && *link)
-				fputc('/', stdout);
+				fputc('/', fp);
 		}
 	}
-	fputs(link, stdout);
+	fputs(link, fp);
 }
 
 unsigned int
-parseline(char **line, size_t *size, char **fields, unsigned int maxfields, FILE *fp, int separator) {
+parseline(char **line, size_t *size, char **fields, unsigned int maxfields, int separator, FILE *fp) {
 	unsigned int i = 0;
 	char *prev, *s;
 
@@ -110,16 +96,33 @@ parseline(char **line, size_t *size, char **fields, unsigned int maxfields, FILE
 	return i;
 }
 
+/* print feed name for id; spaces and tabs in string as "-" (spaces in anchors are not valid). */
 void
-printtime(time_t t) {
-	char buf[32];
-	struct tm temp = { 0 }, *mktm;
+printfeednameid(const char *s, FILE *fp) {
+	for(; *s; s++)
+		fputc(isspace((int)*s) ? '-' : tolower((int)*s), fp);
+}
 
-	if(!(mktm = localtime_r(&t, &temp)))
-		return;
-	mktm->tm_isdst = -1;
+void
+printhtmlencoded(const char *s, FILE *fp) {
+	for(; *s; s++) {
+		switch(*s) {
+		case '<': fputs("&lt;", fp); break;
+		case '>': fputs("&gt;", fp); break;
+/*		case '&': fputs("&amp;", fp); break;*/
+		default:
+			fputc(*s, fp);
+		}
+	}
+}
 
-	if(!strftime(buf, sizeof(buf) - 1, "%Y-%m-%d %H:%M", mktm))
-		return;
-	fputs(buf, stdout);
+void
+feedsfree(struct feed *f) {
+	struct feed *next;
+	while(f) {
+		next = f->next;
+		free(f->name);
+		free(f);
+		f = next;
+	}
 }
