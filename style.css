@@ -30,7 +30,7 @@ h2 {
 	padding: 0;
 	margin: 0;
 }
-h2 a, #sidebar a {
+#items h2 a, #sidebar a {
 	color: inherit;
 }
 #sidebar {
