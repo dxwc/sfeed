@@ -115,7 +115,6 @@ main(int argc, char **argv) {
 		fclose(fpindex);
 		return EXIT_FAILURE;
 	}
-	fclose(fpcontent);
 	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" /></head>", fpitems);
 	fputs("<body class=\"frame\"><div id=\"items\">", fpitems);
 
