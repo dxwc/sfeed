@@ -1,5 +1,5 @@
 # sfeed version
-VERSION = 0.9
+VERSION = 0.8
 
 # customize below to fit your system
 
@@ -12,6 +12,7 @@ INCS =
 LIBS = -lc
 
 # debug
+#CFLAGS = -fstack-protector-all -O0 -g -ansi -Wall -Wextra -pedantic -DVERSION=\"${VERSION}\"
 CFLAGS = -O0 -g -ansi -Wall -Wextra -pedantic -DVERSION=\"${VERSION}\"
 LDFLAGS = ${LIBS}
 
