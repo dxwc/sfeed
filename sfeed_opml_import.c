@@ -1,74 +1,64 @@
 /* convert an opml file to sfeedrc file */
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <strings.h>
-#include <expat.h> /* libexpat */
+#include "xml.h"
+#include "compat.h"
 
-XML_Parser parser; /* expat XML parser state */
+XMLParser parser; /* XML parser state */
+char *feedurl = NULL, *feedname = NULL, *basesiteurl = NULL;
 
-char * /* search for attr value by attr name in attributes list */
-getattrvalue(const char **atts, const char *name) {
-	const char **attr = NULL, *key, *value;
-	if(!atts || !(*atts))
-		return NULL;
-	for(attr = atts; *attr; ) {
-		key = *(attr++);
-		value = *(attr++);
-		if(key && value && !strcasecmp(key, name))
-			return (char *)value;
-	}
-	return NULL;
+int
+istag(const char *s1, const char *s2) {
+	return !xstrcasecmp(s1, s2);
 }
 
-void XMLCALL
-xml_handler_start_element(void *data, const char *name, const char **atts) {
-	char *feedurl = NULL, *feedname = NULL, *basesiteurl = NULL;
+int
+isattr(const char *s1, const char *s2) {
+	return !xstrcasecmp(s1, s2);
+}
 
-	if(!strcasecmp(name, "outline")) {
-		if(!(feedname = getattrvalue(atts, "text")) &&
-		   !(feedname = getattrvalue(atts, "title")))
-			feedname = "unnamed";
-		if(!(basesiteurl = getattrvalue(atts, "htmlurl")))
-			basesiteurl = "";
-		if(!(feedurl = getattrvalue(atts, "xmlurl")))
-			feedurl = "";
-		printf("\tfeed \"%s\" \"%s\" \"%s\"\n", feedname, feedurl, basesiteurl);
+void
+xml_handler_start_element(XMLParser *p, const char *tag, size_t taglen) {
+	if(istag(tag, "outline")) {
+		feedurl = NULL;
+		feedname = NULL;
+		basesiteurl = NULL;
 	}
 }
 
-void XMLCALL
-xml_handler_end_element(void *data, const char *name) {
+void
+xml_handler_end_element(XMLParser *p, const char *tag, size_t taglen, int isshort) {
+	if(istag(tag, "outline")) {
+		printf("\tfeed \"%s\" \"%s\" \"%s\"\n", feedname ? feedname : "unnamed",
+		       feedurl ? feedurl : "", basesiteurl ? basesiteurl : "");
+	}
 }
 
-int /* parse XML from stream using setup parser, return 1 on success, 0 on failure. */
-xml_parse_stream(XML_Parser parser, FILE *fp) {
-	char buffer[BUFSIZ];
-	int done = 0, len = 0;
-
-	while(!feof(fp)) {
-		len = fread(buffer, 1, sizeof(buffer), fp);
-		done = (feof(fp) || ferror(fp));
-		if(XML_Parse(parser, buffer, len, done) == XML_STATUS_ERROR && (len > 0)) {
-			if(XML_GetErrorCode(parser) == XML_ERROR_NO_ELEMENTS)
-				return 1; /* Ignore "no elements found" / empty document as an error */
-			fprintf(stderr, "sfeed_opml_import: error parsing xml %s at line %lu column %lu\n",
-			        XML_ErrorString(XML_GetErrorCode(parser)), (unsigned long)XML_GetCurrentLineNumber(parser),
-			        (unsigned long)XML_GetCurrentColumnNumber(parser));
-			return 0;
+void
+xml_handler_attr(XMLParser *p, const char *tag, size_t taglen, const char *name, size_t namelen, const char *value, size_t valuelen) {
+	if(istag(tag, "outline")) {
+		if(isattr(name, "text") || isattr(name, "title")) {
+			free(feedname);
+			feedname = xstrdup(value);
+		} else if(isattr(name, "htmlurl")) {
+			free(basesiteurl);
+			basesiteurl = xstrdup(value);
+		} else if(isattr(name, "xmlurl")) {
+			free(feedurl);
+			feedurl = xstrdup(value);
 		}
-	} while(!done);
-	return 1;
+	}
 }
 
 int main(void) {
-	int status;
+	xmlparser_init(&parser);
 
-	if(!(parser = XML_ParserCreate("UTF-8"))) {
-		fputs("sfeed_opml_import: can't create parser", stderr);
-		exit(EXIT_FAILURE);
-	}
-	XML_SetElementHandler(parser, xml_handler_start_element, xml_handler_end_element);
+	parser.xmltagstart = xml_handler_start_element;
+	parser.xmltagend = xml_handler_end_element;
+	parser.xmlattr = xml_handler_attr;
+	parser.fp = stdin;
 
 	fputs(
 		"# paths\n"
@@ -80,10 +70,12 @@ int main(void) {
 		"# list of feeds to fetch:\n"
 		"feeds() {\n"
 		"	# feed <name> <url> [encoding]\n", stdout);
-	status = xml_parse_stream(parser, stdin);
+	xmlparser_parse(&parser);
 	fputs("}\n", stdout);
 
-	XML_ParserFree(parser);
+	free(feedurl);
+	free(feedname);
+	free(basesiteurl);
 
-	return status ? EXIT_SUCCESS : EXIT_FAILURE;
+	return EXIT_SUCCESS;
 }
