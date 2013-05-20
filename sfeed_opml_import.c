@@ -7,7 +7,7 @@
 #include "compat.h"
 
 XMLParser parser; /* XML parser state */
-char *feedurl = NULL, *feedname = NULL, *basesiteurl = NULL;
+char feedurl[2048], feedname[2048], basesiteurl[2048];
 
 int
 istag(const char *s1, const char *s2) {
@@ -22,37 +22,34 @@ isattr(const char *s1, const char *s2) {
 void
 xml_handler_start_element(XMLParser *p, const char *tag, size_t taglen) {
 	if(istag(tag, "outline")) {
-		feedurl = NULL;
-		feedname = NULL;
-		basesiteurl = NULL;
+		feedurl[0] = '\0';
+		feedname[0] = '\0';
+		basesiteurl[0] = '\0';
 	}
 }
 
 void
 xml_handler_end_element(XMLParser *p, const char *tag, size_t taglen, int isshort) {
 	if(istag(tag, "outline")) {
-		printf("\tfeed \"%s\" \"%s\" \"%s\"\n", feedname ? feedname : "unnamed",
-		       feedurl ? feedurl : "", basesiteurl ? basesiteurl : "");
+		printf("\tfeed \"%s\" \"%s\" \"%s\"\n", feedname[0] ? feedname : "unnamed",
+		       feedurl[0] ? feedurl : "", basesiteurl[0] ? basesiteurl : "");
 	}
 }
 
 void
 xml_handler_attr(XMLParser *p, const char *tag, size_t taglen, const char *name, size_t namelen, const char *value, size_t valuelen) {
 	if(istag(tag, "outline")) {
-		if(isattr(name, "text") || isattr(name, "title")) {
-			free(feedname);
-			feedname = xstrdup(value);
-		} else if(isattr(name, "htmlurl")) {
-			free(basesiteurl);
-			basesiteurl = xstrdup(value);
-		} else if(isattr(name, "xmlurl")) {
-			free(feedurl);
-			feedurl = xstrdup(value);
-		}
+		if(isattr(name, "text") || isattr(name, "title"))
+			strncpy(feedname, value, sizeof(feedname) - 1);
+		else if(isattr(name, "htmlurl"))
+			strncpy(basesiteurl, value, sizeof(basesiteurl) - 1);
+		else if(isattr(name, "xmlurl"))
+			strncpy(feedurl, value, sizeof(feedurl) - 1);
 	}
 }
 
-int main(void) {
+int
+main(void) {
 	xmlparser_init(&parser);
 
 	parser.xmltagstart = xml_handler_start_element;
@@ -72,10 +69,5 @@ int main(void) {
 		"	# feed <name> <url> [encoding]\n", stdout);
 	xmlparser_parse(&parser);
 	fputs("}\n", stdout);
-
-	free(feedurl);
-	free(feedname);
-	free(basesiteurl);
-
 	return EXIT_SUCCESS;
 }
