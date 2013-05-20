@@ -19,7 +19,7 @@ printutf8padded(const char *s, size_t len) {
 }
 
 int
-main(int argc, char **argv) {
+main(void) {
 	char *line = NULL, *fields[FieldLast];
 	time_t parsedtime, comparetime;
 	int isnew;
