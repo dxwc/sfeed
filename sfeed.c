@@ -387,20 +387,6 @@ string_print_trimmed(String *s) {
 					continue;
 				}
 			}
-			/* TODO: not necesary anymore because xml_handler_data_entity is used with entitytostr ? */
-			/* else if(*p == '&') { 
-				for(e = entities, i = 0, found = 0; *e; e += 2, i++) {
-					len = entlen[i];
-					if(!strncmp(*e, p, len)) {
-						buffer[buflen++] = *(e + 1)[0];
-						p += len;
-						found = 1;
-						break;
-					}
-				}
-				if(found)
-					continue;
-			}*/
 			buffer[buflen++] = *p;
 		}
 		if(buflen >= BUFSIZ) {
@@ -409,10 +395,8 @@ string_print_trimmed(String *s) {
 		}
 		p++;
 	}
-/*	printf("%d |", buflen);*/
 	if(buflen)
 		fwrite(buffer, 1, buflen, stdout);
-/*	printf("|\n");*/
 }
 
 void /* print text, escape tabs, newline and carriage return etc */
@@ -552,11 +536,10 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
 /*	iscontenttag = 0;*/
 	if(feeditem.feedtype != FeedTypeNone) { /* in item */
 		if(feeditemtag[0] == '\0') { /* set tag if not already set. */
-/*			strncpy(feeditemtag, name, sizeof(feeditemtag) - 1);*/
-			if(namelen >= sizeof(feeditemtag) - 2)
+			if(namelen >= sizeof(feeditemtag) - 2) /* check overflow */
 				return;
-			memcpy(feeditemtag, name, namelen + 1);
-			feeditemtaglen = namelen; /* XXX: assumes feeditemtag had enough space */
+			memcpy(feeditemtag, name, namelen + 1); /* copy including nul byte */
+			feeditemtaglen = namelen;
 			feeditemtagid = gettag(feeditem.feedtype, feeditemtag, feeditemtaglen);
 
 			if(feeditem.feedtype == FeedTypeRSS) {
@@ -642,7 +625,6 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 	char timebuf[64];
 	int tagid;
 
-/*	printf("%d end tag: </%s>\n", iscontent, name);*/
 	if(iscontent) {
 		attrcount = 0;
 		/* TODO: optimize */
