@@ -29,15 +29,19 @@ xml_handler_start_element(XMLParser *p, const char *tag, size_t taglen) {
 }
 
 void
-xml_handler_end_element(XMLParser *p, const char *tag, size_t taglen, int isshort) {
+xml_handler_end_element(XMLParser *p, const char *tag, size_t taglen,
+	int isshort) {
 	if(istag(tag, "outline")) {
-		printf("\tfeed \"%s\" \"%s\" \"%s\"\n", feedname[0] ? feedname : "unnamed",
-		       feedurl[0] ? feedurl : "", basesiteurl[0] ? basesiteurl : "");
+		printf("\tfeed \"%s\" \"%s\" \"%s\"\n",
+		       feedname[0] ? feedname : "unnamed",
+		       feedurl[0] ? feedurl : "",
+		       basesiteurl[0] ? basesiteurl : "");
 	}
 }
 
 void
-xml_handler_attr(XMLParser *p, const char *tag, size_t taglen, const char *name, size_t namelen, const char *value, size_t valuelen) {
+xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
+	const char *name, size_t namelen, const char *value, size_t valuelen) {
 	if(istag(tag, "outline")) {
 		if(isattr(name, "text") || isattr(name, "title"))
 			strncpy(feedname, value, sizeof(feedname) - 1);
@@ -55,18 +59,17 @@ main(void) {
 	parser.xmltagstart = xml_handler_start_element;
 	parser.xmltagend = xml_handler_end_element;
 	parser.xmlattr = xml_handler_attr;
-	parser.fp = stdin;
 
 	fputs(
-		"# paths\n"
-		"# NOTE: make sure to uncomment all these if you change it.\n"
-		"#sfeedpath=\"$HOME/.sfeed\"\n"
-		"#sfeedfile=\"$sfeedpath/feeds\"\n"
-		"#sfeedfilenew=\"$sfeedfile.new\"\n"
-		"\n"
-		"# list of feeds to fetch:\n"
-		"feeds() {\n"
-		"	# feed <name> <feedurl> <basesiteurl> [encoding]\n", stdout);
+	    "# paths\n"
+	    "# NOTE: make sure to uncomment all these if you change it.\n"
+	    "#sfeedpath=\"$HOME/.sfeed\"\n"
+	    "#sfeedfile=\"$sfeedpath/feeds\"\n"
+	    "#sfeedfilenew=\"$sfeedfile.new\"\n"
+	    "\n"
+	    "# list of feeds to fetch:\n"
+	    "feeds() {\n"
+	    "	# feed <name> <feedurl> <basesiteurl> [encoding]\n", stdout);
 	xmlparser_parse(&parser);
 	fputs("}\n", stdout);
 	return EXIT_SUCCESS;
