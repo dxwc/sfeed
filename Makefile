@@ -4,7 +4,7 @@ include config.mk
 
 NAME = sfeed
 SRC = sfeed.c sfeed_plain.c sfeed_html.c sfeed_opml_import.c sfeed_frames.c \
-	sfeed_xmlenc.c sfeed_web.c xml.c
+	sfeed_xmlenc.c sfeed_web.c xml.c util.c
 OBJ = ${SRC:.c=.o}
 
 all: options sfeed sfeed_plain sfeed_html sfeed_opml_import sfeed_frames \
@@ -53,7 +53,7 @@ sfeed_web: sfeed_web.o xml.o util.o
 clean:
 	@echo cleaning
 	@rm -f sfeed sfeed_plain sfeed_html sfeed_frames sfeed_opml_import \
-		${OBJ} ${NAME}-${VERSION}.tar.gz
+		sfeed_web sfeed_xmlenc ${OBJ} ${NAME}-${VERSION}.tar.gz
 
 dist: clean
 	@echo creating dist tarball
