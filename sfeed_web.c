@@ -68,5 +68,5 @@ main(int argc, char **argv) {
 
 	xmlparser_parse(&x);
 
-	return found ? EXIT_SUCCESS : EXIT_FAILURE;
+	return found > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

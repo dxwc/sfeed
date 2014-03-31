@@ -5,7 +5,7 @@
 
 #include "util.h"
 
-void
+static void
 printutf8padded(const char *s, size_t len, FILE *fp, int pad) {
 	size_t n = 0, i;
 
@@ -22,18 +22,18 @@ int
 main(void) {
 	char *line = NULL, *fields[FieldLast];
 	time_t parsedtime, comparetime;
-	unsigned int isnew;
 	size_t size = 0;
 
 	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
-		isnew = (parsedtime >= comparetime);
 		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
-		printf(" %c  ", isnew ? 'N' : ' ');
+		if(parsedtime >= comparetime)
+			fputs(" N  ", stdout);
+		else
+			fputs("    ", stdout);
 		if(fields[FieldFeedName][0] != '\0')
 			printf("%-15.15s  ", fields[FieldFeedName]);
-		printf("%-30.30s", fields[FieldTimeFormatted]);
-		fputs("  ", stdout);
+		printf("%-30.30s  ", fields[FieldTimeFormatted]);
 		printutf8padded(fields[FieldTitle], 70, stdout, ' ');
 		fputs("  ", stdout);
 		if(fields[FieldBaseSiteUrl][0] != '\0')
