@@ -142,10 +142,10 @@ main(int argc, char **argv) {
 */
 
 
-		
 
-	
-		
+
+
+
 
 		/* first of feed section or new feed section. */
 		if(!totalfeeds || strcmp(feedcurrent->name, fields[FieldFeedName])) {
@@ -165,7 +165,7 @@ main(int argc, char **argv) {
 			if(mkdir(dirpath, S_IRWXU) != -1) {
 				fprintf(stderr, "sfeed_frames: can't write '%s'\n", dirpath);
 				exit(EXIT_FAILURE);
-			}		
+			}
 			/* TODO: test, replaces strncpy (strncpy is slow) */
 			reldirpath[0] = '\0';
 			if(namelen < sizeof(reldirpath) - 2) {
@@ -193,8 +193,8 @@ main(int argc, char **argv) {
 
 
 			} else {
-				
-				
+
+
 				feedcurrent = f;
 
 

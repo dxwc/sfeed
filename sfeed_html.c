@@ -78,7 +78,7 @@ main(void) {
 			if(!(feedcurrent->name = strdup(fields[FieldFeedName])))
 				die("can't allocate enough memory");
 
-			
+
 			/*
 			feedcurrent->totalnew = 0;
 			feedcurrent->total = 0;

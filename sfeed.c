@@ -299,7 +299,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz) {
 		}
 	} else
 		memcpy(tzname, "GMT", strlen("GMT") + 1);
-	if(!(*p)) {	
+	if(!(*p)) {
 		strlcpy(buf, tzname, bufsiz); /* TODO: dont depend on strlcpy? */
 		return 0;
 	}
@@ -412,8 +412,8 @@ parsetime(const char *s, char *buf) {
 		/* TODO: make sure snprintf cant overflow */
 		if(buf)
 		   sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d %-.16s",
-					tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-					tm.tm_hour, tm.tm_min, tm.tm_sec, tz);
+		           tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+		           tm.tm_hour, tm.tm_min, tm.tm_sec, tz);
 		/* return UNIX time, reverse offset to GMT+0 */
 		return tmtotime(&tm) - offset;
 	}
@@ -466,7 +466,7 @@ string_print_textblock(String *s) {
 	size_t i;
 
 	if(!s->len)
-		return;	
+		return;
 	/* skip leading whitespace */
 	for(p = s->data; *p && isspace((int)*p); p++);
 	for(i = 0; *p; p++) {
@@ -501,7 +501,7 @@ string_print(String *s) {
 	size_t i;
 
 	if(!s->len)
-		return;	
+		return;
 	/* skip leading whitespace */
 	for(p = s->data; *p && isspace((int)*p); p++);
 	for(i = 0; *p; p++) {
@@ -785,7 +785,7 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 			feeditemtag[0] = '\0'; /* unset tag */
 			feeditemtaglen = 0;
 			feeditemtagid = TagUnknown;
-			
+
 			/* not sure if needed */
 			iscontenttag = 0;
 			iscontent = 0;
@@ -794,7 +794,7 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 			feeditemtag[0] = '\0'; /* unset tag */
 			feeditemtaglen = 0;
 			feeditemtagid = TagUnknown;
-			
+
 			/* not sure if needed */
 			iscontenttag = 0;
 			iscontent = 0;
