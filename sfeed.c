@@ -11,12 +11,12 @@
 #define ISWSNOSPACE(c) (((unsigned)c - '\t') < 5) /* isspace(c) && c != ' ' */
 
 enum { FeedTypeNone = 0, FeedTypeRSS = 1, FeedTypeAtom = 2 };
-const char *feedtypes[] = {	"", "rss", "atom" };
+static const char *feedtypes[] = { "", "rss", "atom" };
 
 enum { ContentTypeNone = 0, ContentTypePlain = 1, ContentTypeHTML = 2 };
-const char *contenttypes[] = { "", "plain", "html" };
+static const char *contenttypes[] = { "", "plain", "html" };
 
-const int FieldSeparator = '\t'; /* output field seperator character */
+static const int FieldSeparator = '\t'; /* output field seperator character */
 
 enum {
 	TagUnknown = 0,
@@ -54,7 +54,7 @@ typedef struct feedtag {
 } FeedTag;
 
 static void die(const char *s);
-static void cleanup(void);
+/*static void cleanup(void);*/
 
 static String *currentfield = NULL; /* pointer to current FeedItem field String */
 static FeedItem feeditem; /* data for current feed item */
@@ -411,7 +411,7 @@ parsetime(const char *s, char *buf) {
 		buf[0] = '\0';
 	if(parsetimeformat(s, &tm, &end)) {
 		offset = gettimetz(end, tz, sizeof(tz) - 1);
-		/* TODO: make sure snprintf cant overflow */
+		/* TODO: use snprintf(): make sure *printf can't overflow */
 		if(buf)
 		   sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d %-.16s",
 		           tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
@@ -472,7 +472,8 @@ isattr(const char *name, size_t len, const char *name2, size_t len2) {
 static void
 xml_handler_data(XMLParser *p, const char *s, size_t len) {
 	if(currentfield) {
-		if(feeditemtagid != AtomTagAuthor || !strcmp(p->tag, "name")) /* author>name */
+		/* author>name */
+		if(feeditemtagid != AtomTagAuthor || !strcmp(p->tag, "name"))
 			string_append(currentfield, s, len);
 	}
 }
@@ -484,7 +485,8 @@ xml_handler_cdata(XMLParser *p, const char *s, size_t len) {
 }
 
 static void
-xml_handler_attr_start(struct xmlparser *p, const char *tag, size_t taglen, const char *name, size_t namelen) {
+xml_handler_attr_start(struct xmlparser *p, const char *tag, size_t taglen,
+                       const char *name, size_t namelen) {
 	if(iscontent && !iscontenttag) {
 		if(!attrcount)
 			xml_handler_data(p, " ", 1);
@@ -496,7 +498,8 @@ xml_handler_attr_start(struct xmlparser *p, const char *tag, size_t taglen, cons
 }
 
 static void
-xml_handler_attr_end(struct xmlparser *p, const char *tag, size_t taglen, const char *name, size_t namelen) {
+xml_handler_attr_end(struct xmlparser *p, const char *tag, size_t taglen,
+                     const char *name, size_t namelen) {
 	if(iscontent && !iscontenttag) {
 		xml_handler_data(p, "\"", 1);
 		attrcount = 0;
@@ -504,7 +507,8 @@ xml_handler_attr_end(struct xmlparser *p, const char *tag, size_t taglen, const 
 }
 
 static void
-xml_handler_start_element_parsed(XMLParser *p, const char *tag, size_t taglen, int isshort) {
+xml_handler_start_element_parsed(XMLParser *p, const char *tag, size_t taglen,
+                                 int isshort) {
 	if(iscontent && !iscontenttag) {
 		if(isshort)
 			xml_handler_data(p, "/>", 2);
@@ -525,8 +529,11 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 		/*if(feeditemtagid == AtomTagContent || feeditemtagid == AtomTagSummary) {*/
 		if(iscontenttag) {
 			if(isattr(name, namelen, "type", strlen("type")) &&
-			   (isattr(value, valuelen, "xhtml", strlen("xhtml")) || isattr(value, valuelen, "text/xhtml", strlen("text/xhtml")) ||
-			    isattr(value, valuelen, "html", strlen("html")) || isattr(value, valuelen, "text/html", strlen("text/html")))) {
+			   (isattr(value, valuelen, "xhtml", strlen("xhtml")) ||
+			   isattr(value, valuelen, "text/xhtml", strlen("text/xhtml")) ||
+			   isattr(value, valuelen, "html", strlen("html")) ||
+			   isattr(value, valuelen, "text/html", strlen("text/html"))))
+			{
 				feeditem.contenttype = ContentTypeHTML;
 				iscontent = 1;
 /*				p->xmldataentity = NULL;*/
@@ -670,8 +677,11 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 	if(feeditem.feedtype != FeedTypeNone) {
 		/* end of RSS or Atom entry / item */
 		/* TODO: optimize, use gettag() ? to tagid? */
-		if((feeditem.feedtype == FeedTypeAtom && istag(name, namelen, "entry", strlen("entry"))) || /* Atom */
-		  (feeditem.feedtype == FeedTypeRSS && istag(name, namelen, "item", strlen("item")))) { /* RSS */
+		if((feeditem.feedtype == FeedTypeAtom &&
+		   istag(name, namelen, "entry", strlen("entry"))) || /* Atom */
+		   (feeditem.feedtype == FeedTypeRSS &&
+		   istag(name, namelen, "item", strlen("item")))) /* RSS */
+		{
 			printf("%ld", (long)parsetime((&feeditem.timestamp)->data, timebuf));
 			putchar(FieldSeparator);
 			fputs(timebuf, stdout);
