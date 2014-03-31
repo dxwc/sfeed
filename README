@@ -1,4 +1,4 @@
-sfeed v0.8
+sfeed v0.9
 ----------
 
 Simple RSS and Atom parser (and some format programs).
@@ -142,25 +142,6 @@ gawk -F '\t' 'BEGIN {
 }' < feeds > feeds.clean
 
 mv feeds.clean feeds
-
-
-Common errors and solutions
----------------------------
-
-If you execute sfeed_update and see the error:
-
-	"sfeed: error parsing xml not well-formed (invalid token) at line <linenumber>
-	column <column>"
-
-it's possible sfeed is trying to parse a feed which is non-UTF8 encoded. You can
-specify the encoding in your sfeedrc file so it will be converted to UTF-8
-using iconv, for example for iso-8859-1 change:
-
-	feed "feedname" "feedurl" "baseurl"
-
-to:
-
-	feed "feedname" "feedurl" "baseurl" "iso-8859-1"
 
 
 License

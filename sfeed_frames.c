@@ -7,12 +7,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <utime.h>
-#include "common.h"
-#include "compat.h"
 
-static int showsidebar = 1; /* show sidebar ? */
+#include "util.h"
 
-void /* print error message to stderr */
+static unsigned int showsidebar = 1; /* show sidebar ? */
+
+static FILE *fpindex = NULL, *fpitems = NULL, *fpmenu = NULL, *fpcontent = NULL;
+static char *line = NULL;
+static struct feed *feeds = NULL; /* start of feeds linked-list. */
+
+static void /* print error message to stderr */
 die(const char *s) {
 	fputs("sfeed_frames: ", stderr);
 	fputs(s, stderr);
@@ -20,9 +24,23 @@ die(const char *s) {
 	exit(EXIT_FAILURE);
 }
 
+static void
+cleanup(void) {
+	if(fpmenu)
+		fclose(fpmenu);
+	if(fpitems)
+		fclose(fpitems);
+	if(fpindex)
+		fclose(fpindex);
+	if(fpcontent)
+		fclose(fpcontent);
+	free(line); /* free line */
+	feedsfree(feeds); /* free feeds linked-list */
+}
+
 /* print text, ignore tabs, newline and carriage return etc
  * print some HTML 2.0 / XML 1.0 as normal text */
-void
+static void
 printcontent(const char *s, FILE *fp) {
 	const char *p;
 	int len = 0;
@@ -42,7 +60,8 @@ printcontent(const char *s, FILE *fp) {
 	}
 }
 
-size_t
+/* TODO: bufsiz - 1 ? */
+static size_t
 makepathname(char *buffer, size_t bufsiz, const char *path) {
 	const char *p = path;
 	size_t i = 0, r = 0;
@@ -64,164 +83,208 @@ makepathname(char *buffer, size_t bufsiz, const char *path) {
 	return i;
 }
 
-int
+static int
 fileexists(const char *path) {
 	return (!access(path, F_OK));
 }
 
 int
 main(int argc, char **argv) {
-	char *line = NULL, *fields[FieldLast];
+	char *fields[FieldLast];
+	char name[256]; /* TODO: bigger size? */
+	char *basepath = "feeds";
+	 /* TODO: max path size? */
+	char dirpath[1024], filepath[1024], reldirpath[1024], relfilepath[1024];
 	unsigned long totalfeeds = 0, totalnew = 0;
 	unsigned int isnew;
-	struct feed *feedcurrent = NULL, *feeds = NULL; /* start of feeds linked-list. */
+	struct feed *f, *feedcurrent = NULL;
 	time_t parsedtime, comparetime;
-	size_t size = 0;
-	char name[256];
-	char dirpath[1024];
-	char filepath[1024];
-	char reldirpath[1024];
-	char relfilepath[1024];
-	FILE *fpindex, *fpitems, *fpmenu, *fpcontent;
-	char *basepath = "feeds";
-	struct utimbuf contenttime;
-	size_t namelen = 0;
+	size_t size = 0, namelen = 0, basepathlen = 0;
 
+	struct utimbuf contenttime;
+
+	atexit(cleanup);
 	memset(&contenttime, 0, sizeof(contenttime));
 
 	if(argc > 1 && argv[1][0] != '\0')
 		basepath = argv[1];
 
 	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
-	xmkdir(basepath, S_IRWXU);
+	mkdir(basepath, S_IRWXU);
 
 	/* write main index page */
-	if(strlen(basepath) + strlen("/index.html") < sizeof(dirpath) - 1)
+	basepathlen = strlen(basepath);
+	if(basepathlen + strlen("/index.html") < sizeof(dirpath) - 1)
 		sprintf(dirpath, "%s/index.html", basepath);
-	if((fpindex = fopen(dirpath, "w+b"))) {
-	}
-	if(strlen(basepath) + strlen("/menu.html") < sizeof(dirpath) - 1)
+	if(!(fpindex = fopen(dirpath, "w+b")))
+		die("can't write index.html");
+	if(basepathlen + strlen("/menu.html") < sizeof(dirpath) - 1)
 		sprintf(dirpath, "%s/menu.html", basepath);
-	if(!(fpmenu = fopen(dirpath, "w+b"))) {
-		/* TODO: error */
-		fclose(fpindex);
-		return EXIT_FAILURE;
-	}
-	if(strlen(basepath) + strlen("/items.html") < sizeof(dirpath) - 1)
+	if(!(fpmenu = fopen(dirpath, "w+b")))
+		die("can't write menu.html");
+	if(basepathlen + strlen("/items.html") < sizeof(dirpath) - 1)
 		sprintf(dirpath, "%s/items.html", basepath);
-	if(!(fpitems = fopen(dirpath, "w+b"))) {
-		/* TODO: error */
-		fclose(fpmenu);
-		fclose(fpindex);
-		return EXIT_FAILURE;
-	}
-	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" /></head>", fpitems);
-	fputs("<body class=\"frame\"><div id=\"items\">", fpitems);
-
+	if(!(fpitems = fopen(dirpath, "w+b")))
+		die("can't write items.html");
+	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" /></head>"
+	      "<body class=\"frame\"><div id=\"items\">", fpitems);
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
+
+
+/*
+
 		dirpath[0] = '\0';
 		filepath[0] = '\0';
 		reldirpath[0] = '\0';
 		relfilepath[0] = '\0';
-		namelen = makepathname(name, sizeof(name) - 1, fields[FieldFeedName]);
-		if(namelen) {
-			if(strlen(basepath) + namelen + 1 < sizeof(dirpath) - 1)
+
+
+*/
+
+
+		
+
+	
+		
+
+		/* first of feed section or new feed section. */
+		if(!totalfeeds || strcmp(feedcurrent->name, fields[FieldFeedName])) {
+
+
+			/* TODO: makepathname isnt necesary if fields[FieldFeedName] is the same as the previous line */
+			/* TODO: move this part below where FieldFeedName is checked if its different ? */
+
+			/* make directory for feedname */
+			namelen = makepathname(name, sizeof(name) - 1, fields[FieldFeedName]);
+			if(!namelen)
+				continue;
+
+			if(basepathlen + namelen + 1 < sizeof(dirpath) - 1)
 				sprintf(dirpath, "%s/%s", basepath, name);
 			/* TODO: handle error. */
-			if(xmkdir(dirpath, S_IRWXU) != -1) {
+			if(mkdir(dirpath, S_IRWXU) != -1) {
+				fprintf(stderr, "sfeed_frames: can't write '%s'\n", dirpath);
+				exit(EXIT_FAILURE);
+			}		
+			/* TODO: test, replaces strncpy (strncpy is slow) */
+			reldirpath[0] = '\0';
+			if(namelen < sizeof(reldirpath) - 2) {
+				memcpy(reldirpath, name, namelen + 1); /* copy including nul byte */
+	/*			reldirpath[namelen] = '\0';*/
 			}
-			strncpy(reldirpath, name, sizeof(reldirpath) - 1);	
-			namelen = makepathname(name, sizeof(name), fields[FieldTitle]);
-			if(namelen) {
-				if(strlen(dirpath) + namelen + strlen("/.html") < sizeof(filepath) - 1)
-					sprintf(filepath, "%s/%s.html", dirpath, name);
-				if(strlen(reldirpath) + namelen + strlen("/.html") < sizeof(relfilepath) - 1)
-					sprintf(relfilepath, "%s/%s.html", reldirpath, name);
-				if(!fileexists(filepath) && (fpcontent = fopen(filepath, "w+b"))) {
-					fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" /></head>", fpcontent);
-					fputs("<body class=\"frame\"><div class=\"content\">", fpcontent);
-					fputs("<h2><a href=\"", fpcontent);
-					if(fields[FieldBaseSiteUrl][0] != '\0')
-						printlink(fields[FieldLink], fields[FieldBaseSiteUrl], fpcontent);
-					else
-						printlink(fields[FieldLink], fields[FieldFeedUrl], fpcontent);
-					fputs("\">", fpcontent);
-					printhtmlencoded(fields[FieldTitle], fpcontent);
-					fputs("</a></h2>", fpcontent);
-					printcontent(fields[FieldContent], fpcontent);
-					fputs("</div></body></html>", fpcontent);
-					fclose(fpcontent);
-				}
+	/*		strncpy(reldirpath, name, sizeof(reldirpath) - 1);*/
 
-				/* first of feed section or new feed section. */
-				if(!totalfeeds || strcmp(feedcurrent->name, fields[FieldFeedName])) {
-					if(totalfeeds) { /* end previous one. */
-						fputs("</table>\n", fpitems);
-						if(!(feedcurrent->next = calloc(1, sizeof(struct feed))))
-							die("can't allocate enough memory");
-						feedcurrent = feedcurrent->next;
-					} else {
-						if(!(feedcurrent = calloc(1, sizeof(struct feed))))
-							die("can't allocate enough memory");
-						feeds = feedcurrent; /* first item. */
-						if(fields[FieldFeedName][0] == '\0') {
-							showsidebar = 0;
-						}
-					}
-					/* write menu link if new. */
-					if(!(feedcurrent->name = xstrdup(fields[FieldFeedName])))
-						die("can't allocate enough memory");
-					if(fields[FieldFeedName][0] != '\0') {
-						fputs("<h2 id=\"", fpitems);
-						printfeednameid(feedcurrent->name, fpitems);
-						fputs("\"><a href=\"#", fpitems);
-						printfeednameid(feedcurrent->name, fpitems);
-						fputs("\">", fpitems);
-						fputs(feedcurrent->name, fpitems);
-						fputs("</a></h2>\n", fpitems);
-					}
-					fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", fpitems);
-					totalfeeds++;
-				}
-				/* write item. */
-				parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
-				/* set modified and access time of file to time of item. */
-				contenttime.actime = parsedtime;
-				contenttime.modtime = parsedtime;
-				utime(filepath, &contenttime);
 
-				isnew = (parsedtime >= comparetime);
-				totalnew += isnew;
-				feedcurrent->totalnew += isnew;
-				feedcurrent->total++;
-				if(isnew)
-					fputs("<tr class=\"n\"><td nowrap valign=\"top\">", fpitems);
-				else
-					fputs("<tr><td nowrap valign=\"top\">", fpitems);
-				fputs("<tr><td nowrap valign=\"top\">", fpitems);
-				fputs(fields[FieldTimeFormatted], fpitems);
-				fputs("</td><td nowrap valign=\"top\">", fpitems);
-				if(isnew)
-					fputs("<b><u>", fpitems);
-				fputs("<a href=\"", fpitems);
-				fputs(relfilepath, fpitems);
-				fputs("\" target=\"content\">", fpitems);
-				printhtmlencoded(fields[FieldTitle], fpitems);
-				fputs("</a>", fpitems);
-				if(isnew)
-					fputs("</u></b>", fpitems);
-				fputs("</td></tr>\n", fpitems);
+
+
+
+			if(!(f = calloc(1, sizeof(struct feed))))
+				die("can't allocate enough memory");
+
+
+
+			if(totalfeeds) { /* end previous one. */
+				fputs("</table>\n", fpitems);
+
+
+				feedcurrent->next = f;
+				feedcurrent = feedcurrent->next;
+
+
+
+			} else {
+				
+				
+				feedcurrent = f;
+
+
+				feeds = feedcurrent; /* first item. */
+				if(fields[FieldFeedName][0] == '\0') {
+					showsidebar = 0;
+				}
 			}
+			/* write menu link if new. */
+			if(!(feedcurrent->name = strdup(fields[FieldFeedName])))
+				die("can't allocate enough memory");
+			if(fields[FieldFeedName][0] != '\0') {
+				fputs("<h2 id=\"", fpitems);
+				printfeednameid(feedcurrent->name, fpitems);
+				fputs("\"><a href=\"#", fpitems);
+				printfeednameid(feedcurrent->name, fpitems);
+				fputs("\">", fpitems);
+				fputs(feedcurrent->name, fpitems);
+				fputs("</a></h2>\n", fpitems);
+			}
+			fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", fpitems);
+			totalfeeds++;
 		}
+
+
+
+		/* write content */
+		namelen = makepathname(name, sizeof(name), fields[FieldTitle]);
+		if(!namelen)
+			continue;
+		if(strlen(dirpath) + namelen + strlen("/.html") < sizeof(filepath) - 1)
+			sprintf(filepath, "%s/%s.html", dirpath, name);
+		if(strlen(reldirpath) + namelen + strlen("/.html") < sizeof(relfilepath) - 1)
+			sprintf(relfilepath, "%s/%s.html", reldirpath, name);
+		if(!fileexists(filepath) && (fpcontent = fopen(filepath, "w+b"))) {
+			fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" /></head>"
+				  "<body class=\"frame\"><div class=\"content\">"
+				  "<h2><a href=\"", fpcontent);
+			if(fields[FieldBaseSiteUrl][0] != '\0')
+				printlink(fields[FieldLink], fields[FieldBaseSiteUrl], fpcontent);
+			else
+				printlink(fields[FieldLink], fields[FieldFeedUrl], fpcontent);
+			fputs("\">", fpcontent);
+			printhtmlencoded(fields[FieldTitle], fpcontent);
+			fputs("</a></h2>", fpcontent);
+			printcontent(fields[FieldContent], fpcontent);
+			fputs("</div></body></html>", fpcontent);
+			fclose(fpcontent);
+		}
+
+
+
+
+		/* write item. */
+		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
+		/* set modified and access time of file to time of item. */
+		contenttime.actime = parsedtime;
+		contenttime.modtime = parsedtime;
+		utime(filepath, &contenttime);
+
+		isnew = (parsedtime >= comparetime);
+		totalnew += isnew;
+		feedcurrent->totalnew += isnew;
+		feedcurrent->total++;
+		if(isnew)
+			fputs("<tr class=\"n\">", fpitems);
+		else
+			fputs("<tr>", fpitems);
+		fputs("<td nowrap valign=\"top\">", fpitems);
+		fputs(fields[FieldTimeFormatted], fpitems);
+		fputs("</td><td nowrap valign=\"top\">", fpitems);
+		if(isnew)
+			fputs("<b><u>", fpitems);
+		fputs("<a href=\"", fpitems);
+		fputs(relfilepath, fpitems);
+		fputs("\" target=\"content\">", fpitems);
+		printhtmlencoded(fields[FieldTitle], fpitems);
+		fputs("</a>", fpitems);
+		if(isnew)
+			fputs("</u></b>", fpitems);
+		fputs("</td></tr>\n", fpitems);
 	}
 	if(totalfeeds) {
 		fputs("</table>\n", fpitems);
 	}
 	fputs("\n</div></body>\n</html>", fpitems); /* div items */
 	if(showsidebar) {
-		fputs("<html><head>", fpmenu);
-		fputs("<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />", fpmenu);
-		fputs("</head><body class=\"frame\"><div id=\"sidebar\">", fpmenu);
+		fputs("<html><head>"
+		      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
+		      "</head><body class=\"frame\"><div id=\"sidebar\">", fpmenu);
 		for(feedcurrent = feeds; feedcurrent; feedcurrent = feedcurrent->next) {
 			if(!feedcurrent->name || feedcurrent->name[0] == '\0')
 				continue;
@@ -241,33 +304,24 @@ main(int argc, char **argv) {
 		}
 		fputs("</div></body></html>", fpmenu);
 	}
-
-	fputs("<!DOCTYPE html><html><head>\n", fpindex);
-	fprintf(fpindex, "\t<title>Newsfeed (%lu)</title>\n", totalnew);
-	fputs("\t<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />\n", fpindex);
-	fputs("</head>\n", fpindex);
+	fputs("<!DOCTYPE html><html><head>\n\t<title>Newsfeed (", fpindex);
+	fprintf(fpindex, "%lu", totalnew);
+	fputs(")</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />\n"
+	      "</head>\n", fpindex);
 	if(showsidebar) {
 		fputs(
-			"<frameset framespacing=\"0\" cols=\"200,*\" frameborder=\"1\">"
-			"	<frame name=\"menu\" src=\"menu.html\" target=\"menu\">", fpindex);
+			"<frameset framespacing=\"0\" cols=\"200,*\" frameborder=\"1\">\n"
+			"	<frame name=\"menu\" src=\"menu.html\" target=\"menu\">\n", fpindex);
 	} else {
-		fputs(
-			"<frameset framespacing=\"0\" cols=\"*\" frameborder=\"1\">", fpindex);
+		fputs("<frameset framespacing=\"0\" cols=\"*\" frameborder=\"1\">\n", fpindex);
 	}
 	fputs(
-		"	<frameset id=\"frameset\" framespacing=\"0\" cols=\"50%,50%\" frameborder=\"1\">"
-		"		<frame name=\"items\" src=\"items.html\" target=\"items\">"
-		"		<frame name=\"content\" target=\"content\">"
-		"	</frameset>"
-		"</frameset>"
+		"	<frameset id=\"frameset\" framespacing=\"0\" cols=\"50%,50%\" frameborder=\"1\">\n"
+		"		<frame name=\"items\" src=\"items.html\" target=\"items\">\n"
+		"		<frame name=\"content\" target=\"content\">\n"
+		"	</frameset>\n"
+		"</frameset>\n"
 		"</html>", fpindex);
-
-	fclose(fpmenu);
-	fclose(fpitems);
-	fclose(fpindex);
-
-	free(line); /* free line */
-	feedsfree(feeds); /* free feeds linked-list */
 
 	return EXIT_SUCCESS;
 }

@@ -59,9 +59,9 @@ This file is evaluated as a shellscript in sfeed_update.
 You can for example override the fetchfeed() function to
 use wget, fetch or an other download program or you can
 override the merge() function to change the merge logic.
-The function feeds() is called to fetch the feeds. The
-function feed() can safely be executed as a parallel job
-in your sfeedrc config file to speedup updating.
+The function feeds() is called to fetch the feeds. By
+default the function feed() is executed as a parallel
+job to speedup updating.
 .SH FILES WRITTEN
 .TP
 .B feeds

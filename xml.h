@@ -22,9 +22,11 @@ typedef struct xmlparser {
 	void (*xmlcomment)(struct xmlparser *p, const char *comment, size_t commentlen);
 	void (*xmlcommentend)(struct xmlparser *p);
 
-	FILE *fp; /* stream to read from */
+	FILE *fp; /* file stream to read from */
+
 	/* private; internal state */
 	char tag[1024]; /* current tag */
+	int isshorttag; /* current tag is in short form ? */
 	size_t taglen;
 	char name[256]; /* current attribute name */
 	char data[BUFSIZ]; /* data buffer used for tag and attribute data */

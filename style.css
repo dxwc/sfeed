@@ -69,3 +69,14 @@ body.frame .content {
 	font-family: sans;
 	font-size: medium;
 }
+/* show only new when body has newonly class */
+body.newonly tr,
+body.newonly li {
+	display: none;
+}
+body.newonly li.n {
+	display: list-item;
+}
+body.newonly tr.n {
+	display: table-row;
+}

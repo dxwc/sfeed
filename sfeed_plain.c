@@ -2,27 +2,27 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
-#include "common.h"
-#include "compat.h"
+
+#include "util.h"
 
 void
-printutf8padded(const char *s, size_t len) {
+printutf8padded(const char *s, size_t len, FILE *fp, int pad) {
 	size_t n = 0, i;
 
 	for(i = 0; s[i] && n < len; i++) {
 		if((s[i] & 0xc0) != 0x80) /* start of character */
 			n++;
-		putchar(s[i]);
+		putc(s[i], fp);
 	}
 	for(; n < len; n++)
-		putchar(' ');
+		putc(pad, fp);
 }
 
 int
 main(void) {
 	char *line = NULL, *fields[FieldLast];
 	time_t parsedtime, comparetime;
-	int isnew;
+	unsigned int isnew;
 	size_t size = 0;
 
 	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
@@ -34,7 +34,7 @@ main(void) {
 			printf("%-15.15s  ", fields[FieldFeedName]);
 		printf("%-30.30s", fields[FieldTimeFormatted]);
 		fputs("  ", stdout);
-		printutf8padded(fields[FieldTitle], 70);
+		printutf8padded(fields[FieldTitle], 70, stdout, ' ');
 		fputs("  ", stdout);
 		if(fields[FieldBaseSiteUrl][0] != '\0')
 			printlink(fields[FieldLink], fields[FieldBaseSiteUrl], stdout);

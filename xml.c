@@ -2,8 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "xml.h"
 
+#include "xml.h"
 
 void
 xmlparser_init(XMLParser *x) {
@@ -22,76 +22,19 @@ xmlparser_getnext(XMLParser *x) {
 }
 
 __inline__ void
-xmlparser_parseattrvalue(XMLParser *x, const char *name, size_t namelen, int end) {
-	size_t valuelen = 0;
-	int c;
-
-	if(x->xmlattrstart)
-		x->xmlattrstart(x, x->tag, x->taglen, name, namelen);
-	for(valuelen = 0; (c = xmlparser_getnext(x)) != EOF;) {
-		if(c == '&' && x->xmlattrentity) { /* entities */
-			x->data[valuelen] = '\0';
-			/* call data function with data before entity if there is data */
-			if(valuelen && x->xmlattr)
-				x->xmlattr(x, x->tag, x->taglen, name, namelen, x->data, valuelen);
-			x->data[0] = c;
-			valuelen = 1;
-			while((c = xmlparser_getnext(x)) != EOF) {
-				if(c == end)
-					goto parseattrvalueend;
-				if(valuelen < sizeof(x->data) - 1)
-					x->data[valuelen++] = c;
-				else { /* TODO: entity too long? this should be very strange. */
-					x->data[valuelen] = '\0';
-					if(x->xmlattr)
-						x->xmlattr(x, x->tag, x->taglen, name, namelen, x->data, valuelen);
-					valuelen = 0; /* TODO: incorrect ? ';' is read in c below? */
-/*							x->data[0] = '\0'; */
-					break;
-				}
-				if(c == ';') {
-					x->data[valuelen] = '\0';
-					x->xmlattrentity(x, x->tag, x->taglen, name, namelen, x->data, valuelen);
-					valuelen = 0; /* TODO: incorrect ? ';' is read in c below? */
-					break;
-				}
-			}
-		} else if(c == end) { /* TODO: ugly, remove goto?, simplify? duplicate code. */
-parseattrvalueend:
-			x->data[valuelen] = '\0';
-			if(x->xmlattr)
-				x->xmlattr(x, x->tag, x->taglen, name, namelen, x->data, valuelen);
-			if(x->xmlattrend)
-				x->xmlattrend(x, x->tag, x->taglen, name, namelen);
-			return;
-		} else {
-			if(valuelen < sizeof(x->data) - 1) {
-				x->data[valuelen++] = c;
-			} else {
-				x->data[valuelen] = '\0';
-				if(x->xmlattr)
-					x->xmlattr(x, x->tag, x->taglen, name, namelen, x->data, valuelen);
-				x->data[0] = c;
-				valuelen = 1;
-			}
-		}
-	}
-}
-
-__inline__ void
-xmlparser_parseattrs(XMLParser *x, int *isshorttag) {
-	size_t namelen = 0;
-	int c, endname = 0;
+xmlparser_parseattrs(XMLParser *x) {
+	size_t namelen = 0, valuelen;
+	int c, endsep, endname = 0;
 
 	while((c = xmlparser_getnext(x)) != EOF) {
-		if(isspace(c)) {
-			if(namelen) /* Do nothing */
+		if(isspace(c)) { /* TODO: simplify endname ? */
+			if(namelen) /* do nothing */
 				endname = 1;
 			else
 				continue;
 		}
-		if(c == '?' && isspace(c)) { /* Do nothing */
-		} else if(c == '=') {
+		if(c == '?'); /* ignore */
+		else if(c == '=') {
 			x->name[namelen] = '\0';
 		} else if(namelen && ((endname && isalpha(c)) || (c == '>' || c == '/'))) {
 			/* attribute without value */
@@ -107,7 +50,56 @@ xmlparser_parseattrs(XMLParser *x, int *isshorttag) {
 			namelen = 1;
 		} else if(namelen && (c == '\'' || c == '"')) {
 			/* attribute with value */
-			xmlparser_parseattrvalue(x, x->name, namelen, c);
+			endsep = c; /* c is end separator */
+			if(x->xmlattrstart)
+				x->xmlattrstart(x, x->tag, x->taglen, x->name, namelen);
+			for(valuelen = 0; (c = xmlparser_getnext(x)) != EOF;) {
+				if(c == '&' && x->xmlattrentity) { /* entities */
+					x->data[valuelen] = '\0';
+					/* call data function with data before entity if there is data */
+					if(valuelen && x->xmlattr)
+						x->xmlattr(x, x->tag, x->taglen, x->name, namelen, x->data, valuelen);
+					x->data[0] = c;
+					valuelen = 1;
+					while((c = xmlparser_getnext(x)) != EOF) {
+						if(c == endsep)
+							break;
+						if(valuelen < sizeof(x->data) - 1)
+							x->data[valuelen++] = c;
+						else { /* TODO: entity too long? this should be very strange. */
+							x->data[valuelen] = '\0';
+							if(x->xmlattr)
+								x->xmlattr(x, x->tag, x->taglen, x->name, namelen, x->data, valuelen);
+							valuelen = 0;
+							break;
+						}
+						if(c == ';') {
+							x->data[valuelen] = '\0';
+							x->xmlattrentity(x, x->tag, x->taglen, x->name, namelen, x->data, valuelen);
+							valuelen = 0;
+							break;
+						}
+					}
+				} else if(c != endsep) {
+					if(valuelen < sizeof(x->data) - 1) {
+						x->data[valuelen++] = c;
+					} else {
+						x->data[valuelen] = '\0';
+						if(x->xmlattr)
+							x->xmlattr(x, x->tag, x->taglen, x->name, namelen, x->data, valuelen);
+						x->data[0] = c;
+						valuelen = 1;
+					}
+				}
+				if(c == endsep) {
+					x->data[valuelen] = '\0';
+					if(x->xmlattr)
+						x->xmlattr(x, x->tag, x->taglen, x->name, namelen, x->data, valuelen);
+					if(x->xmlattrend)
+						x->xmlattrend(x, x->tag, x->taglen, x->name, namelen);
+					break;
+				}
+			}
 			namelen = 0;
 			endname = 0;
 		} else if(namelen < sizeof(x->name) - 1)
@@ -115,7 +107,7 @@ xmlparser_parseattrs(XMLParser *x, int *isshorttag) {
 		if(c == '>') {
 			break;
 		} else if(c == '/') {
-			*isshorttag = 1;
+			x->isshorttag = 1;
 			namelen = 0;
 			x->name[0] = '\0';
 		}
@@ -133,15 +125,12 @@ xmlparser_parsecomment(XMLParser *x) {
 		if(c == '-' && i < 2)
 			i++;
 		else if(c == '>') {
-			if(i == 2) { /* (!memcmp(cd, "-->", strlen("-->"))) { */
+			if(i == 2) { /* -- */
 				if(datalen >= 2) {
 					datalen -= 2;
 					x->data[datalen] = '\0';
 					if(x->xmlcomment)
 						x->xmlcomment(x, x->data, datalen);
-/*				} else {
-					datalen = 0;
-					x->data[datalen] = '\0';*/
 				}
 				if(x->xmlcommentend)
 					x->xmlcommentend(x);
@@ -149,9 +138,9 @@ xmlparser_parsecomment(XMLParser *x) {
 			}
 			i = 0;
 		}
-		if(datalen < sizeof(x->data) - 1) { /* || (c == '-' && d >= sizeof(x->data) - 4)) { */ /* TODO: what if the end has --, and its cut on the boundary, test this. */
+		if(datalen < sizeof(x->data) - 1) /* || (c == '-' && d >= sizeof(x->data) - 4)) { */ /* TODO: what if the end has --, and its cut on the boundary, test this. */
 			x->data[datalen++] = c;
-		} else {
+		else {
 			x->data[datalen] = '\0';
 			if(x->xmlcomment)
 				x->xmlcomment(x, x->data, datalen);
@@ -161,6 +150,13 @@ xmlparser_parsecomment(XMLParser *x) {
 	}
 }
 
+/* TODO:
+ * <test><![CDATA[1234567dddd8]]]>
+ *
+ * with x->data of sizeof(15) gives 2 ] at end of cdata, should be 1
+ * test comment function too for similar bug?
+ *
+ */
 __inline__ void
 xmlparser_parsecdata(XMLParser *x) {
 	size_t datalen = 0, i = 0;
@@ -172,15 +168,12 @@ xmlparser_parsecdata(XMLParser *x) {
 		if(c == ']' && i < 2) {
 			i++;
 		} else if(c == '>') {
-			if(i == 2) { /* (!memcmp(cd, "]]", strlen("]]"))) { */
+			if(i == 2) { /* ]] */
 				if(datalen >= 2) {
 					datalen -= 2;
 					x->data[datalen] = '\0';
-					if(x->xmlcdata)
+					if(x->xmlcdata && datalen)
 						x->xmlcdata(x, x->data, datalen);
-/*				} else {
-					datalen = 0;
-					x->data[datalen] = '\0';*/
 				}
 				if(x->xmlcdataend)
 					x->xmlcdataend(x);
@@ -200,130 +193,122 @@ xmlparser_parsecdata(XMLParser *x) {
 	}
 }
 
-__inline__ void
-xmlparser_parsetag(XMLParser *x) {
-	size_t datalen, taglen;
-	int c, s, isshorttag = 0;
-
-	x->tag[0] = '\0';
-	x->taglen = 0;
-	while((c = xmlparser_getnext(x)) != EOF && isspace(c));
-	if(c == '!') {
-		for(datalen = 0; (c = xmlparser_getnext(x)) != EOF;) {
-			if(datalen <= strlen("[CDATA[")) /* if(d < sizeof(x->data)) */
-				x->data[datalen++] = c; /* TODO: prevent overflow */
-			if(c == '>')
-				break;
-			else if(c == '-' && datalen == strlen("--") &&
-			        (x->data[0] == '-')) { /* comment */ /* TODO: optimize this bitch */
-				xmlparser_parsecomment(x);
-				break;
-			} else if(c == '[' && datalen == strlen("[CDATA[") &&
-				x->data[1] == 'C' && x->data[2] == 'D' &&
-				x->data[3] == 'A' && x->data[4] == 'T' &&
-				x->data[5] == 'A' && x->data[6] == '[') { /* cdata */
-				xmlparser_parsecdata(x);
-				break;
-			}
-		}
-	} else if(c == '?') {
-		while((c = xmlparser_getnext(x)) != EOF) {
-			if(c == '"' || c == '\'')
-				for(s = c; (c = xmlparser_getnext(x)) != EOF && c != s;);
-			else if(c == '>')
-				break;
-		}
-	/* TODO: find out why checking isalpha(c) gives "not enough memory"
-	 * also check if maybe when there is << or <> it might go into an infinite loop (unsure) */
-	} else if(c != EOF && c != '>') { /* TODO: optimize and put above the other conditions ? */
-		x->tag[0] = c;
-		taglen = 1;
-		while((c = xmlparser_getnext(x)) != EOF) {
-			if(c == '/')
-				isshorttag = 1; /* short tag */
-			else if(c == '>' || isspace(c)) {
-				x->tag[taglen] = '\0';
-				if(x->tag[0] == '/') { /* end tag, starts with </ */
-					x->taglen = --taglen; /* len -1 because of / */
-					if(x->xmltagend)
-						x->xmltagend(x, &(x->tag)[1], x->taglen, 0);
-				} else {
-					x->taglen = taglen;
-					if(x->xmltagstart)
-						x->xmltagstart(x, x->tag, x->taglen); /* start tag */
-					if(isspace(c))
-						xmlparser_parseattrs(x, &isshorttag);
-					if(x->xmltagstartparsed)
-						x->xmltagstartparsed(x, x->tag, x->taglen, isshorttag);
-				}
-				if(isshorttag && x->xmltagend)
-					x->xmltagend(x, x->tag, x->taglen, 1);
-				break;
-			} else if(taglen < sizeof(x->tag) - 1)
-				x->tag[taglen++] = c;
-		}
-	}
-}
-
-void
-xmlparser_parsedata(XMLParser *x, int c) { /* TODO: remove int c, ugly */
-	size_t datalen = 0;
-
-	if(x->xmldatastart)
-		x->xmldatastart(x);
-	do {
-		if(c == '&' && x->xmldataentity) { /* TODO: test this, entity handler */
-			x->data[datalen] = '\0';
-			x->xmldata(x, x->data, datalen);
-			x->data[0] = c;
-			datalen = 1;
-			while((c = xmlparser_getnext(x)) != EOF) {
-				if(c == '<')
-					goto parsedataend;
-				if(datalen < sizeof(x->data) - 1)
-					x->data[datalen++] = c;
-				if(isspace(c))
-					break;
-				else if(c == ';') {
-					x->data[datalen] = '\0';
-					x->xmldataentity(x, x->data, datalen);
-					datalen = 0;
-					break;
-				}
-			}
-		} else if(c == '<') { /* TODO: ugly, remove goto ? simplify? duplicate code. */
-parsedataend:
-			x->data[datalen] = '\0';
-			if(x->xmldata)
-				x->xmldata(x, x->data, datalen);
-			if(x->xmldataend)
-				x->xmldataend(x);
-			break;
-		} else {
-			if(datalen < sizeof(x->data) - 1) {
-				x->data[datalen++] = c;
-			} else {
-				x->data[datalen] = '\0';
-				if(x->xmldata)
-					x->xmldata(x, x->data, datalen);
-				x->data[0] = c;
-				datalen = 1;
-			}
-		}
-	} while((c = xmlparser_getnext(x)) != EOF);
-}
-
 void
 xmlparser_parse(XMLParser *x) {
-	int c;
+	int c, ispi;
+	size_t datalen, tagdatalen, taglen;
 
-	while((c = xmlparser_getnext(x)) != EOF) {
-		if(c == '<') /* tag */
-			xmlparser_parsetag(x);
-		else {
-			xmlparser_parsedata(x, c);
-			xmlparser_parsetag(x);
+	while((c = xmlparser_getnext(x)) != EOF && c != '<'); /* skip until < */
+
+	while(c != EOF) {
+		if(c == '<') { /* parse tag */
+			if((c = xmlparser_getnext(x)) == EOF)
+				return;
+			x->tag[0] = '\0';
+			x->taglen = 0;
+			if(c == '!') { /* cdata and comments */
+				for(tagdatalen = 0; (c = xmlparser_getnext(x)) != EOF;) {
+					if(tagdatalen <= strlen("[CDATA[")) /* if(d < sizeof(x->data)) */
+						x->data[tagdatalen++] = c; /* TODO: prevent overflow */
+					if(c == '>')
+						break;
+					else if(c == '-' && tagdatalen == strlen("--") &&
+							(x->data[0] == '-')) { /* comment */
+						xmlparser_parsecomment(x);
+						break;
+					} else if(c == '[') {
+						if(tagdatalen == strlen("[CDATA[") &&
+							x->data[1] == 'C' && x->data[2] == 'D' &&
+							x->data[3] == 'A' && x->data[4] == 'T' &&
+							x->data[5] == 'A' && x->data[6] == '[') { /* cdata */
+							xmlparser_parsecdata(x);
+							break;
+						} else {
+							/* markup declaration section */
+							while((c = xmlparser_getnext(x)) != EOF && c != ']');
+						}
+					}
+				}
+			} else { /* normal tag (open, short open, close), processing instruction. */
+				if(isspace(c))
+					while((c = xmlparser_getnext(x)) != EOF && isspace(c));
+				if(c == EOF)
+					return;
+				x->tag[0] = c;
+				ispi = (c == '?') ? 1 : 0;
+				x->isshorttag = ispi;
+				taglen = 1;
+				while((c = xmlparser_getnext(x)) != EOF) {
+					if(c == '/') /* TODO: simplify short tag? */
+						x->isshorttag = 1; /* short tag */
+					else if(c == '>' || isspace(c)) {
+						x->tag[taglen] = '\0';
+						if(x->tag[0] == '/') { /* end tag, starts with </ */
+							x->taglen = --taglen; /* len -1 because of / */
+							if(taglen && x->xmltagend)
+								x->xmltagend(x, &(x->tag)[1], x->taglen, 0);
+						} else {
+							x->taglen = taglen;
+							if(x->xmltagstart)
+								x->xmltagstart(x, x->tag, x->taglen); /* start tag */
+							if(isspace(c))
+								xmlparser_parseattrs(x);
+							if(x->xmltagstartparsed)
+								x->xmltagstartparsed(x, x->tag, x->taglen, x->isshorttag);
+						}
+						if((x->isshorttag || ispi) && x->xmltagend) /* call tagend for shortform or processing instruction */
+							x->xmltagend(x, x->tag, x->taglen, 1);
+						break;
+					} else if(taglen < sizeof(x->tag) - 1)
+						x->tag[taglen++] = c;
+				}
+			}
+		} else { /* parse data */
+			datalen = 0;
+			if(x->xmldatastart)
+				x->xmldatastart(x);
+			while((c = xmlparser_getnext(x)) != EOF) {
+				if(c == '&' && x->xmldataentity) {
+					if(datalen) {
+						x->data[datalen] = '\0';
+						x->xmldata(x, x->data, datalen);
+					}
+					x->data[0] = c;
+					datalen = 1;
+					while((c = xmlparser_getnext(x)) != EOF) {
+						if(c == '<')
+							break;
+						if(datalen < sizeof(x->data) - 1)
+							x->data[datalen++] = c;
+						if(isspace(c))
+							break;
+						else if(c == ';') {
+							x->data[datalen] = '\0';
+							x->xmldataentity(x, x->data, datalen);
+							datalen = 0;
+							break;
+						}
+					}
+				} else if(c != '<') {
+					if(datalen < sizeof(x->data) - 1) {
+						x->data[datalen++] = c;
+					} else {
+						x->data[datalen] = '\0';
+						if(x->xmldata)
+							x->xmldata(x, x->data, datalen);
+						x->data[0] = c;
+						datalen = 1;
+					}
+				}
+				if(c == '<') {
+					x->data[datalen] = '\0';
+					if(x->xmldata && datalen)
+						x->xmldata(x, x->data, datalen);
+					if(x->xmldataend)
+						x->xmldataend(x);
+					break;
+				}
+			}
 		}
 	}
-	return;
 }

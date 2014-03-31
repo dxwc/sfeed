@@ -3,23 +3,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+
 #include "xml.h"
-#include "compat.h"
 
-XMLParser parser; /* XML parser state */
-char feedurl[2048], feedname[2048], basesiteurl[2048];
+static XMLParser parser; /* XML parser state */
+static char feedurl[2048], feedname[2048], basesiteurl[2048];
 
-int
+static int
 istag(const char *s1, const char *s2) {
-	return !xstrcasecmp(s1, s2);
+	return !strcasecmp(s1, s2);
 }
 
-int
+static int
 isattr(const char *s1, const char *s2) {
-	return !xstrcasecmp(s1, s2);
+	return !strcasecmp(s1, s2);
 }
 
-void
+static void
 xml_handler_start_element(XMLParser *p, const char *tag, size_t taglen) {
 	if(istag(tag, "outline")) {
 		feedurl[0] = '\0';
@@ -28,7 +28,7 @@ xml_handler_start_element(XMLParser *p, const char *tag, size_t taglen) {
 	}
 }
 
-void
+static void
 xml_handler_end_element(XMLParser *p, const char *tag, size_t taglen,
 	int isshort) {
 	if(istag(tag, "outline")) {
@@ -39,7 +39,7 @@ xml_handler_end_element(XMLParser *p, const char *tag, size_t taglen,
 	}
 }
 
-void
+static void
 xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 	const char *name, size_t namelen, const char *value, size_t valuelen) {
 	if(istag(tag, "outline")) {

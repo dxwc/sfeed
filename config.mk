@@ -1,5 +1,5 @@
 # sfeed version
-VERSION = 0.8
+VERSION = 0.9
 
 # customize below to fit your system
 
@@ -12,12 +12,12 @@ INCS =
 LIBS = -lc
 
 # debug
-#CFLAGS = -fstack-protector-all -O0 -g -ansi -Wall -Wextra -pedantic -DVERSION=\"${VERSION}\"
+CFLAGS = -fstack-protector-all -O0 -g -ansi -Wall -Wextra -pedantic -DVERSION=\"${VERSION}\"
 CFLAGS = -O0 -g -ansi -Wall -Wextra -pedantic -DVERSION=\"${VERSION}\"
 LDFLAGS = ${LIBS}
 
 # optimized
-#CFLAGS = -O2 -ansi -DVERSION=\"${VERSION}\" -DVERSION=\"${VERSION}\"
+#CFLAGS = -O2 -ansi -DVERSION=\"${VERSION}\"
 #LDFLAGS = -s ${LIBS}
 
 # Solaris

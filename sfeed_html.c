@@ -3,12 +3,21 @@
 #include <stdlib.h>
 #include <time.h>
 #include <ctype.h>
-#include "common.h"
-#include "compat.h"
+
+#include "util.h"
 
 static int showsidebar = 1; /* show sidebar ? */
 
-void /* print error message to stderr */
+static struct feed *feeds = NULL; /* start of feeds linked-list. */
+static char *line = NULL;
+
+static void
+cleanup(void) {
+	free(line); /* free line */
+	feedsfree(feeds); /* free feeds linked-list */
+}
+
+static void /* print error message to stderr */
 die(const char *s) {
 	fputs("sfeed_html: ", stderr);
 	fputs(s, stderr);
@@ -18,13 +27,14 @@ die(const char *s) {
 
 int
 main(void) {
-	char *line = NULL, *fields[FieldLast];
+	char *fields[FieldLast];
 	unsigned long totalfeeds = 0, totalnew = 0;
-	int islink, isnew;
-	struct feed *feedcurrent = NULL, *feeds = NULL; /* start of feeds linked-list. */
+	unsigned int islink, isnew;
+	struct feed *f, *feedcurrent = NULL;
 	time_t parsedtime, comparetime;
 	size_t size = 0;
 
+	atexit(cleanup);
 	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
 	fputs(
 		"<!DOCTYPE HTML>\n"
@@ -36,20 +46,25 @@ main(void) {
 		"	<body class=\"noframe\">\n",
 	stdout);
 
+	if(!(feedcurrent = calloc(1, sizeof(struct feed))))
+		die("can't allocate enough memory");
+	feeds = feedcurrent;
+
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
 		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
 		isnew = (parsedtime >= comparetime);
 		islink = (fields[FieldLink][0] != '\0');
 		/* first of feed section or new feed section. */
-		if(!totalfeeds || strcmp(feedcurrent->name, fields[FieldFeedName])) {
+		if(!totalfeeds || (feedcurrent && strcmp(feedcurrent->name, fields[FieldFeedName]))) { /* TODO: allocate feedcurrent before here, feedcurrent can be NULL */
+			if(!(f = calloc(1, sizeof(struct feed))))
+				die("can't allocate enough memory");
+			/*f->next = NULL;*/
 			if(totalfeeds) { /* end previous one. */
 				fputs("</table>\n", stdout);
-				if(!(feedcurrent->next = calloc(1, sizeof(struct feed))))
-					die("can't allocate enough memory");
-				feedcurrent = feedcurrent->next;
+				feedcurrent->next = f;
+				feedcurrent = f;
 			} else {
-				if(!(feedcurrent = calloc(1, sizeof(struct feed))))
-					die("can't allocate enough memory");
+				feedcurrent = f;
 				feeds = feedcurrent; /* first item. */
 				if(fields[FieldFeedName][0] == '\0' || !showsidebar) {
 					/* set nosidebar class on div for styling */
@@ -58,8 +73,17 @@ main(void) {
 				} else
 					fputs("\t\t<div id=\"items\">\n", stdout);
 			}
-			if(!(feedcurrent->name = xstrdup(fields[FieldFeedName])))
+
+			/* TODO: memcpy and make feedcurrent->name static? */
+			if(!(feedcurrent->name = strdup(fields[FieldFeedName])))
 				die("can't allocate enough memory");
+
+			
+			/*
+			feedcurrent->totalnew = 0;
+			feedcurrent->total = 0;
+			feedcurrent->next = NULL;*/
+
 			if(fields[FieldFeedName][0] != '\0') {
 				fputs("<h2 id=\"", stdout);
 				printfeednameid(feedcurrent->name, stdout);
@@ -75,14 +99,13 @@ main(void) {
 		totalnew += isnew;
 		feedcurrent->totalnew += isnew;
 		feedcurrent->total++;
-
 		if(isnew)
-			fputs("<tr class=\"n\"><td nowrap valign=\"top\">", stdout);
+			fputs("<tr class=\"n\">", stdout);
 		else
-			fputs("<tr><td nowrap valign=\"top\">", stdout);
+			fputs("<tr>", stdout);
+		fputs("<td nowrap valign=\"top\">", stdout);
 		fputs(fields[FieldTimeFormatted], stdout);
 		fputs("</td><td nowrap valign=\"top\">", stdout);
-
 		if(isnew)
 			fputs("<b><u>", stdout);
 		if(islink) {
@@ -100,10 +123,8 @@ main(void) {
 			fputs("</u></b>", stdout);
 		fputs("</td></tr>\n", stdout);
 	}
-	if(totalfeeds) {
-		fputs("</table>\n", stdout);
-		fputs("\t\t</div>\n", stdout); /* div items */
-	}
+	if(totalfeeds)
+		fputs("</table>\n\t\t</div>\n", stdout); /* div items */
 	if(showsidebar) {
 		fputs("\t<div id=\"sidebar\">\n\t\t<ul>\n", stdout);
 		for(feedcurrent = feeds; feedcurrent; feedcurrent = feedcurrent->next) {
@@ -125,15 +146,22 @@ main(void) {
 		}
 		fputs("\t\t</ul>\n\t</div>\n", stdout);
 	}
+	/* toggle showing only new with "n" */
+	fputs("<script type=\"text/javascript\">"
+	      "var b=document.body;window.onkeypress=function(e){"
+	      "switch(String.fromCharCode(e.which)){"
+	      "case 'n':var n='newonly';b.className=/*toggle new only*/"
+	      "b.className.indexOf(n)==-1?b.className+' '+n:b.className.replace(n,'');break;"
+	      "case 'm':case 's':b.querySelector('#sidebar a').focus();break; /*focus menu*/"
+	      "case 'i':b.querySelector('#items').focus();break;/*focus items*/"
+	      "}};"
+	      "</script>", stdout);
 	fputs(
 		"	</body>\n"
 		"	<title>Newsfeed (",
 	stdout);
 	fprintf(stdout, "%lu", totalnew);
 	fputs(")</title>\n</html>", stdout);
-
-	free(line); /* free line */
-	feedsfree(feeds); /* free feeds linked-list */
 
 	return EXIT_SUCCESS;
 }

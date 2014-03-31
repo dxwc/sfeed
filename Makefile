@@ -3,10 +3,12 @@
 include config.mk
 
 NAME = sfeed
-SRC = sfeed.c sfeed_plain.c sfeed_html.c sfeed_opml_import.c xml.c sfeed_frames.c common.c compat.c
+SRC = sfeed.c sfeed_plain.c sfeed_html.c sfeed_opml_import.c sfeed_frames.c \
+	sfeed_xmlenc.c sfeed_web.c xml.c
 OBJ = ${SRC:.c=.o}
 
-all: options sfeed sfeed_plain sfeed_html sfeed_opml_import sfeed_frames
+all: options sfeed sfeed_plain sfeed_html sfeed_opml_import sfeed_frames \
+	sfeed_xmlenc sfeed_web
 
 options:
 	@echo ${NAME} build options:
@@ -20,37 +22,46 @@ options:
 
 ${OBJ}: config.mk
 
-sfeed: sfeed.o xml.o compat.o
+sfeed: sfeed.o xml.o util.o
 	@echo CC -o $@
-	@${CC} -o $@ sfeed.o xml.o compat.o ${LDFLAGS}
+	@${CC} -o $@ sfeed.o xml.o util.o ${LDFLAGS}
 
-sfeed_opml_import: sfeed_opml_import.o xml.o compat.o
+sfeed_opml_import: sfeed_opml_import.o xml.o
 	@echo CC -o $@
-	@${CC} -o $@ sfeed_opml_import.o xml.o compat.o ${LDFLAGS}
+	@${CC} -o $@ sfeed_opml_import.o xml.o ${LDFLAGS}
 
-sfeed_plain: sfeed_plain.o common.o compat.o
+sfeed_plain: sfeed_plain.o util.o
 	@echo CC -o $@
-	@${CC} -o $@ sfeed_plain.o common.o compat.o ${LDFLAGS}
+	@${CC} -o $@ sfeed_plain.o util.o ${LDFLAGS}
 
-sfeed_html: sfeed_html.o common.o compat.o
+sfeed_html: sfeed_html.o util.o
 	@echo CC -o $@
-	@${CC} -o $@ sfeed_html.o common.o compat.o ${LDFLAGS}
+	@${CC} -o $@ sfeed_html.o util.o ${LDFLAGS}
 
-sfeed_frames: sfeed_frames.o common.o compat.o
+sfeed_frames: sfeed_frames.o util.o
 	@echo CC -o $@
-	@${CC} -o $@ sfeed_frames.o common.o compat.o ${LDFLAGS}
+	@${CC} -o $@ sfeed_frames.o util.o ${LDFLAGS}
+
+sfeed_xmlenc: sfeed_xmlenc.o xml.o
+	@echo CC -o $@
+	@${CC} -o $@ sfeed_xmlenc.o xml.o ${LDFLAGS}
+
+sfeed_web: sfeed_web.o xml.o util.o
+	@echo CC -o $@
+	@${CC} -o $@ sfeed_web.o xml.o util.o ${LDFLAGS}
 
 clean:
 	@echo cleaning
-	@rm -f sfeed sfeed_plain sfeed_html sfeed_frames sfeed_opml_import ${OBJ} ${NAME}-${VERSION}.tar.gz
+	@rm -f sfeed sfeed_plain sfeed_html sfeed_frames sfeed_opml_import \
+		${OBJ} ${NAME}-${VERSION}.tar.gz
 
 dist: clean
 	@echo creating dist tarball
 	@mkdir -p ${NAME}-${VERSION}
 	@cp -R CHANGELOG LICENSE Makefile README config.mk \
-		TODO CREDITS sfeedrc.example style.css ${SRC} common.c sfeed_update sfeed_opml_export \
+		TODO CREDITS sfeedrc.example style.css ${SRC} sfeed_update  \
 		sfeed.1 sfeed_update.1 sfeed_plain.1 sfeed_html.1 sfeed_opml_import.1 \
-		sfeed_frames.c sfeed_frames.1 sfeed_opml_export.1 ${NAME}-${VERSION}
+		sfeed_frames.1 sfeed_opml_export sfeed_opml_export.1 ${NAME}-${VERSION}
 	@tar -cf ${NAME}-${VERSION}.tar ${NAME}-${VERSION}
 	@gzip ${NAME}-${VERSION}.tar
 	@rm -rf ${NAME}-${VERSION}
@@ -58,13 +69,14 @@ dist: clean
 install: all
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
-	@cp -f sfeed sfeed_update sfeed_plain sfeed_html sfeed_frames \
+	@cp -f sfeed sfeed_update sfeed_plain sfeed_html sfeed_frames sfeed_xmlenc \
 		 sfeed_opml_import sfeed_opml_export ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/sfeed \
 		${DESTDIR}${PREFIX}/bin/sfeed_update \
 		${DESTDIR}${PREFIX}/bin/sfeed_plain \
 		${DESTDIR}${PREFIX}/bin/sfeed_html \
 		${DESTDIR}${PREFIX}/bin/sfeed_frames \
+		${DESTDIR}${PREFIX}/bin/sfeed_xmlenc \
 		${DESTDIR}${PREFIX}/bin/sfeed_opml_import \
 		${DESTDIR}${PREFIX}/bin/sfeed_opml_export
 	@mkdir -p ${DESTDIR}${PREFIX}/share/sfeed
@@ -73,12 +85,18 @@ install: all
 	@echo installing manual pages to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@sed "s/VERSION/${VERSION}/g" < sfeed.1 > ${DESTDIR}${MANPREFIX}/man1/sfeed.1
-	@sed "s/VERSION/${VERSION}/g" < sfeed_update.1 > ${DESTDIR}${MANPREFIX}/man1/sfeed_update.1
-	@sed "s/VERSION/${VERSION}/g" < sfeed_plain.1 > ${DESTDIR}${MANPREFIX}/man1/sfeed_plain.1
-	@sed "s/VERSION/${VERSION}/g" < sfeed_html.1 > ${DESTDIR}${MANPREFIX}/man1/sfeed_html.1
-	@sed "s/VERSION/${VERSION}/g" < sfeed_frames.1 > ${DESTDIR}${MANPREFIX}/man1/sfeed_frames.1
-	@sed "s/VERSION/${VERSION}/g" < sfeed_opml_import.1 > ${DESTDIR}${MANPREFIX}/man1/sfeed_opml_import.1
-	@sed "s/VERSION/${VERSION}/g" < sfeed_opml_export.1 > ${DESTDIR}${MANPREFIX}/man1/sfeed_opml_export.1
+	@sed "s/VERSION/${VERSION}/g" < sfeed_update.1 > \
+		${DESTDIR}${MANPREFIX}/man1/sfeed_update.1
+	@sed "s/VERSION/${VERSION}/g" < sfeed_plain.1 > \
+		${DESTDIR}${MANPREFIX}/man1/sfeed_plain.1
+	@sed "s/VERSION/${VERSION}/g" < sfeed_html.1 > \
+		${DESTDIR}${MANPREFIX}/man1/sfeed_html.1
+	@sed "s/VERSION/${VERSION}/g" < sfeed_frames.1 > \
+		${DESTDIR}${MANPREFIX}/man1/sfeed_frames.1
+	@sed "s/VERSION/${VERSION}/g" < sfeed_opml_import.1 > \
+		${DESTDIR}${MANPREFIX}/man1/sfeed_opml_import.1
+	@sed "s/VERSION/${VERSION}/g" < sfeed_opml_export.1 > \
+		${DESTDIR}${MANPREFIX}/man1/sfeed_opml_export.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/sfeed.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_update.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_plain.1 \
@@ -94,6 +112,7 @@ uninstall:
 		${DESTDIR}${PREFIX}/bin/sfeed_plain \
 		${DESTDIR}${PREFIX}/bin/sfeed_html \
 		${DESTDIR}${PREFIX}/bin/sfeed_frames \
+		${DESTDIR}${PREFIX}/bin/sfeed_xmlenc \
 		${DESTDIR}${PREFIX}/bin/sfeed_opml_import \
 		${DESTDIR}${PREFIX}/bin/sfeed_opml_export \
 		${DESTDIR}${PREFIX}/share/${NAME}/sfeedrc.example \

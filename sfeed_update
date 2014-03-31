@@ -1,6 +1,6 @@
 #!/bin/sh
 # update feeds, merge with old feeds.
-# NOTE: assumes "sfeed_*" files are in $PATH.
+# NOTE: assumes "sfeed_*" executables are in $PATH.
 
 # defaults
 sfeedpath="$HOME/.sfeed"
@@ -42,39 +42,40 @@ merge() {
 }
 
 # fetch a feed via HTTP/HTTPS etc.
-# fetchfeed(url, name)
+# fetchfeed(url, name, lastupdated)
 fetchfeed() {
-	if (curl -f -s -S -L --max-time 30 -z "$lastupdated" "$1"); then
-		printf "%s\n" "[`date`] Fetching $2 [$1] ... done" >&2
+	if curl -f -s -S -L --max-time 30 -z "$3" "$1"; then
+		printf "[  OK] %s %s\n" "[`date '+%Y-%m-%d %H:%M:%S %Z'`]" "$2" >&2
 	else
-		printf "%s\n" "[`date`] Fetching $2 [$1] ... fail" >&2
+		printf "[FAIL] %s %s\n" "[`date '+%Y-%m-%d %H:%M:%S %Z'`]" "$2" >&2
 	fi
 }
 
-# add field after line, output to stdout.
-# addfield(field)
-addfield() {
-	# NOTE: IFS is set and restored to prevent stripping whitespace.
-	OLDIFS="$IFS"
-	IFS="
-"
-	while read -r line; do
-		printf "%s	%s\n" "${line}" "$1"
-	done
-	IFS="$OLDIFS"
+# convert encoding from one encoding to another.
+# convertencoding(from, to)
+convertencoding() {
+	if [ ! "$1" = "" ] && [ ! "$2" = "" ] && [ ! "$1" = "$2" ]; then # from != to
+		iconv -cs -f "$1" -t "$2" 2> /dev/null
+	else
+		cat # no convert, just output
+	fi
 }
 
 # fetch and parse feed.
-# feed(name, feedurl, basesiteurl, [encoding])
+# feed(name, feedurl, [basesiteurl], [encoding])
 feed() {
-	tmpfile=$(mktemp -p "$TMPDIR")
-	(if [ "$4" = "" ]; then
-		# don't use iconv if encoding not set in config.
-		fetchfeed "$2" "$1"
-	else
-		# use iconv to convert encoding to UTF-8.
-		fetchfeed "$2" "$1" | iconv -cs -f "$4" -t "utf-8"
-	fi) | sfeed | addfield "$1	$2	$3" > "$tmpfile"
+	(tmpfeedfile=$(mktemp -p "$TMPDIR")
+	tmpencfile=""
+	encoding="$4"
+	if [ ! "$encoding" = "" ]; then
+		fetchfeed "$2" "$1" "$lastupdated" | convertencoding "$encoding" "utf-8"
+	else # detect encoding.
+		tmpencfile=$(mktemp -p "$TMPDIR")
+		fetchfeed "$2" "$1" "$lastupdated" > "$tmpencfile"
+		detectenc=$(sfeed_xmlenc < "$tmpencfile")
+		convertencoding "$detectenc" "utf-8" < "$tmpencfile"
+		rm -f "$tmpencfile"
+	fi | sfeed "$1	$2	$3" > "$tmpfeedfile") &
 }
 
 terminated() {
@@ -86,6 +87,11 @@ cleanup() {
 	rm -rf "$tmpfile" "$TMPDIR"
 }
 
+feeds() {
+	echo "Configuration file \"$config\" is invalid or does not contain a \"feeds\" function." >&2
+	echo "See sfeedrc.example for an example." >&2
+}
+
 # load config file.
 loadconfig "$1"
 # fetch feeds and store in temporary file.
@@ -93,17 +99,20 @@ TMPDIR=$(mktemp -d -t "sfeed_XXXXXX")
 # get date of last modified feedfile in format:
 # YYYYmmdd HH:MM:SS [+-][0-9]*
 lastupdated=$(stat -c "%y" "$sfeedfile" 2> /dev/null | cut -c 1-4,6-7,9-10,11-19,30-)
-# Kill whole current process group on ^C.
+# kill whole current process group on ^C.
 isrunning="1"
-trap -- "terminated" "15" # SIGTERM: signal to terminate parent.
-trap -- "kill -TERM -$$" "2" # SIGINT: kill all running childs >:D
+# SIGTERM: signal to terminate parent.
+trap -- "terminated" "15"
+# SIGINT: kill all running childs >:D
+trap -- "kill -TERM -$$" "2"
 # fetch feeds specified in config file.
 feeds
 # make sure path exists.
 mkdir -p "$sfeedpath"
 # wait till all feeds are fetched (allows running in parallel).
 wait
-[ "$isrunning" = "0" ] && cleanup && exit 1 # if terminated cleanup.
+# if terminated cleanup.
+[ "$isrunning" = "0" ] && cleanup && exit 1
 # concat all individual feed files to a single file.
 # NOTE: mktemp uses $TMPDIR for temporary directory.
 tmpfile=$(mktemp -t "sfeed_XXXXXX")

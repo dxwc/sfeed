@@ -6,7 +6,7 @@
 
 # list of feeds to fetch:
 feeds() {
-	# feed <name> <feedurl> <basesiteurl> [encoding]
+	# feed <name> <feedurl> [basesiteurl] [encoding]
 	feed "codemadness" "http://www.codemadness.nl/blog/rss.xml"
 	feed "explosm" "http://feeds.feedburner.com/Explosm"
 	feed "linux kernel" "http://kernel.org/kdist/rss.xml" "http://kernel.org" "iso-8859-1"

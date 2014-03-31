@@ -3,8 +3,12 @@
 #include <stdlib.h>
 #include <time.h>
 #include <ctype.h>
-#include "common.h"
+#include <sys/types.h>
 
+#include "util.h"
+
+#if 0
+/* TODO: optimize */
 char *
 afgets(char **p, size_t *size, FILE *fp) {
 	char buf[BUFSIZ], *alloc = NULL;
@@ -35,6 +39,74 @@ afgets(char **p, size_t *size, FILE *fp) {
 		strncpy((*p + (len - n)), buf, n);
 		if(end || feof(fp))
 			break;
+	}
+	if(*p && len > 0) {
+		(*p)[len] = '\0';
+		return *p;
+	}
+	return NULL;
+}
+#endif
+
+/*
+ * Taken from OpenBSD.
+ * Copy src to string dst of size siz.  At most siz-1 characters
+ * will be copied.  Always NUL terminates (unless siz == 0).
+ * Returns strlen(src); if retval >= siz, truncation occurred.
+ */
+size_t
+strlcpy(char *dst, const char *src, size_t siz) {
+	char *d = dst;
+	const char *s = src;
+	size_t n = siz;
+
+	/* copy as many bytes as will fit */
+	if (n != 0) {
+		while (--n != 0) {
+			if ((*d++ = *s++) == '\0')
+				break;
+		}
+	}
+	/* not enough room in dst, add NUL and traverse rest of src */
+	if (n == 0) {
+		if (siz != 0)
+				*d = '\0'; /* NUL-terminate dst */
+		while (*s++)
+			;
+	}
+	return(s - src - 1);    /* count does not include NUL */
+}
+
+/* TODO: optimize */
+char *
+afgets(char **p, size_t *size, FILE *fp) {
+	char buf[BUFSIZ], *alloc = NULL;
+	size_t n, len = 0, allocsiz;
+	int end = 0;
+
+	while(!end && !feof(fp) && fgets(buf, sizeof(buf), fp)) {
+		n = strlen(buf);
+		if(buf[n - 1] == '\n') { /* dont store newlines. */
+			buf[n - 1] = '\0';
+			n--;
+			end = 1; /* newline found, end */
+		}
+		len += n;
+		allocsiz = len + 1;
+		if(allocsiz > *size) {
+			if((alloc = realloc(*p, allocsiz))) {
+				*p = alloc;
+				*size = allocsiz;
+			} else {
+				free(*p);
+				*p = NULL;
+				fputs("error: could not realloc\n", stderr);
+				exit(EXIT_FAILURE);
+				return NULL;
+			}
+		}
+		strlcpy((*p + (len - n)), buf, n + 1); /* TODO: dont depend on strlcpy */
+/*		strncpy((*p + (len - n)), buf, n);*/
 	}
 	if(*p && len > 0) {
 		(*p)[len] = '\0';
@@ -118,11 +190,13 @@ printhtmlencoded(const char *s, FILE *fp) {
 
 void
 feedsfree(struct feed *f) {
-	struct feed *next;
-	while(f) {
+	struct feed *next = NULL;
+
+	for(; f; f = next) {
 		next = f->next;
+		/*f->next = NULL;*/
 		free(f->name);
+		/*f->name = NULL;*/
 		free(f);
-		f = next;
 	}
 }

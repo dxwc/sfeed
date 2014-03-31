@@ -1,16 +1,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <time.h>
 #include <ctype.h>
+
+#include "util.h"
 #include "xml.h"
-#include "compat.h"
+
+#define ISWSNOSPACE(c) (((unsigned)c - '\t') < 5) /* isspace(c) && c != ' ' */
 
 enum { FeedTypeNone = 0, FeedTypeRSS = 1, FeedTypeAtom = 2 };
 const char *feedtypes[] = {	"", "rss", "atom" };
 
 enum { ContentTypeNone = 0, ContentTypePlain = 1, ContentTypeHTML = 2 };
 const char *contenttypes[] = { "", "plain", "html" };
+
+const int FieldSeparator = '\t'; /* output field seperator character */
+
+enum {
+	TagUnknown = 0,
+	/* RSS */
+	RSSTagDcdate, RSSTagPubdate, RSSTagTitle,
+	RSSTagLink, RSSTagDescription, RSSTagContentencoded,
+	RSSTagGuid, RSSTagAuthor, RSSTagDccreator,
+	/* Atom */
+	AtomTagPublished, AtomTagUpdated, AtomTagTitle,
+	AtomTagSummary, AtomTagContent,
+	AtomTagId, AtomTagLink, AtomTagAuthor
+};
 
 typedef struct string { /* String data / pool */
 	char *data; /* data */
@@ -29,41 +47,29 @@ typedef struct feeditem { /* Feed item */
 	int feedtype; /* FeedTypeRSS or FeedTypeAtom */
 } FeedItem;
 
-void die(const char *s);
-void cleanup(void);
-
-String *currentfield = NULL; /* TODO */
-const int FieldSeparator = '\t';
-FeedItem feeditem; /* data for current feed item */
-char feeditemtag[256] = ""; /* current tag _inside_ a feeditem */
-size_t feeditemtaglen = 0;
-int feeditemtagid = 0;
-int iscontent = 0;
-int iscontenttag = 0;
-size_t attrcount = 0;
-char *standardtz = NULL; /* TZ variable at start of program */
-XMLParser parser; /* XML parser state */
-
-enum {
-	TagUnknown = 0,
-	/* RSS */
-	RSSTagDcdate, RSSTagPubdate, RSSTagTitle,
-	RSSTagLink, RSSTagDescription, RSSTagContentencoded,
-	RSSTagGuid, RSSTagAuthor, RSSTagDccreator,
-	/* Atom */
-	AtomTagPublished, AtomTagUpdated, AtomTagTitle,
-	AtomTagSummary, AtomTagContent,
-	AtomTagId, AtomTagLink, AtomTagAuthor
-};
-
 typedef struct feedtag {
 	char *name;
 	size_t namelen;
 	int id;
 } FeedTag;
 
+static void die(const char *s);
+static void cleanup(void);
+
+static String *currentfield = NULL; /* pointer to current FeedItem field String */
+static FeedItem feeditem; /* data for current feed item */
+static char feeditemtag[256] = ""; /* current tag _inside_ a feeditem */
+static size_t feeditemtaglen = 0;
+static int feeditemtagid = 0; /* unique number for parsed tag (faster comparison) */
+static int iscontent = 0;
+static int iscontenttag = 0;
+static size_t attrcount = 0;
+static char *standardtz = NULL; /* TZ variable at start of program */
+static XMLParser parser; /* XML parser state */
+static char *append = NULL;
+
 /* TODO: optimize lookup */
-int
+static int /* unique number for parsed tag (faster comparison) */
 gettag(int feedtype, const char *name, size_t namelen) {
 	/* RSS, alphabetical order */
 	static FeedTag rsstag[] = {
@@ -91,11 +97,11 @@ gettag(int feedtype, const char *name, size_t namelen) {
 		{ NULL, 0, -1 }
 	};
 	int i, n;
-	
+
 	if(namelen >= 2 && namelen <= 15) {
 		if(feedtype == FeedTypeRSS) {
 			for(i = 0; rsstag[i].name; i++) {
-				if(!(n = xstrncasecmp(rsstag[i].name, name, rsstag[i].namelen)))
+				if(!(n = strncasecmp(rsstag[i].name, name, rsstag[i].namelen)))
 					return rsstag[i].id;
 				/* optimization: it's sorted so nothing after it matches. */
 				if(n > 0)
@@ -103,7 +109,7 @@ gettag(int feedtype, const char *name, size_t namelen) {
 			}
 		} else if(feedtype == FeedTypeAtom) {
 			for(i = 0; atomtag[i].name; i++) {
-				if(!(n = xstrncasecmp(atomtag[i].name, name, atomtag[i].namelen)))
+				if(!(n = strncasecmp(atomtag[i].name, name, atomtag[i].namelen)))
 					return atomtag[i].id;
 				/* optimization: it's sorted so nothing after it matches. */
 				if(n > 0)
@@ -114,8 +120,21 @@ gettag(int feedtype, const char *name, size_t namelen) {
 	return TagUnknown;
 }
 
-int
-entitytostr(const char *e, char *buffer, size_t bufsiz) {
+static unsigned long
+codepointtoutf8(unsigned long cp) {
+	if(cp >= 0x10000) /* 4 bytes */
+		return 0xf0808080 | ((cp & 0xfc0000) << 6) | ((cp & 0x3f000) << 4) |
+		       ((cp & 0xfc0) << 2) | (cp & 0x3f);
+	else if(cp >= 0x00800) /* 3 bytes */
+		return 0xe08080 | ((cp & 0x3f000) << 4) | ((cp & 0xfc0) << 2) |
+		       (cp & 0x3f);
+	else if(cp >= 0x80) /* 2 bytes */
+		return 0xc080 | ((cp & 0xfc0) << 2) | (cp & 0x3f);
+	return cp; /* 1 byte */
+}
+
+static int
+namedentitytostr(const char *e, char *buffer, size_t bufsiz) {
 	/* TODO: optimize lookup? */
 	char *entities[6][2] = {
 		{ "&lt;", "<" },
@@ -130,7 +149,7 @@ entitytostr(const char *e, char *buffer, size_t bufsiz) {
 		return 0;
 	for(i = 0; entities[i][0]; i++) {
 		/* NOTE: compares max 7 chars */
-		if(!xstrncasecmp(e, entities[i][0], 6)) {
+		if(!strncasecmp(e, entities[i][0], 6)) {
 			buffer[0] = *(entities[i][1]);
 			buffer[1] = '\0';
 			return 1;
@@ -139,7 +158,49 @@ entitytostr(const char *e, char *buffer, size_t bufsiz) {
 	return 0;
 }
 
-void
+static int
+entitytostr(const char *e, char *buffer, size_t bufsiz) {
+	unsigned long l = 0, cp = 0;
+	if(*e != '&' || bufsiz < 5) /* doesnt start with & */
+		return 0;
+	e++;
+	if(*e == '#') {
+		e++;
+		if(*e == 'x') {
+			e++;
+			l = strtol(e, NULL, 16); /* hex */
+		} else
+			l = strtol(e, NULL, 10); /* decimal */
+		if((cp = codepointtoutf8(l))) {
+			buffer[0] = l & 0xff;
+			buffer[1] = (l >> 8) & 0xff;
+			buffer[2] = (l >> 16) & 0xff;
+			buffer[3] = (l >> 24) & 0xff;
+			buffer[4] = '\0';
+			/* escape whitespace */
+			if(ISWSNOSPACE(buffer[0])) { /* isspace(c) && c != ' ' */
+				if(buffer[0] == '\n') { /* escape newline */
+					buffer[0] = '\\';
+					buffer[1] = 'n';
+					buffer[2] = '\0';
+				} else if(buffer[0] == '\\') { /* escape \ */
+					buffer[0] = '\\';
+					buffer[1] = '\\';
+					buffer[2] = '\0';
+				} else if(buffer[0] == '\t') { /* tab */
+					buffer[0] = '\\';
+					buffer[1] = 't';
+					buffer[2] = '\0';
+				}
+			}
+		}
+		return 1;
+	} else /* named entity */
+		return namedentitytostr(e, buffer, bufsiz);
+	return 0;
+}
+
+static void
 string_clear(String *s) {
 	if(s->data)
 		s->data[0] = '\0'; /* clear string only; don't free, prevents
@@ -147,7 +208,7 @@ string_clear(String *s) {
 	s->len = 0;
 }
 
-void
+static void
 string_buffer_init(String *s, size_t len) {
 	if(!(s->data = malloc(len)))
 		die("can't allocate enough memory");
@@ -155,7 +216,7 @@ string_buffer_init(String *s, size_t len) {
 	string_clear(s);
 }
 
-void
+static void
 string_free(String *s) {
 	free(s->data);
 	s->data = NULL;
@@ -163,12 +224,10 @@ string_free(String *s) {
 	s->len = 0;
 }
 
-int
-string_buffer_expand(String *s, size_t newlen) {
+static int
+string_buffer_realloc(String *s, size_t newlen) {
 	char *p;
 	size_t alloclen;
-	/* check if allocation is necesary, dont shrink buffer
-	   should be more than bufsiz ofcourse */
 	for(alloclen = 16; alloclen <= newlen; alloclen *= 2);
 	if(!(p = realloc(s->data, alloclen))) {
 		string_free(s); /* free previous allocation */
@@ -179,18 +238,20 @@ string_buffer_expand(String *s, size_t newlen) {
 	return s->bufsiz;
 }
 
-void
+static void
 string_append(String *s, const char *data, size_t len) {
 	if(!len || *data == '\0')
 		return;
+	/* check if allocation is necesary, dont shrink buffer
+	   should be more than bufsiz ofcourse */
 	if(s->len + len > s->bufsiz)
-		string_buffer_expand(s, s->len + len);
+		string_buffer_realloc(s, s->len + len);
 	memcpy(s->data + s->len, data, len);
 	s->len += len;
 	s->data[s->len] = '\0';
 }
 
-void /* cleanup parser, free allocated memory, etc */
+static void /* cleanup, free allocated memory, etc */
 cleanup(void) {
 	string_free(&feeditem.timestamp);
 	string_free(&feeditem.title);
@@ -200,7 +261,7 @@ cleanup(void) {
 	string_free(&feeditem.author);
 }
 
-void /* print error message to stderr */
+static void /* print error message to stderr */
 die(const char *s) {
 	fputs("sfeed: ", stderr);
 	fputs(s, stderr);
@@ -210,7 +271,7 @@ die(const char *s) {
 
 /* get timezone from string, return as formatted string and time offset,
  * for the offset it assumes GMT */
-int
+static int
 gettimetz(const char *s, char *buf, size_t bufsiz) {
 	const char *p = s;
 	char tzname[16] = "", *t = NULL;
@@ -239,7 +300,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz) {
 	} else
 		memcpy(tzname, "GMT", strlen("GMT") + 1);
 	if(!(*p)) {	
-		strncpy(buf, tzname, bufsiz);
+		strlcpy(buf, tzname, bufsiz); /* TODO: dont depend on strlcpy? */
 		return 0;
 	}
 	if((sscanf(p, "%c%02d:%02d", &c, &tzhour, &tzmin)) > 0);
@@ -254,31 +315,30 @@ gettimetz(const char *s, char *buf, size_t bufsiz) {
 /* parses everything in a format similar to:
  * "%a, %d %b %Y %H:%M:%S" or "%Y-%m-%d %H:%M:%S" */
 /* TODO: calculate time offset (GMT only) from gettimetz ? */
-int
+static int
 parsetimeformat(const char *s, struct tm *t, const char **end) {
-	static const char *months[] = {
+	const char *months[] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
 		"Nov", "Dec"
 	};
-	const char *p = s;
 	unsigned int i, fm;
 	unsigned long l;
 
 	memset(t, 0, sizeof(struct tm));
-	if((l = strtoul(p, (void *)&p, 10))) {
+	if((l = strtoul(s, (void *)&s, 10))) {
 		t->tm_year = abs(l) - 1900;
-		if(!(l = strtoul(p, (void *)&p, 10)))
+		if(!(l = strtoul(s, (void *)&s, 10)))
 			return 0;
 		t->tm_mon = abs(l) - 1;
-		if(!(t->tm_mday = abs(strtoul(p, (void *)&p, 10))))
+		if(!(t->tm_mday = abs(strtoul(s, (void *)&s, 10))))
 			return 0;
 	} else {
-		for(; *p && !isdigit((int)*p); p++);
-		if(!(t->tm_mday = abs(strtoul(p, (void *)&p, 10))))
+		for(; *s && !isdigit((int)*s); s++);
+		if(!(t->tm_mday = abs(strtoul(s, (void *)&s, 10))))
 			return 0;
-		for(; *p && !isalpha((int)*p); p++); /* skip non-alpha */
+		for(; *s && !isalpha((int)*s); s++); /* skip non-alpha */
 		for(fm = 0, i = 0; i < 12; i++) { /* parse month names */
-			if(!xstrncasecmp(p, months[i], 3)) {
+			if(!strncasecmp(s, months[i], 3)) {
 				t->tm_mon = i;
 				fm = 1;
 				break;
@@ -286,22 +346,22 @@ parsetimeformat(const char *s, struct tm *t, const char **end) {
 		}
 		if(!fm) /* can't find month */
 			return 0;
-		for(; *p && !isdigit((int)*p); p++); /* skip non-digit */
-		if(!(l = strtoul(p, (void *)&p, 10)))
+		for(; *s && !isdigit((int)*s); s++); /* skip non-digit */
+		if(!(l = strtoul(s, (void *)&s, 10)))
 			return 0;
 		t->tm_year = abs(l) - 1900;
 	}
-	for(; *p && !isdigit((int)*p); p++); /* skip non-digit */
-	if((t->tm_hour = abs(strtoul(p, (void *)&p, 10))) > 23)
+	for(; *s && !isdigit((int)*s); s++); /* skip non-digit */
+	if((t->tm_hour = abs(strtoul(s, (void *)&s, 10))) > 23)
 		return 0;
-	for(; *p && !isdigit((int)*p); p++); /* skip non-digit */
-	if((t->tm_min = abs(strtoul(p, (void *)&p, 10))) > 59)
+	for(; *s && !isdigit((int)*s); s++); /* skip non-digit */
+	if((t->tm_min = abs(strtoul(s, (void *)&s, 10))) > 59)
 		return 0;
-	for(; *p && !isdigit((int)*p); p++); /* skip non-digit */
-	if((t->tm_sec = abs(strtoul(p, (void *)&p, 10))) > 60)
+	for(; *s && !isdigit((int)*s); s++); /* skip non-digit */
+	if((t->tm_sec = abs(strtoul(s, (void *)&s, 10))) > 60)
 		return 0;
 	if(end)
-		*end = p;
+		*end = s;
 	return 1;
 }
 
@@ -309,8 +369,8 @@ parsetimeformat(const char *s, struct tm *t, const char **end) {
 #define Q(a,b) ((a)>0 ? (a)/(b) : -(((b)-(a)-1)/(b)))
 
 /* copied from Musl C awesome small implementation, see LICENSE. */
-time_t
-tm_to_time(struct tm *tm) {
+static time_t
+tmtotime(struct tm *tm) {
 	time_t year = tm->tm_year - 100;
 	int month = tm->tm_mon;
 	int day = tm->tm_mday;
@@ -338,7 +398,7 @@ tm_to_time(struct tm *tm) {
 	       946684800; /* the dawn of time, aka 1970 (30 years of seconds) :) */
 }
 
-time_t
+static time_t
 parsetime(const char *s, char *buf) {
 	struct tm tm;
 	char tz[64];
@@ -355,11 +415,12 @@ parsetime(const char *s, char *buf) {
 					tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 					tm.tm_hour, tm.tm_min, tm.tm_sec, tz);
 		/* return UNIX time, reverse offset to GMT+0 */
-		return tm_to_time(&tm) - offset;
+		return tmtotime(&tm) - offset;
 	}
 	return -1; /* can't parse */
 }
 
+#if 0
 /* print text, ignore tabs, newline and carriage return etc
  * print some HTML 2.0 / XML 1.0 as normal text */
 void
@@ -379,8 +440,7 @@ string_print_trimmed(String *s) {
 		return;
 	for(p = s->data; isspace((int)*p); p++); /* strip leading whitespace */
 	for(; *p; ) { /* ignore tabs, newline and carriage return etc, except space */
-		/*if(!isspace((int)*p) || *p == ' ') {*/
-		if(!((unsigned)*p - '\t' < 5)) {
+		if(!ISWSNOSPACE(*p)) { /* !isspace(c) || c == ' ' */
 			if(*p == '<') { /* skip tags */
 				if((n = strchr(p, '>'))) {
 					p = n + 1;
@@ -389,9 +449,9 @@ string_print_trimmed(String *s) {
 			}
 			buffer[buflen++] = *p;
 		}
-		if(buflen >= BUFSIZ) {
-			fwrite(buffer, 1, buflen, stdout);
-			buflen = 0;
+		if(buflen >= BUFSIZ) { /* align write size with BUFSIZ */
+			fwrite(buffer, 1, BUFSIZ, stdout);
+			buflen -= BUFSIZ;
 		}
 		p++;
 	}
@@ -410,7 +470,42 @@ string_print_textblock(String *s) {
 	/* skip leading whitespace */
 	for(p = s->data; *p && isspace((int)*p); p++);
 	for(i = 0; *p; p++) {
-		if(((unsigned)*p - '\t') < 5) {
+		if(ISWSNOSPACE(*p)) { /* isspace(c) && c != ' ' */
+			if(*p == '\n') { /* escape newline */
+				buffer[i++] = '\\';
+				buffer[i++] = 'n';
+			} else if(*p == '\\') { /* escape \ */
+				buffer[i++] = '\\';
+				buffer[i++] = '\\';
+			} else if(*p == '\t') { /* tab */
+				buffer[i++] = '\\';
+				buffer[i++] = 't';
+			}
+		} else {
+			buffer[i++] = *p;
+		}
+		if(i >= BUFSIZ) { /* align write size with BUFSIZ */
+			fwrite(buffer, 1, BUFSIZ, stdout);
+			i -= BUFSIZ;
+		}
+	}
+	if(i)
+		fwrite(buffer, 1, i, stdout);
+}
+#endif
+
+static void /* print text, escape tabs, newline and carriage return etc */
+string_print(String *s) {
+	const char *p;
+	char buffer[BUFSIZ + 4];
+	size_t i;
+
+	if(!s->len)
+		return;	
+	/* skip leading whitespace */
+	for(p = s->data; *p && isspace((int)*p); p++);
+	for(i = 0; *p; p++) {
+		if(ISWSNOSPACE(*p)) { /* isspace(c) && c != ' ' */
 			if(*p == '\n') { /* escape newline */
 				buffer[i++] = '\\';
 				buffer[i++] = 'n';
@@ -425,28 +520,28 @@ string_print_textblock(String *s) {
 		} else {
 			buffer[i++] = *p;
 		}
-		if(i >= BUFSIZ) { /* TODO: align */
-			fwrite(buffer, 1, i, stdout);
-			i = 0;
+		if(i >= BUFSIZ) { /* align write size with BUFSIZ */
+			fwrite(buffer, 1, BUFSIZ, stdout);
+			i -= BUFSIZ;
 		}
 	}
-	if(i)
+	if(i) /* write remaining */
 		fwrite(buffer, 1, i, stdout);
 }
 
-int
+static int
 istag(const char *name, size_t len, const char *name2, size_t len2) {
-	return (len == len2 && !xstrcasecmp(name, name2));
+	return (len == len2 && !strcasecmp(name, name2));
 }
 
-int
+static int
 isattr(const char *name, size_t len, const char *name2, size_t len2) {
-	return (len == len2 && !xstrcasecmp(name, name2));
+	return (len == len2 && !strcasecmp(name, name2));
 }
 
 /* NOTE: this handler can be called multiple times if the data in this
  * block is bigger than the buffer */
-void
+static void
 xml_handler_data(XMLParser *p, const char *s, size_t len) {
 	if(currentfield) {
 		if(feeditemtagid != AtomTagAuthor || !strcmp(p->tag, "name")) /* author>name */
@@ -454,13 +549,13 @@ xml_handler_data(XMLParser *p, const char *s, size_t len) {
 	}
 }
 
-void
+static void
 xml_handler_cdata(XMLParser *p, const char *s, size_t len) {
 	if(currentfield)
 		string_append(currentfield, s, len);
 }
 
-void
+static void
 xml_handler_attr_start(struct xmlparser *p, const char *tag, size_t taglen, const char *name, size_t namelen) {
 	if(iscontent && !iscontenttag) {
 		if(!attrcount)
@@ -472,7 +567,7 @@ xml_handler_attr_start(struct xmlparser *p, const char *tag, size_t taglen, cons
 	}
 }
 
-void
+static void
 xml_handler_attr_end(struct xmlparser *p, const char *tag, size_t taglen, const char *name, size_t namelen) {
 	if(iscontent && !iscontenttag) {
 		xml_handler_data(p, "\"", 1);
@@ -480,7 +575,7 @@ xml_handler_attr_end(struct xmlparser *p, const char *tag, size_t taglen, const 
 	}
 }
 
-void
+static void
 xml_handler_start_element_parsed(XMLParser *p, const char *tag, size_t taglen, int isshort) {
 	if(iscontent && !iscontenttag) {
 		if(isshort)
@@ -490,7 +585,7 @@ xml_handler_start_element_parsed(XMLParser *p, const char *tag, size_t taglen, i
 	}
 }
 
-void
+static void
 xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
                  const char *name, size_t namelen, const char *value,
                  size_t valuelen) {
@@ -516,7 +611,7 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 	}
 }
 
-void
+static void
 xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
 	if(iscontenttag) {
 		/* starts with div, handle as XML, dont convert entities */
@@ -541,7 +636,6 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
 			memcpy(feeditemtag, name, namelen + 1); /* copy including nul byte */
 			feeditemtaglen = namelen;
 			feeditemtagid = gettag(feeditem.feedtype, feeditemtag, feeditemtaglen);
-
 			if(feeditem.feedtype == FeedTypeRSS) {
 				if(feeditemtagid == TagUnknown)
 					currentfield = NULL;
@@ -587,7 +681,7 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
 				else if(feeditemtagid == AtomTagAuthor)
 					currentfield = &feeditem.author;
 			}
-			/* TODO: prefer content encoded over content? */
+			/* TODO: prefer content encoded over content? test */
 		}
 	} else { /* start of RSS or Atom item / entry */
 		if(istag(name, namelen, "entry", strlen("entry"))) { /* Atom */
@@ -602,7 +696,7 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
 	}
 }
 
-void
+static void
 xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen) {
 	char buffer[16];
 	size_t len;
@@ -620,7 +714,7 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen) {
 		xml_handler_data(p, data, datalen); /* can't convert entity, just use it's data */
 }
 
-void
+static void
 xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int isshort) {
 	char timebuf[64];
 	int tagid;
@@ -660,19 +754,23 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 			putchar(FieldSeparator);
 			fputs(timebuf, stdout);
 			putchar(FieldSeparator);
-			string_print_trimmed(&feeditem.title);
+			string_print(&feeditem.title);
 			putchar(FieldSeparator);
-			string_print_trimmed(&feeditem.link);
+			string_print(&feeditem.link);
 			putchar(FieldSeparator);
-			string_print_textblock(&feeditem.content);
+			string_print(&feeditem.content);
 			putchar(FieldSeparator);
 			fputs(contenttypes[feeditem.contenttype], stdout);
 			putchar(FieldSeparator);
-			string_print_trimmed(&feeditem.id);
+			string_print(&feeditem.id);
 			putchar(FieldSeparator);
-			string_print_trimmed(&feeditem.author);
+			string_print(&feeditem.author);
 			putchar(FieldSeparator);
 			fputs(feedtypes[feeditem.feedtype], stdout);
+			if(append) {
+				putchar(FieldSeparator);
+				fputs(append, stdout);
+			}
 			putchar('\n');
 
 			/* clear strings */
@@ -705,8 +803,11 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 }
 
 int
-main(void) {
+main(int argc, char **argv) {
 	atexit(cleanup);
+
+	if(argc > 1)
+		append = argv[1];
 
 	/* init strings and initial memory pool size */
 	string_buffer_init(&feeditem.timestamp, 64);

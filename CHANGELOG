@@ -3,9 +3,17 @@ v0.9
 
 Features:
 ---------
+
+	* Feeds are now by default updated in parallel for a huge speedup in performance.
+	* Added hotkeys to sfeed_html to toggle showing only new items (n key) and
+	  focusing the menu (s key) or items (i key) using a tiny bit of
+	  javascript.
+	* Auto-detect XML encoding.
+
+
 	* Added sfeed_frames, a formatting program to output feeds as a HTML file with
 	  frames. It's optimized to look good in older browsers that don't necesarily
-	  support CSS or modern HTML like links. See the man page for more details.
+	  support CSS or modern HTML, like links. See the man page for more details.
 	* Removed the dependency on libexpat, using a custom XML parser (xml.*),
 	  this parser is also non-validating, it will not check the XML for errors
 	  or stop parsing if it contains errors (which is good).
