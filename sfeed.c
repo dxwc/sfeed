@@ -251,6 +251,7 @@ string_append(String *s, const char *data, size_t len) {
 	s->data[s->len] = '\0';
 }
 
+#if 0
 static void /* cleanup, free allocated memory, etc */
 cleanup(void) {
 	string_free(&feeditem.timestamp);
@@ -260,6 +261,7 @@ cleanup(void) {
 	string_free(&feeditem.id);
 	string_free(&feeditem.author);
 }
+#endif
 
 static void /* print error message to stderr */
 die(const char *s) {
@@ -419,80 +421,6 @@ parsetime(const char *s, char *buf) {
 	}
 	return -1; /* can't parse */
 }
-
-#if 0
-/* print text, ignore tabs, newline and carriage return etc
- * print some HTML 2.0 / XML 1.0 as normal text */
-void
-string_print_trimmed(String *s) {
-/*	const char *entities[] = {
-		"&amp;", "&", "&lt;", "<", "&gt;", ">",	"&apos;", "'",
-		"&quot;", "\"",
-		NULL, NULL
-	};
-	unsigned char entlen[] = { 5, 4, 4, 6, 6 };*/
-	/*unsigned int len, found, i;*/
-	const char *p, *n/*, **e*/;
-	char buffer[BUFSIZ + 4];
-	size_t buflen = 0;
-
-	if(!s->len)
-		return;
-	for(p = s->data; isspace((int)*p); p++); /* strip leading whitespace */
-	for(; *p; ) { /* ignore tabs, newline and carriage return etc, except space */
-		if(!ISWSNOSPACE(*p)) { /* !isspace(c) || c == ' ' */
-			if(*p == '<') { /* skip tags */
-				if((n = strchr(p, '>'))) {
-					p = n + 1;
-					continue;
-				}
-			}
-			buffer[buflen++] = *p;
-		}
-		if(buflen >= BUFSIZ) { /* align write size with BUFSIZ */
-			fwrite(buffer, 1, BUFSIZ, stdout);
-			buflen -= BUFSIZ;
-		}
-		p++;
-	}
-	if(buflen)
-		fwrite(buffer, 1, buflen, stdout);
-}
-
-void /* print text, escape tabs, newline and carriage return etc */
-string_print_textblock(String *s) {
-	const char *p;
-	char buffer[BUFSIZ + 4];
-	size_t i;
-
-	if(!s->len)
-		return;
-	/* skip leading whitespace */
-	for(p = s->data; *p && isspace((int)*p); p++);
-	for(i = 0; *p; p++) {
-		if(ISWSNOSPACE(*p)) { /* isspace(c) && c != ' ' */
-			if(*p == '\n') { /* escape newline */
-				buffer[i++] = '\\';
-				buffer[i++] = 'n';
-			} else if(*p == '\\') { /* escape \ */
-				buffer[i++] = '\\';
-				buffer[i++] = '\\';
-			} else if(*p == '\t') { /* tab */
-				buffer[i++] = '\\';
-				buffer[i++] = 't';
-			}
-		} else {
-			buffer[i++] = *p;
-		}
-		if(i >= BUFSIZ) { /* align write size with BUFSIZ */
-			fwrite(buffer, 1, BUFSIZ, stdout);
-			i -= BUFSIZ;
-		}
-	}
-	if(i)
-		fwrite(buffer, 1, i, stdout);
-}
-#endif
 
 static void /* print text, escape tabs, newline and carriage return etc */
 string_print(String *s) {
@@ -701,12 +629,6 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen) {
 	char buffer[16];
 	size_t len;
 
-#if 0
-	if(iscontent) {
-		xml_handler_data(p, data, datalen); /* TODO: for now, dont convert entities */
-		return;
-	}
-#endif
 	/* TODO: for content HTML data entities, convert &amp; to &? */
 	if((len = entitytostr(data, buffer, sizeof(buffer))))
 		xml_handler_data(p, buffer, len);
@@ -804,7 +726,7 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 
 int
 main(int argc, char **argv) {
-	atexit(cleanup);
+/*	atexit(cleanup);*/
 
 	if(argc > 1)
 		append = argv[1];
