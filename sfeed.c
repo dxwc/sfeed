@@ -819,7 +819,7 @@ main(int argc, char **argv) {
 	feeditem.contenttype = ContentTypePlain;
 	feeditem.feedtype = FeedTypeNone;
 
-	xmlparser_init(&parser);
+	xmlparser_init(&parser, stdin);
 	parser.xmltagstart = xml_handler_start_element;
 	parser.xmltagend = xml_handler_end_element;
 	parser.xmldata = xml_handler_data;

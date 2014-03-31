@@ -8,7 +8,7 @@
 #include "xml.h"
 
 static unsigned int isbase = 0, islink = 0, isfeedlink = 0, found = 0;
-static char feedlink[4096], basehref[4096];
+static char feedlink[4096] = "", basehref[4096] = "";
 
 static void
 xmltagstart(XMLParser *p, const char *tag, size_t taglen) {
@@ -54,14 +54,11 @@ int
 main(int argc, char **argv) {
 	XMLParser x;
 
-	feedlink[0] = '\0';
 	/* base href */
 	if(argc > 1)
 		strlcpy(basehref, argv[1], sizeof(basehref) - 1);
-	else
-		basehref[0] = '\0';
 
-	xmlparser_init(&x);
+	xmlparser_init(&x, stdin);
 	x.xmltagstart = xmltagstart;
 	x.xmlattr = xmlattr;
 	x.xmltagstartparsed = xmltagstartparsed;

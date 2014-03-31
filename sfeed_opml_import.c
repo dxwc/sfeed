@@ -54,7 +54,7 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 
 int
 main(void) {
-	xmlparser_init(&parser);
+	xmlparser_init(&parser, stdin);
 
 	parser.xmltagstart = xml_handler_start_element;
 	parser.xmltagend = xml_handler_end_element;

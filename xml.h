@@ -35,5 +35,5 @@ typedef struct xmlparser {
 	unsigned char readbuf[BUFSIZ]; /* read buffer used by xmlparser_getnext() */
 } XMLParser;
 
-void xmlparser_init(XMLParser *x);
+void xmlparser_init(XMLParser *x, FILE *fp);
 void xmlparser_parse(XMLParser *x);

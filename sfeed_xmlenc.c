@@ -34,7 +34,7 @@ int
 main(int argc, char **argv) {
 	XMLParser x;
 
-	xmlparser_init(&x);
+	xmlparser_init(&x, stdin);
 	x.xmltagstart = xmltagstart;
 	x.xmltagend = xmltagend;
 	x.xmlattr = xmlattr;

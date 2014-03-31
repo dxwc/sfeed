@@ -6,9 +6,9 @@
 #include "xml.h"
 
 void
-xmlparser_init(XMLParser *x) {
+xmlparser_init(XMLParser *x, FILE *fp) {
 	memset(x, 0, sizeof(XMLParser));
-	x->fp = stdin;
+	x->fp = fp;
 }
 
 __inline__ int /* like getc(), but do some smart buffering */
