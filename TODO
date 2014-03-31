@@ -1,0 +1,7 @@
+bugs?:
+	sfeed_frames double free() bug?
+	sfeed_frames: check if mkdir() fails.
+
+	sfeed_html has double free() aswell?
+
+[ ] dogfood sfeed_frames, html content.
