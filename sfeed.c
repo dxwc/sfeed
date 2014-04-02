@@ -30,13 +30,15 @@ enum {
 	AtomTagId, AtomTagLink, AtomTagAuthor
 };
 
-typedef struct string { /* String data / pool */
+/* String data / memory pool */
+typedef struct string {
 	char *data; /* data */
 	size_t len; /* string length */
 	size_t bufsiz; /* allocated size */
 } String;
 
-typedef struct feeditem { /* Feed item */
+/* Feed item */
+typedef struct feeditem {
 	String timestamp;
 	String title;
 	String link;
@@ -54,7 +56,7 @@ typedef struct feedtag {
 } FeedTag;
 
 static void die(const char *s);
-/*static void cleanup(void);*/
+static void cleanup(void);
 
 static String *currentfield = NULL; /* pointer to current FeedItem field String */
 static FeedItem feeditem; /* data for current feed item */
@@ -251,8 +253,8 @@ string_append(String *s, const char *data, size_t len) {
 	s->data[s->len] = '\0';
 }
 
-#if 0
-static void /* cleanup, free allocated memory, etc */
+/* cleanup, free allocated memory, etc */
+static void
 cleanup(void) {
 	string_free(&feeditem.timestamp);
 	string_free(&feeditem.title);
@@ -261,7 +263,6 @@ cleanup(void) {
 	string_free(&feeditem.id);
 	string_free(&feeditem.author);
 }
-#endif
 
 static void /* print error message to stderr */
 die(const char *s) {
@@ -736,7 +737,7 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 
 int
 main(int argc, char **argv) {
-/*	atexit(cleanup);*/
+	atexit(cleanup);
 
 	if(argc > 1)
 		append = argv[1];
