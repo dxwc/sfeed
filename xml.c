@@ -223,9 +223,12 @@ xmlparser_parse(XMLParser *x) {
 							x->data[5] == 'A' && x->data[6] == '[') { /* cdata */
 							xmlparser_parsecdata(x);
 							break;
+						#if 0
 						} else {
+							/* TODO ? */
 							/* markup declaration section */
 							while((c = xmlparser_getnext(x)) != EOF && c != ']');
+						#endif
 						}
 					}
 				}
