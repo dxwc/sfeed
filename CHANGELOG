@@ -16,8 +16,6 @@ Features:
 	* Removed the dependency on libexpat, using a custom XML parser (xml.*),
 	  this parser is also non-validating, it will not check the XML for errors
 	  or stop parsing if it contains errors (which is good).
-	* Removed the dependency on a POSIX C compiler / libc and converted to
-	  C99.
 
 Bug fixes:
 ----------
