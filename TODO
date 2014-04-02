@@ -3,6 +3,11 @@ bugs?:
 	[x] sfeed_frames: check if mkdir() fails.
 	[ ] sfeed_html has double free() aswell?
 
+[ ] add plan9 mkfile?
+
+[ ] makefile:
+	[ ] allow easy override, allow easy -static builds.
+
 [ ] dogfood sfeed_frames, html content.
 
 [ ] in sfeed_html and sfeed_frames set <meta encoding> to utf-8.
