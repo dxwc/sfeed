@@ -1,7 +1,11 @@
 bugs?:
-	sfeed_frames double free() bug?
-	sfeed_frames: check if mkdir() fails.
-
-	sfeed_html has double free() aswell?
+	[x] sfeed_frames double free() bug? was: double fclose()
+	[x] sfeed_frames: check if mkdir() fails.
+	[ ] sfeed_html has double free() aswell?
 
 [ ] dogfood sfeed_frames, html content.
+
+[ ] in sfeed_html and sfeed_frames set <meta encoding> to utf-8.
+[ ] flabber link is broken (flabberc2 feedname).
+
+[ ] feeds file: empty tab (encoding cant be detected?)
