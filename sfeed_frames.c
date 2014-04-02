@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <utime.h>
+#include <errno.h>
 
 #include "util.h"
 
@@ -70,9 +71,8 @@ makepathname(char *buffer, size_t bufsiz, const char *path) {
 			buffer[i++] = tolower((int)*p);
 			r = 0;
 		} else {
-			if(!r) { /* dont repeat '-'. */
+			if(!r) /* don't repeat '-'. */
 				buffer[i++] = '-';
-			}
 			r++;
 		}
 	}
@@ -92,7 +92,7 @@ int
 main(int argc, char **argv) {
 	char *fields[FieldLast];
 	char name[256]; /* TODO: bigger size? */
-	char *basepath = "feeds";
+	char *basepath = ".";
 	 /* TODO: max path size? */
 	char dirpath[1024], filepath[1024], reldirpath[1024], relfilepath[1024];
 	unsigned long totalfeeds = 0, totalnew = 0;
@@ -100,7 +100,7 @@ main(int argc, char **argv) {
 	struct feed *f, *feedcurrent = NULL;
 	time_t parsedtime, comparetime;
 	size_t size = 0, namelen = 0, basepathlen = 0;
-
+	struct stat st;
 	struct utimbuf contenttime;
 
 	atexit(cleanup);
@@ -110,10 +110,11 @@ main(int argc, char **argv) {
 		basepath = argv[1];
 
 	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
-	mkdir(basepath, S_IRWXU);
+	basepathlen = strlen(basepath);
+	if(basepathlen > 0)
+		mkdir(basepath, S_IRWXU);
 
 	/* write main index page */
-	basepathlen = strlen(basepath);
 	if(basepathlen + strlen("/index.html") < sizeof(dirpath) - 1)
 		sprintf(dirpath, "%s/index.html", basepath);
 	if(!(fpindex = fopen(dirpath, "w+b")))
@@ -142,29 +143,25 @@ main(int argc, char **argv) {
 */
 
 
-
-
-
-
-
 		/* first of feed section or new feed section. */
-		if(!totalfeeds || strcmp(feedcurrent->name, fields[FieldFeedName])) {
+		if(!totalfeeds || (feedcurrent && strcmp(feedcurrent->name, fields[FieldFeedName]))) {
 
 
 			/* TODO: makepathname isnt necesary if fields[FieldFeedName] is the same as the previous line */
 			/* TODO: move this part below where FieldFeedName is checked if its different ? */
 
 			/* make directory for feedname */
-			namelen = makepathname(name, sizeof(name) - 1, fields[FieldFeedName]);
-			if(!namelen)
+			if(!(namelen = makepathname(name, sizeof(name) - 1, fields[FieldFeedName])))
 				continue;
 
 			if(basepathlen + namelen + 1 < sizeof(dirpath) - 1)
 				sprintf(dirpath, "%s/%s", basepath, name);
 			/* TODO: handle error. */
-			if(mkdir(dirpath, S_IRWXU) != -1) {
-				fprintf(stderr, "sfeed_frames: can't write '%s'\n", dirpath);
-				exit(EXIT_FAILURE);
+			if(stat(dirpath, &st) == -1) {
+				if(mkdir(dirpath, S_IRWXU) == -1) {
+					fprintf(stderr, "sfeed_frames: can't make directory '%s': %s\n", dirpath, strerror(errno));
+					exit(EXIT_FAILURE);
+				}
 			}
 			/* TODO: test, replaces strncpy (strncpy is slow) */
 			reldirpath[0] = '\0';
@@ -193,15 +190,13 @@ main(int argc, char **argv) {
 
 
 			} else {
-
-
+				/* first item. */
 				feedcurrent = f;
 
-
-				feeds = feedcurrent; /* first item. */
-				if(fields[FieldFeedName][0] == '\0') {
+				feeds = feedcurrent;
+				/* assume single feed (hide sidebar) */
+				if(fields[FieldFeedName][0] == '\0')
 					showsidebar = 0;
-				}
 			}
 			/* write menu link if new. */
 			if(!(feedcurrent->name = strdup(fields[FieldFeedName])))
@@ -219,11 +214,8 @@ main(int argc, char **argv) {
 			totalfeeds++;
 		}
 
-
-
 		/* write content */
-		namelen = makepathname(name, sizeof(name), fields[FieldTitle]);
-		if(!namelen)
+		if(!(namelen = makepathname(name, sizeof(name), fields[FieldTitle])))
 			continue;
 		if(strlen(dirpath) + namelen + strlen("/.html") < sizeof(filepath) - 1)
 			sprintf(filepath, "%s/%s.html", dirpath, name);
@@ -231,8 +223,8 @@ main(int argc, char **argv) {
 			sprintf(relfilepath, "%s/%s.html", reldirpath, name);
 		if(!fileexists(filepath) && (fpcontent = fopen(filepath, "w+b"))) {
 			fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" /></head>"
-				  "<body class=\"frame\"><div class=\"content\">"
-				  "<h2><a href=\"", fpcontent);
+			      "<body class=\"frame\"><div class=\"content\">"
+			      "<h2><a href=\"", fpcontent);
 			if(fields[FieldBaseSiteUrl][0] != '\0')
 				printlink(fields[FieldLink], fields[FieldBaseSiteUrl], fpcontent);
 			else
@@ -243,10 +235,8 @@ main(int argc, char **argv) {
 			printcontent(fields[FieldContent], fpcontent);
 			fputs("</div></body></html>", fpcontent);
 			fclose(fpcontent);
+			fpcontent = NULL;
 		}
-
-
-
 
 		/* write item. */
 		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
