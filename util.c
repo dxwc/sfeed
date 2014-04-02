@@ -7,47 +7,6 @@
 
 #include "util.h"
 
-#if 0
-/* TODO: optimize */
-char *
-afgets(char **p, size_t *size, FILE *fp) {
-	char buf[BUFSIZ], *alloc = NULL;
-	size_t n, len = 0, allocsiz;
-	int end = 0;
-
-	while(fgets(buf, sizeof(buf), fp)) {
-		n = strlen(buf);
-		if(buf[n - 1] == '\n') { /* dont store newlines. */
-			buf[n - 1] = '\0';
-			n--;
-			end = 1; /* newline found, end */
-		}
-		len += n;
-		allocsiz = len + 1;
-		if(allocsiz > *size) {
-			if((alloc = realloc(*p, allocsiz))) {
-				*p = alloc;
-				*size = allocsiz;
-			} else {
-				free(*p);
-				*p = NULL;
-				fputs("error: could not realloc\n", stderr);
-				exit(EXIT_FAILURE);
-				return NULL;
-			}
-		}
-		strncpy((*p + (len - n)), buf, n);
-		if(end || feof(fp))
-			break;
-	}
-	if(*p && len > 0) {
-		(*p)[len] = '\0';
-		return *p;
-	}
-	return NULL;
-}
-#endif
-
 /*
  * Taken from OpenBSD.
  * Copy src to string dst of size siz.  At most siz-1 characters
@@ -77,7 +36,6 @@ strlcpy(char *dst, const char *src, size_t siz) {
 	return(s - src - 1);    /* count does not include NUL */
 }
 
-/* TODO: optimize */
 char *
 afgets(char **p, size_t *size, FILE *fp) {
 	char buf[BUFSIZ], *alloc = NULL;
@@ -105,8 +63,7 @@ afgets(char **p, size_t *size, FILE *fp) {
 				return NULL;
 			}
 		}
-		strlcpy((*p + (len - n)), buf, n + 1); /* TODO: dont depend on strlcpy */
-/*		strncpy((*p + (len - n)), buf, n);*/
+		strlcpy((*p + (len - n)), buf, n + 1);
 	}
 	if(*p && len > 0) {
 		(*p)[len] = '\0';
@@ -194,9 +151,9 @@ feedsfree(struct feed *f) {
 
 	for(; f; f = next) {
 		next = f->next;
-		/*f->next = NULL;*/
+		f->next = NULL;
 		free(f->name);
-		/*f->name = NULL;*/
+		f->name = NULL;
 		free(f);
 	}
 }

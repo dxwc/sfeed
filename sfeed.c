@@ -402,7 +402,7 @@ tmtotime(struct tm *tm) {
 }
 
 static time_t
-parsetime(const char *s, char *buf) {
+parsetime(const char *s, char *buf, size_t bufsiz) {
 	struct tm tm;
 	char tz[64];
 	const char *end;
@@ -414,7 +414,7 @@ parsetime(const char *s, char *buf) {
 		offset = gettimetz(end, tz, sizeof(tz) - 1);
 		/* TODO: use snprintf(): make sure *printf can't overflow */
 		if(buf)
-		   sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d %-.16s",
+		   snprintf(buf, bufsiz, "%04d-%02d-%02d %02d:%02d:%02d %-.16s",
 		           tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 		           tm.tm_hour, tm.tm_min, tm.tm_sec, tz);
 		/* return UNIX time, reverse offset to GMT+0 */
@@ -683,7 +683,8 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 		   (feeditem.feedtype == FeedTypeRSS &&
 		   istag(name, namelen, "item", strlen("item")))) /* RSS */
 		{
-			printf("%ld", (long)parsetime((&feeditem.timestamp)->data, timebuf));
+			printf("%ld", (long)parsetime((&feeditem.timestamp)->data,
+			              timebuf, sizeof(timebuf)));
 			putchar(FieldSeparator);
 			fputs(timebuf, stdout);
 			putchar(FieldSeparator);

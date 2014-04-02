@@ -9,3 +9,5 @@ bugs?:
 [ ] flabber link is broken (flabberc2 feedname).
 
 [ ] feeds file: empty tab (encoding cant be detected?)
+
+[ ] optimize afgets()
