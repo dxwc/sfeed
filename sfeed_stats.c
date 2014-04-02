@@ -47,7 +47,6 @@ main(void) {
 		if(!totalfeeds || (feedcurrent && strcmp(feedcurrent->name, fields[FieldFeedName]))) { /* TODO: allocate feedcurrent before here, feedcurrent can be NULL */
 			if(!(f = calloc(1, sizeof(struct feed))))
 				die("can't allocate enough memory");
-			/*f->next = NULL;*/
 			if(totalfeeds) { /* end previous one. */
 				feedcurrent->next = f;
 				feedcurrent = f;
@@ -57,23 +56,18 @@ main(void) {
 			}
 			if(parsedtime > timenewest) {
 				timenewest = parsedtime;
-				strncpy(timenewestformat, fields[FieldTimeFormatted],
-				        sizeof(timenewestformat)); /* TODO: strlcpy */
+				strlcpy(timenewestformat, fields[FieldTimeFormatted],
+				        sizeof(timenewestformat));
 			}
 			if(parsedtime > feedcurrent->timenewest) {
 				feedcurrent->timenewest = parsedtime;
-				strncpy(feedcurrent->timenewestformat, fields[FieldTimeFormatted],
-				        sizeof(feedcurrent->timenewestformat)); /* TODO: strlcpy */
+				strlcpy(feedcurrent->timenewestformat, fields[FieldTimeFormatted],
+				        sizeof(feedcurrent->timenewestformat));
 			}
 
 			/* TODO: memcpy and make feedcurrent->name static? */
 			if(!(feedcurrent->name = strdup(fields[FieldFeedName])))
 				die("can't allocate enough memory");
-
-			/*
-			feedcurrent->totalnew = 0;
-			feedcurrent->total = 0;
-			feedcurrent->next = NULL;*/
 
 			totalfeeds++;
 		}
@@ -85,7 +79,6 @@ main(void) {
 	for(feedcurrent = feeds; feedcurrent; feedcurrent = feedcurrent->next) {
 		if(!feedcurrent->name || feedcurrent->name[0] == '\0')
 			continue;
-/*		printfeednameid(feedcurrent->name, stdout);*/
 		fprintf(stdout, "%c %-20.20s [%4lu/%-4lu]", feedcurrent->totalnew > 0 ? 'N' : ' ',
 		        feedcurrent->name, feedcurrent->totalnew, feedcurrent->total);
 		if(feedcurrent->timenewestformat && feedcurrent->timenewestformat[0])
