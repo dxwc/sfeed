@@ -70,7 +70,7 @@ install: all
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
 	@cp -f sfeed sfeed_update sfeed_plain sfeed_html sfeed_frames sfeed_xmlenc \
-		 sfeed_opml_import sfeed_opml_export ${DESTDIR}${PREFIX}/bin
+		 sfeed_opml_import sfeed_opml_export sfeed_web ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/sfeed \
 		${DESTDIR}${PREFIX}/bin/sfeed_update \
 		${DESTDIR}${PREFIX}/bin/sfeed_plain \
@@ -78,7 +78,8 @@ install: all
 		${DESTDIR}${PREFIX}/bin/sfeed_frames \
 		${DESTDIR}${PREFIX}/bin/sfeed_xmlenc \
 		${DESTDIR}${PREFIX}/bin/sfeed_opml_import \
-		${DESTDIR}${PREFIX}/bin/sfeed_opml_export
+		${DESTDIR}${PREFIX}/bin/sfeed_opml_export \
+		${DESTDIR}${PREFIX}/bin/sfeed_web
 	@mkdir -p ${DESTDIR}${PREFIX}/share/sfeed
 	@cp -f sfeedrc.example ${DESTDIR}${PREFIX}/share/${NAME}
 	@cp -f style.css ${DESTDIR}${PREFIX}/share/${NAME}
@@ -115,6 +116,7 @@ uninstall:
 		${DESTDIR}${PREFIX}/bin/sfeed_xmlenc \
 		${DESTDIR}${PREFIX}/bin/sfeed_opml_import \
 		${DESTDIR}${PREFIX}/bin/sfeed_opml_export \
+		${DESTDIR}${PREFIX}/bin/sfeed_web \
 		${DESTDIR}${PREFIX}/share/${NAME}/sfeedrc.example \
 		${DESTDIR}${PREFIX}/share/${NAME}/style.css
 	@-rmdir ${DESTDIR}${PREFIX}/share/${NAME}

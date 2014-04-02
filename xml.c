@@ -11,7 +11,7 @@ xmlparser_init(XMLParser *x, FILE *fp) {
 	x->fp = fp;
 }
 
-__inline__ int /* like getc(), but do some smart buffering */
+static __inline__ int /* like getc(), but do some smart buffering */
 xmlparser_getnext(XMLParser *x) {
 	if(x->readoffset >= x->readlastbytes) {
 		x->readoffset = 0;
@@ -21,7 +21,7 @@ xmlparser_getnext(XMLParser *x) {
 	return (int)x->readbuf[x->readoffset++];
 }
 
-__inline__ void
+static __inline__ void
 xmlparser_parseattrs(XMLParser *x) {
 	size_t namelen = 0, valuelen;
 	int c, endsep, endname = 0;
@@ -114,7 +114,7 @@ xmlparser_parseattrs(XMLParser *x) {
 	}
 }
 
-__inline__ void
+static __inline__ void
 xmlparser_parsecomment(XMLParser *x) {
 	size_t datalen = 0, i = 0;
 	int c;
@@ -157,7 +157,7 @@ xmlparser_parsecomment(XMLParser *x) {
  * test comment function too for similar bug?
  *
  */
-__inline__ void
+static __inline__ void
 xmlparser_parsecdata(XMLParser *x) {
 	size_t datalen = 0, i = 0;
 	int c;
