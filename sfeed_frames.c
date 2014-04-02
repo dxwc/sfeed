@@ -127,7 +127,8 @@ main(int argc, char **argv) {
 		sprintf(dirpath, "%s/items.html", basepath);
 	if(!(fpitems = fopen(dirpath, "w+b")))
 		die("can't write items.html");
-	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" /></head>"
+	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
+	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>"
 	      "<body class=\"frame\"><div id=\"items\">", fpitems);
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
 
@@ -222,7 +223,8 @@ main(int argc, char **argv) {
 		if(strlen(reldirpath) + namelen + strlen("/.html") < sizeof(relfilepath) - 1)
 			sprintf(relfilepath, "%s/%s.html", reldirpath, name);
 		if(!fileexists(filepath) && (fpcontent = fopen(filepath, "w+b"))) {
-			fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" /></head>"
+			fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
+			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>\n"
 			      "<body class=\"frame\"><div class=\"content\">"
 			      "<h2><a href=\"", fpcontent);
 			if(fields[FieldBaseSiteUrl][0] != '\0')
@@ -273,7 +275,8 @@ main(int argc, char **argv) {
 	fputs("\n</div></body>\n</html>", fpitems); /* div items */
 	if(showsidebar) {
 		fputs("<html><head>"
-		      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
+		      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />\n"
+		      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 		      "</head><body class=\"frame\"><div id=\"sidebar\">", fpmenu);
 		for(feedcurrent = feeds; feedcurrent; feedcurrent = feedcurrent->next) {
 			if(!feedcurrent->name || feedcurrent->name[0] == '\0')
@@ -297,21 +300,20 @@ main(int argc, char **argv) {
 	fputs("<!DOCTYPE html><html><head>\n\t<title>Newsfeed (", fpindex);
 	fprintf(fpindex, "%lu", totalnew);
 	fputs(")</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />\n"
+	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 	      "</head>\n", fpindex);
 	if(showsidebar) {
-		fputs(
-			"<frameset framespacing=\"0\" cols=\"200,*\" frameborder=\"1\">\n"
-			"	<frame name=\"menu\" src=\"menu.html\" target=\"menu\">\n", fpindex);
+		fputs("<frameset framespacing=\"0\" cols=\"200,*\" frameborder=\"1\">\n"
+		      "	<frame name=\"menu\" src=\"menu.html\" target=\"menu\">\n", fpindex);
 	} else {
 		fputs("<frameset framespacing=\"0\" cols=\"*\" frameborder=\"1\">\n", fpindex);
 	}
-	fputs(
-		"	<frameset id=\"frameset\" framespacing=\"0\" cols=\"50%,50%\" frameborder=\"1\">\n"
-		"		<frame name=\"items\" src=\"items.html\" target=\"items\">\n"
-		"		<frame name=\"content\" target=\"content\">\n"
-		"	</frameset>\n"
-		"</frameset>\n"
-		"</html>", fpindex);
+	fputs("	<frameset id=\"frameset\" framespacing=\"0\" cols=\"50%,50%\" frameborder=\"1\">\n"
+	      "		<frame name=\"items\" src=\"items.html\" target=\"items\">\n"
+	      "		<frame name=\"content\" target=\"content\">\n"
+	      "	</frameset>\n"
+	      "</frameset>\n"
+	      "</html>", fpindex);
 
 	return EXIT_SUCCESS;
 }
