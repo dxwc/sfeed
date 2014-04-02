@@ -25,11 +25,11 @@ die(const char *s) {
 
 int
 main(void) {
-	char *fields[FieldLast];
-	unsigned long totalfeeds = 0, totalnew = 0;
+	char *fields[FieldLast], timenewestformat[64] = "";
+	unsigned long totalfeeds = 0, totalnew = 0, totalitems = 0;
 	unsigned int islink, isnew;
 	struct feed *f, *feedcurrent = NULL;
-	time_t parsedtime, comparetime;
+	time_t parsedtime, comparetime, timenewest = 0;
 	size_t size = 0;
 
 	atexit(cleanup);
@@ -55,10 +55,15 @@ main(void) {
 				feedcurrent = f;
 				feeds = feedcurrent; /* first item. */
 			}
-			if(isnew && parsedtime > feedcurrent->timenewest) {
+			if(parsedtime > timenewest) {
+				timenewest = parsedtime;
+				strncpy(timenewestformat, fields[FieldTimeFormatted],
+				        sizeof(timenewestformat)); /* TODO: strlcpy */
+			}
+			if(parsedtime > feedcurrent->timenewest) {
 				feedcurrent->timenewest = parsedtime;
 				strncpy(feedcurrent->timenewestformat, fields[FieldTimeFormatted],
-				        sizeof(feedcurrent->timenewestformat));
+				        sizeof(feedcurrent->timenewestformat)); /* TODO: strlcpy */
 			}
 
 			/* TODO: memcpy and make feedcurrent->name static? */
@@ -75,17 +80,20 @@ main(void) {
 		totalnew += isnew;
 		feedcurrent->totalnew += isnew;
 		feedcurrent->total++;
+		totalitems++;
 	}
-	printf("Total new: %lu\n", totalnew);
 	for(feedcurrent = feeds; feedcurrent; feedcurrent = feedcurrent->next) {
 		if(!feedcurrent->name || feedcurrent->name[0] == '\0')
 			continue;
 /*		printfeednameid(feedcurrent->name, stdout);*/
-		fprintf(stdout, "[%4lu / %4lu] %-20s", feedcurrent->totalnew, feedcurrent->total,
-			   	feedcurrent->name);
+		fprintf(stdout, "%c %-20.20s [%4lu/%-4lu]", feedcurrent->totalnew > 0 ? 'N' : ' ',
+		        feedcurrent->name, feedcurrent->totalnew, feedcurrent->total);
 		if(feedcurrent->timenewestformat && feedcurrent->timenewestformat[0])
-			fprintf(stdout, " (newest %s)", feedcurrent->timenewestformat);
+			fprintf(stdout, " %s", feedcurrent->timenewestformat);
 		putchar('\n');
 	}
+	printf("  ================================\n");
+	printf("%c %-20.20s [%4lu/%-4lu] %s\n", totalnew > 0 ? 'N' : ' ', "Total:",
+	       totalnew, totalitems, timenewestformat);
 	return EXIT_SUCCESS;
 }
