@@ -7,21 +7,28 @@ Simple RSS and Atom parser (and some format programs).
 Dependencies
 ------------
 
-- C compiler.
-
-
-Platforms tested
-----------------
-
-Linux, OpenBSD, Windows (cygwin, mingw), DOS.
+- C compiler (recommended to support C99 and POSIX >= 200809).
 
 
 Optional dependencies
 ---------------------
 
-- POSIX shell (used by sfeed_update and sfeed_opml_export).
-- curl  (used by sfeed_update, http://curl.haxx.se/).
-- iconv (used by sfeed_update, http://www.gnu.org/software/libiconv/).
+- POSIX shell
+  used by sfeed_update and sfeed_opml_export.
+- curl: http://curl.haxx.se/
+  used by sfeed_update, can be replaced with any tool like wget, fetch.
+- iconv command-line utilities: http://www.gnu.org/software/libiconv/
+  used by sfeed_update. If your RSS/Atom feeds are already utf-8 then you
+  don't need this.
+
+
+Platforms tested
+----------------
+
+- Linux
+- OpenBSD
+- Windows (cygwin, mingw).
+- DOS.
 
 
 Files
