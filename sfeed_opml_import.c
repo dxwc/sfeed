@@ -30,7 +30,8 @@ xml_handler_start_element(XMLParser *p, const char *tag, size_t taglen) {
 
 static void
 xml_handler_end_element(XMLParser *p, const char *tag, size_t taglen,
-	int isshort) {
+	int isshort)
+{
 	if(istag(tag, "outline")) {
 		printf("\tfeed \"%s\" \"%s\" \"%s\"\n",
 		       feedname[0] ? feedname : "unnamed",
@@ -41,14 +42,15 @@ xml_handler_end_element(XMLParser *p, const char *tag, size_t taglen,
 
 static void
 xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
-	const char *name, size_t namelen, const char *value, size_t valuelen) {
+	const char *name, size_t namelen, const char *value, size_t valuelen)
+{
 	if(istag(tag, "outline")) {
 		if(isattr(name, "text") || isattr(name, "title"))
-			strncpy(feedname, value, sizeof(feedname) - 1);
+			strlcpy(feedname, value, sizeof(feedname));
 		else if(isattr(name, "htmlurl"))
-			strncpy(basesiteurl, value, sizeof(basesiteurl) - 1);
+			strlcpy(basesiteurl, value, sizeof(basesiteurl));
 		else if(isattr(name, "xmlurl"))
-			strncpy(feedurl, value, sizeof(feedurl) - 1);
+			strlcpy(feedurl, value, sizeof(feedurl));
 	}
 }
 
