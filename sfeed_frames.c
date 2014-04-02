@@ -115,16 +115,16 @@ main(int argc, char **argv) {
 		mkdir(basepath, S_IRWXU);
 
 	/* write main index page */
-	if(basepathlen + strlen("/index.html") < sizeof(dirpath) - 1)
-		sprintf(dirpath, "%s/index.html", basepath);
+/*	if(basepathlen + strlen("/index.html") < sizeof(dirpath) - 1)*/
+	snprintf(dirpath, sizeof(dirpath), "%s/index.html", basepath);
 	if(!(fpindex = fopen(dirpath, "w+b")))
 		die("can't write index.html");
-	if(basepathlen + strlen("/menu.html") < sizeof(dirpath) - 1)
-		sprintf(dirpath, "%s/menu.html", basepath);
+/*	if(basepathlen + strlen("/menu.html") < sizeof(dirpath) - 1)*/
+	snprintf(dirpath, sizeof(dirpath), "%s/menu.html", basepath);
 	if(!(fpmenu = fopen(dirpath, "w+b")))
 		die("can't write menu.html");
-	if(basepathlen + strlen("/items.html") < sizeof(dirpath) - 1)
-		sprintf(dirpath, "%s/items.html", basepath);
+/*	if(basepathlen + strlen("/items.html") < sizeof(dirpath) - 1)*/
+	snprintf(dirpath, sizeof(dirpath), "%s/items.html", basepath);
 	if(!(fpitems = fopen(dirpath, "w+b")))
 		die("can't write items.html");
 	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
@@ -155,8 +155,8 @@ main(int argc, char **argv) {
 			if(!(namelen = makepathname(name, sizeof(name) - 1, fields[FieldFeedName])))
 				continue;
 
-			if(basepathlen + namelen + 1 < sizeof(dirpath) - 1)
-				sprintf(dirpath, "%s/%s", basepath, name);
+/*			if(basepathlen + namelen + 1 < sizeof(dirpath) - 1)*/
+				snprintf(dirpath, sizeof(dirpath), "%s/%s", basepath, name);
 			/* TODO: handle error. */
 			if(stat(dirpath, &st) == -1) {
 				if(mkdir(dirpath, S_IRWXU) == -1) {
@@ -166,10 +166,11 @@ main(int argc, char **argv) {
 			}
 			/* TODO: test, replaces strncpy (strncpy is slow) */
 			reldirpath[0] = '\0';
-			if(namelen < sizeof(reldirpath) - 2) {
-				memcpy(reldirpath, name, namelen + 1); /* copy including nul byte */
+/*			if(namelen < sizeof(reldirpath) - 2) {*/
+				strlcpy(reldirpath, name, sizeof(reldirpath));
+				/*memcpy(reldirpath, name, namelen + 1);*/ /* copy including nul byte */
 	/*			reldirpath[namelen] = '\0';*/
-			}
+/*			}*/
 	/*		strncpy(reldirpath, name, sizeof(reldirpath) - 1);*/
 
 
@@ -218,10 +219,10 @@ main(int argc, char **argv) {
 		/* write content */
 		if(!(namelen = makepathname(name, sizeof(name), fields[FieldTitle])))
 			continue;
-		if(strlen(dirpath) + namelen + strlen("/.html") < sizeof(filepath) - 1)
-			sprintf(filepath, "%s/%s.html", dirpath, name);
-		if(strlen(reldirpath) + namelen + strlen("/.html") < sizeof(relfilepath) - 1)
-			sprintf(relfilepath, "%s/%s.html", reldirpath, name);
+/*		if(strlen(dirpath) + namelen + strlen("/.html") < sizeof(filepath) - 1)*/
+		snprintf(filepath, sizeof(filepath), "%s/%s.html", dirpath, name);
+/*		if(strlen(reldirpath) + namelen + strlen("/.html") < sizeof(relfilepath) - 1)*/
+		snprintf(relfilepath, sizeof(relfilepath), "%s/%s.html", reldirpath, name);
 		if(!fileexists(filepath) && (fpcontent = fopen(filepath, "w+b"))) {
 			fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
 			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>\n"
