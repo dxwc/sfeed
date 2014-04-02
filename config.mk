@@ -17,12 +17,12 @@ LIBS = -lc
 #LDFLAGS = ${LIBS}
 
 # optimized
-CFLAGS = -O2 -std=c99 -DVERSION=\"${VERSION}\" -D_POSIX_C_SOURCE=200809L
-LDFLAGS = -s ${LIBS}
+CFLAGS += -O2 -std=c99 -DVERSION=\"${VERSION}\" -D_POSIX_C_SOURCE=200809L
+LDFLAGS += -s ${LIBS}
 
 # Solaris
 #CFLAGS = -fast ${INCS} -DVERSION=\"${VERSION}\"
 #LDFLAGS = ${LIBS}
 
 # compiler and linker
-CC = cc
+#CC = cc
