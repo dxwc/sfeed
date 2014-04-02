@@ -4,6 +4,7 @@
 #include <string.h>
 #include <strings.h>
 
+#include "util.h"
 #include "xml.h"
 
 static XMLParser parser; /* XML parser state */

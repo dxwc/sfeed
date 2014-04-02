@@ -26,9 +26,9 @@ sfeed: sfeed.o xml.o util.o
 	@echo CC -o $@
 	@${CC} -o $@ sfeed.o xml.o util.o ${LDFLAGS}
 
-sfeed_opml_import: sfeed_opml_import.o xml.o
+sfeed_opml_import: sfeed_opml_import.o xml.o util.o
 	@echo CC -o $@
-	@${CC} -o $@ sfeed_opml_import.o xml.o ${LDFLAGS}
+	@${CC} -o $@ sfeed_opml_import.o xml.o util.o ${LDFLAGS}
 
 sfeed_plain: sfeed_plain.o util.o
 	@echo CC -o $@
