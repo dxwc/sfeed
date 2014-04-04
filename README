@@ -13,6 +13,7 @@ Dependencies
 Optional dependencies
 ---------------------
 
+- make (for Makefile) or mk (for mkfile) (plan9 or 9base).
 - POSIX shell
   used by sfeed_update and sfeed_opml_export.
 - curl: http://curl.haxx.se/
@@ -96,13 +97,20 @@ feed url                 - string (extra field added by sfeed_update)
 item baseurl site        - string (extra field added by sfeed_update)
 
 
-Usage
------
+Build and install
+-----------------
 
-To build and install (respects DESTDIR and PREFIX variable):
+Using make (respects DESTDIR and PREFIX variable):
 
 make install
 
+or using plan9 mk:
+
+mk install
+
+
+Usage
+-----
 
 To update feeds and format the feeds file (configfile argument is optional):
 
