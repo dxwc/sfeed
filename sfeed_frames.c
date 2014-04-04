@@ -56,7 +56,7 @@ printcontent(const char *s, FILE *fp) {
 			else if(*p == 'n' && len)
 				fputc('\n', fp);
 			else
-				fputc(p); /* unknown */
+				fputc(*p, fp); /* unknown */
 			len = 0;
 		} else {
 			fputc(*p, fp);
@@ -120,39 +120,25 @@ main(int argc, char **argv) {
 		mkdir(basepath, S_IRWXU);
 
 	/* write main index page */
-/*	if(basepathlen + strlen("/index.html") < sizeof(dirpath) - 1)*/
-	snprintf(dirpath, sizeof(dirpath), "%s/index.html", basepath);
+	if(snprintf(dirpath, sizeof(dirpath), "%s/index.html", basepath) <= 0)
+		die("snprintf() format error");
 	if(!(fpindex = fopen(dirpath, "w+b")))
 		die("can't write index.html");
-/*	if(basepathlen + strlen("/menu.html") < sizeof(dirpath) - 1)*/
-	snprintf(dirpath, sizeof(dirpath), "%s/menu.html", basepath);
+	if(snprintf(dirpath, sizeof(dirpath), "%s/menu.html", basepath) <= 0)
+		die("snprintf() format error");
 	if(!(fpmenu = fopen(dirpath, "w+b")))
 		die("can't write menu.html");
-/*	if(basepathlen + strlen("/items.html") < sizeof(dirpath) - 1)*/
-	snprintf(dirpath, sizeof(dirpath), "%s/items.html", basepath);
+	if(snprintf(dirpath, sizeof(dirpath), "%s/items.html", basepath) <= 0)
+		die("snprintf() format error");
 	if(!(fpitems = fopen(dirpath, "w+b")))
 		die("can't write items.html");
 	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
 	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>"
 	      "<body class=\"frame\"><div id=\"items\">", fpitems);
+
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
-
-
-/*
-
-		dirpath[0] = '\0';
-		filepath[0] = '\0';
-		reldirpath[0] = '\0';
-		relfilepath[0] = '\0';
-
-
-*/
-
-
 		/* first of feed section or new feed section. */
 		if(!totalfeeds || (feedcurrent && strcmp(feedcurrent->name, fields[FieldFeedName]))) {
-
-
 			/* TODO: makepathname isnt necesary if fields[FieldFeedName] is the same as the previous line */
 			/* TODO: move this part below where FieldFeedName is checked if its different ? */
 
@@ -160,32 +146,20 @@ main(int argc, char **argv) {
 			if(!(namelen = makepathname(name, sizeof(name) - 1, fields[FieldFeedName])))
 				continue;
 
-/*			if(basepathlen + namelen + 1 < sizeof(dirpath) - 1)*/
-				snprintf(dirpath, sizeof(dirpath), "%s/%s", basepath, name);
-			/* TODO: handle error. */
+			if(snprintf(dirpath, sizeof(dirpath), "%s/%s", basepath, name) <= 0)
+				die("snprintf() format error");
+
+			/* directory doesn't exist: try to create it. */
 			if(stat(dirpath, &st) == -1) {
 				if(mkdir(dirpath, S_IRWXU) == -1) {
 					fprintf(stderr, "sfeed_frames: can't make directory '%s': %s\n", dirpath, strerror(errno));
 					exit(EXIT_FAILURE);
 				}
 			}
-			/* TODO: test, replaces strncpy (strncpy is slow) */
-			reldirpath[0] = '\0';
-/*			if(namelen < sizeof(reldirpath) - 2) {*/
-				strlcpy(reldirpath, name, sizeof(reldirpath));
-				/*memcpy(reldirpath, name, namelen + 1);*/ /* copy including nul byte */
-	/*			reldirpath[namelen] = '\0';*/
-/*			}*/
-	/*		strncpy(reldirpath, name, sizeof(reldirpath) - 1);*/
-
-
-
-
+			strlcpy(reldirpath, name, sizeof(reldirpath));
 
 			if(!(f = calloc(1, sizeof(struct feed))))
 				die("can't allocate enough memory");
-
-
 
 			if(totalfeeds) { /* end previous one. */
 				fputs("</table>\n", fpitems);
@@ -193,7 +167,6 @@ main(int argc, char **argv) {
 
 				feedcurrent->next = f;
 				feedcurrent = feedcurrent->next;
-
 
 
 			} else {
@@ -224,10 +197,10 @@ main(int argc, char **argv) {
 		/* write content */
 		if(!(namelen = makepathname(name, sizeof(name), fields[FieldTitle])))
 			continue;
-/*		if(strlen(dirpath) + namelen + strlen("/.html") < sizeof(filepath) - 1)*/
-		snprintf(filepath, sizeof(filepath), "%s/%s.html", dirpath, name);
-/*		if(strlen(reldirpath) + namelen + strlen("/.html") < sizeof(relfilepath) - 1)*/
-		snprintf(relfilepath, sizeof(relfilepath), "%s/%s.html", reldirpath, name);
+		if(snprintf(filepath, sizeof(filepath), "%s/%s.html", dirpath, name) <= 0)
+			die("snprintf() format error");
+		if(snprintf(relfilepath, sizeof(relfilepath), "%s/%s.html", reldirpath, name) <= 0)
+			die("snprintf() format error");
 		if(!fileexists(filepath) && (fpcontent = fopen(filepath, "w+b"))) {
 			fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
 			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>\n"
