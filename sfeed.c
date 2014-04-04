@@ -66,7 +66,6 @@ static int feeditemtagid = 0; /* unique number for parsed tag (faster comparison
 static int iscontent = 0;
 static int iscontenttag = 0;
 static size_t attrcount = 0;
-static char *standardtz = NULL; /* TZ variable at start of program */
 static XMLParser parser; /* XML parser state */
 static char *append = NULL;
 
