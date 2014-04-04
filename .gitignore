@@ -1,8 +1,11 @@
 *.o
+core
+a.out
 sfeed
 sfeed_plain
 sfeed_html
-sfeed_opml_import
 sfeed_frames
+sfeed_opml_import
+sfeed_stats
 sfeed_web
 sfeed_xmlenc
