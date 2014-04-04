@@ -45,6 +45,7 @@ static void
 printcontent(const char *s, FILE *fp) {
 	const char *p;
 	int len = 0;
+
 	for(p = s; *p; p++) {
 		if(*p == '\\') {
 			p++;
@@ -54,6 +55,9 @@ printcontent(const char *s, FILE *fp) {
 				fputc('\t', fp);
 			else if(*p == 'n' && len)
 				fputc('\n', fp);
+			else
+				fputc(p); /* unknown */
+			len = 0;
 		} else {
 			fputc(*p, fp);
 			len++;
@@ -66,6 +70,7 @@ static size_t
 makepathname(char *buffer, size_t bufsiz, const char *path) {
 	const char *p = path;
 	size_t i = 0, r = 0;
+
 	for(; *p && i < bufsiz; p++) {
 		if(isalpha((int)*p) || isdigit((int)*p)) {
 			buffer[i++] = tolower((int)*p);
