@@ -341,7 +341,7 @@ parsetime(const char *s, char *buf, size_t bufsiz) {
 		NULL
 	};
 	char *p;
-	int offset, i;
+	int i;
 
 	if(buf)
 		buf[0] = '\0';
@@ -349,20 +349,21 @@ parsetime(const char *s, char *buf, size_t bufsiz) {
 	for(i = 0; i < LEN(formats); i++) {
 		if((p = strptime(s, formats[i], &tm))) {
 			tm.tm_isdst = -1; /* don't use DST */
-			t = mktime(&tm);
-			offset = gettimetz(p, tz, sizeof(tz));
+			if((t = mktime(&tm)) == -1) /* error */
+				return t;
+			t -= gettimetz(p, tz, sizeof(tz));
 			if(buf)
 				snprintf(buf, bufsiz, "%04d-%02d-%02d %02d:%02d:%02d %-.16s",
 				         tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 				         tm.tm_hour, tm.tm_min, tm.tm_sec, tz);
-			t -= offset;
 			break;
 		}
 	}
 	return t;
 }
 
-static void /* print text, escape tabs, newline and carriage return etc */
+/* print text, escape tabs, newline and carriage return etc */
+static void
 string_print(String *s) {
 	const char *p;
 	char buffer[BUFSIZ + 4];
