@@ -7,6 +7,8 @@
 	[x] html content isnt unescaped (see ContentType (plain or html)), (sfeed_frames and sfeed_html).
 	[ ] in links browsers: items are centered in the table for some reason.
 
+[ ] compile and test on plan9
+
 [x] add plan9 mkfile?
 
 [ ] feeds file: empty tab (encoding cant be detected?)

@@ -6,7 +6,7 @@ Features:
 
 	* Feeds are now by default updated in parallel for an increase in performance.
 	* Auto-detect XML character set encoding (sfeed_xmlenc).
-	* Auto-detect RSS/Atom feeds from web-pages (sfeed_web).
+	* Find RSS/Atom feeds from web-pages (sfeed_web).
 	* Added sfeed_frames, a formatting program to output feeds as a HTML file with
 	  frames. It's optimized to look good in older browsers that don't necesarily
 	  support CSS or modern HTML, like links. See the man page for more details.

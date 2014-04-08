@@ -29,7 +29,7 @@ Platforms tested
 - Linux
 - OpenBSD
 - Windows (cygwin, mingw).
-- DOS.
+- DOS
 
 
 Files
@@ -44,8 +44,8 @@ sfeed_html        - Format feeds file (TSV) from sfeed_update to HTML.
 sfeed_frames      - Format feeds as a HTML file with frames.
 sfeed_opml_import - Generate a sfeedrc config file based on an opml file.
 sfeed_opml_export - Generate an opml file based on a sfeedrc config file.
-sfeed_xmlenc      - Detect character set encoding from XML stream.
-sfeed_web         - Detect url to RSS/Atom feed from a webpage.
+sfeed_xmlenc      - Detect character-set encoding from XML stream.
+sfeed_web         - Find urls to RSS/Atom feed from a webpage.
 sfeedrc.example   - Example config file.
 style.css         - Example stylesheet to use with sfeed_html or sfeed_frames.
 
@@ -111,6 +111,15 @@ mk install
 
 Usage
 -----
+
+Find RSS/Atom feed urls from a webpage:
+
+$ url="codemadness.org"; wget -L -q -O - "$url" | sfeed_web "$url"
+
+output:
+	application/rss+xml http://codemadness.org/blog/rss.xml
+	application/atom+xml http://codemadness.org/blog/atom.xml
+
 
 To update feeds and format the feeds file (configfile argument is optional):
 
