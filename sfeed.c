@@ -151,6 +151,7 @@ namedentitytostr(const char *e, char *buffer, size_t bufsiz) {
 		{ NULL, NULL }
 	};
 	size_t i;
+
 	if(*e != '&' || bufsiz < 2) /* doesn't start with & */
 		return 0;
 	for(i = 0; entities[i][0]; i++) {
@@ -167,10 +168,10 @@ namedentitytostr(const char *e, char *buffer, size_t bufsiz) {
 static int
 entitytostr(const char *e, char *buffer, size_t bufsiz) {
 	unsigned long l = 0, cp = 0;
+
 	if(*e != '&' || bufsiz < 5) /* doesnt start with & */
 		return 0;
-	e++;
-	if(*e == '#') {
+	if(*(e+1) == '#') {
 		e++;
 		if(*e == 'x') {
 			e++;
@@ -582,7 +583,7 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen) {
 	char buffer[16];
 	size_t len;
 
-	/* TODO: for content HTML data entities, convert &amp; to &? */
+	/* TODO: for content HTML data entities, convert &amp; to & ? */
 	if((len = entitytostr(data, buffer, sizeof(buffer))))
 		xml_handler_data(p, buffer, len);
 	else
