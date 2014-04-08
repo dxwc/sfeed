@@ -72,15 +72,17 @@ afgets(char **p, size_t *size, FILE *fp) {
 	return NULL;
 }
 
-void /* print link; if link is relative use baseurl to make it absolute */
+/* print link; if link is relative use baseurl to make it absolute */
+void
 printlink(const char *link, const char *baseurl, FILE *fp) {
 	const char *ebaseproto, *ebasedomain, *p;
 	int isrelative;
 
 	/* protocol part */
 	for(p = link; *p && (isalpha((int)*p) || isdigit((int)*p) || *p == '+' || *p == '-' || *p == '.'); p++);
+	/* relative link (baseurl is used). */
 	isrelative = strncmp(p, "://", strlen("://"));
-	if(isrelative) { /* relative link (baseurl is used). */
+	if(isrelative) {
 		if((ebaseproto = strstr(baseurl, "://"))) {
 			ebaseproto += strlen("://");
 			fwrite(baseurl, 1, ebaseproto - baseurl, fp);
@@ -92,13 +94,15 @@ printlink(const char *link, const char *baseurl, FILE *fp) {
 		if(link[0] == '/') { /* relative to baseurl domain (not path).  */
 			if(link[1] == '/') /* absolute url but with protocol from baseurl. */
 				link += 2;
-			else if((ebasedomain = strchr(ebaseproto, '/'))) /* relative to baseurl and baseurl path. */
+			else if((ebasedomain = strchr(ebaseproto, '/')))
+				/* relative to baseurl and baseurl path. */
 				fwrite(ebaseproto, 1, ebasedomain - ebaseproto, fp);
 			else
 				fputs(ebaseproto, stdout);
-		} else if((ebasedomain = strrchr(ebaseproto, '/'))) /* relative to baseurl and baseurl path. */
+		} else if((ebasedomain = strrchr(ebaseproto, '/'))) {
+			/* relative to baseurl and baseurl path. */
 			fwrite(ebaseproto, 1, ebasedomain - ebaseproto + 1, fp);
-		else {
+		} else {
 			fputs(ebaseproto, fp);
 			if(*baseurl && *link)
 				fputc('/', fp);
@@ -108,13 +112,15 @@ printlink(const char *link, const char *baseurl, FILE *fp) {
 }
 
 unsigned int
-parseline(char **line, size_t *size, char **fields, unsigned int maxfields, int separator, FILE *fp) {
+parseline(char **line, size_t *size, char **fields,
+          unsigned int maxfields, int separator, FILE *fp)
+{
 	unsigned int i = 0;
 	char *prev, *s;
 
 	if(afgets(line, size, fp)) {
 		for(prev = *line; (s = strchr(prev, separator)) && i <= maxfields; i++) {
-			*s = '\0'; /* null terminate string. */
+			*s = '\0';
 			fields[i] = prev;
 			prev = s + 1;
 		}

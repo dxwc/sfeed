@@ -38,7 +38,7 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 		return;
 	if(isbase) {
 		if(!strncasecmp(name, "href", namelen))
-			strlcpy(basehref, value, sizeof(basehref) - 1);
+			strlcpy(basehref, value, sizeof(basehref));
 	} else if(islink) {
 		if(!strncasecmp(name, "type", namelen)) {
 			if(!strncasecmp(value, "application/atom", strlen("application/atom")) ||
@@ -46,7 +46,7 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 				isfeedlink = 1;
 			}
 		} else if(!strncasecmp(name, "href", namelen))
-			strlcpy(feedlink, value, sizeof(feedlink) - 1);
+			strlcpy(feedlink, value, sizeof(feedlink));
 	}
 }
 
@@ -56,7 +56,7 @@ main(int argc, char **argv) {
 
 	/* base href */
 	if(argc > 1)
-		strlcpy(basehref, argv[1], sizeof(basehref) - 1);
+		strlcpy(basehref, argv[1], sizeof(basehref));
 
 	xmlparser_init(&x, stdin);
 	x.xmltagstart = xmltagstart;

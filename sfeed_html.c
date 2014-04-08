@@ -39,11 +39,11 @@ main(void) {
 	fputs(
 		"<!DOCTYPE HTML>\n"
 		"<html dir=\"ltr\" lang=\"en\">\n"
-		"	<head>\n"
-		"		<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
-		"		<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />\n"
-		"	</head>\n"
-		"	<body class=\"noframe\">\n",
+		"\t<head>\n"
+		"\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
+		"\t\t<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />\n"
+		"\t</head>\n"
+		"\t<body class=\"noframe\">\n",
 	stdout);
 
 	if(!(feedcurrent = calloc(1, sizeof(struct feed))))
@@ -55,7 +55,8 @@ main(void) {
 		isnew = (parsedtime >= comparetime);
 		islink = (fields[FieldLink][0] != '\0');
 		/* first of feed section or new feed section. */
-		if(!totalfeeds || (feedcurrent && strcmp(feedcurrent->name, fields[FieldFeedName]))) { /* TODO: allocate feedcurrent before here, feedcurrent can be NULL */
+		/* TODO: allocate feedcurrent before here, feedcurrent can be NULL */
+		if(!totalfeeds || (feedcurrent && strcmp(feedcurrent->name, fields[FieldFeedName]))) {
 			if(!(f = calloc(1, sizeof(struct feed))))
 				die("can't allocate enough memory");
 			/*f->next = NULL;*/
@@ -146,19 +147,9 @@ main(void) {
 		}
 		fputs("\t\t</ul>\n\t</div>\n", stdout);
 	}
-	/* toggle showing only new with "n" */
-	fputs("<script type=\"text/javascript\">"
-	      "var b=document.body;window.onkeypress=function(e){"
-	      "switch(String.fromCharCode(e.which)){"
-	      "case 'n':var n='newonly';b.className=/*toggle new only*/"
-	      "b.className.indexOf(n)==-1?b.className+' '+n:b.className.replace(n,'');break;"
-	      "case 'm':case 's':b.querySelector('#sidebar a').focus();break; /*focus menu*/"
-	      "case 'i':b.querySelector('#items').focus();break;/*focus items*/"
-	      "}};"
-	      "</script>", stdout);
 	fputs(
-		"	</body>\n"
-		"	<title>Newsfeed (",
+		"\t</body>\n"
+		"\t<title>Newsfeed (",
 	stdout);
 	fprintf(stdout, "%lu", totalnew);
 	fputs(")</title>\n</html>", stdout);

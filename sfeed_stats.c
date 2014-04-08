@@ -44,7 +44,8 @@ main(void) {
 		isnew = (parsedtime >= comparetime);
 		islink = (fields[FieldLink][0] != '\0');
 		/* first of feed section or new feed section. */
-		if(!totalfeeds || (feedcurrent && strcmp(feedcurrent->name, fields[FieldFeedName]))) { /* TODO: allocate feedcurrent before here, feedcurrent can be NULL */
+		/* TODO: allocate feedcurrent before here, feedcurrent can be NULL */
+		if(!totalfeeds || (feedcurrent && strcmp(feedcurrent->name, fields[FieldFeedName]))) {
 			if(!(f = calloc(1, sizeof(struct feed))))
 				die("can't allocate enough memory");
 			if(totalfeeds) { /* end previous one. */
@@ -79,7 +80,8 @@ main(void) {
 	for(feedcurrent = feeds; feedcurrent; feedcurrent = feedcurrent->next) {
 		if(!feedcurrent->name || feedcurrent->name[0] == '\0')
 			continue;
-		fprintf(stdout, "%c %-20.20s [%4lu/%-4lu]", feedcurrent->totalnew > 0 ? 'N' : ' ',
+		fprintf(stdout, "%c %-20.20s [%4lu/%-4lu]",
+		        feedcurrent->totalnew > 0 ? 'N' : ' ',
 		        feedcurrent->name, feedcurrent->totalnew, feedcurrent->total);
 		if(feedcurrent->timenewestformat && feedcurrent->timenewestformat[0])
 			fprintf(stdout, " %s", feedcurrent->timenewestformat);

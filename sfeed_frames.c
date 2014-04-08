@@ -8,16 +8,19 @@
 #include <sys/stat.h>
 #include <utime.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "util.h"
 
 static unsigned int showsidebar = 1; /* show sidebar ? */
 
-static FILE *fpindex = NULL, *fpitems = NULL, *fpmenu = NULL, *fpcontent = NULL;
+static FILE *fpindex = NULL, *fpitems = NULL, *fpmenu = NULL;
+static FILE *fpcontent = NULL;
 static char *line = NULL;
-static struct feed *feeds = NULL; /* start of feeds linked-list. */
+static struct feed *feeds = NULL;
 
-static void /* print error message to stderr */
+/* print string to stderr and exit program with EXIT_FAILURE */
+static void
 die(const char *s) {
 	fputs("sfeed_frames: ", stderr);
 	fputs(s, stderr);
@@ -64,12 +67,11 @@ printcontent(const char *s, FILE *fp) {
 
 /* TODO: bufsiz - 1 ? */
 static size_t
-makepathname(char *buffer, size_t bufsiz, const char *path) {
-	const char *p = path;
+makepathname(const char *path, char *buffer, size_t bufsiz) {
 	size_t i = 0, r = 0;
 
-	for(; *p && i < bufsiz; p++) {
-		if(isalpha((int)*p) || isdigit((int)*p)) {
+	for(; *path && i < bufsiz - 1; p++) {
+		if(isalpha((int)*path) || isdigit((int)*path)) {
 			buffer[i++] = tolower((int)*p);
 			r = 0;
 		} else {
@@ -92,16 +94,16 @@ fileexists(const char *path) {
 
 int
 main(int argc, char **argv) {
+	struct feed *f, *feedcurrent = NULL;
 	char *fields[FieldLast];
 	char name[256]; /* TODO: bigger size? */
 	char *basepath = ".";
-	 /* TODO: max path size? */
-	char dirpath[1024], filepath[1024], reldirpath[1024], relfilepath[1024];
+	char dirpath[PATH_MAX], filepath[PATH_MAX];
+	char reldirpath[PATH_MAX], relfilepath[PATH_MAX];
 	unsigned long totalfeeds = 0, totalnew = 0;
 	unsigned int isnew;
-	struct feed *f, *feedcurrent = NULL;
 	time_t parsedtime, comparetime;
-	size_t size = 0, namelen = 0, basepathlen = 0;
+	size_t linesize = 0, namelen, basepathlen;
 	struct stat st;
 	struct utimbuf contenttime;
 
@@ -133,14 +135,14 @@ main(int argc, char **argv) {
 	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>"
 	      "<body class=\"frame\"><div id=\"items\">", fpitems);
 
-	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
+	while(parseline(&line, &linesize, fields, FieldLast, '\t', stdin) > 0) {
 		/* first of feed section or new feed section. */
 		if(!totalfeeds || (feedcurrent && strcmp(feedcurrent->name, fields[FieldFeedName]))) {
 			/* TODO: makepathname isnt necesary if fields[FieldFeedName] is the same as the previous line */
 			/* TODO: move this part below where FieldFeedName is checked if its different ? */
 
 			/* make directory for feedname */
-			if(!(namelen = makepathname(name, sizeof(name) - 1, fields[FieldFeedName])))
+			if(!(namelen = makepathname(fields[FieldFeedName], name, sizeof(name))))
 				continue;
 
 			if(snprintf(dirpath, sizeof(dirpath), "%s/%s", basepath, name) <= 0)
@@ -192,7 +194,7 @@ main(int argc, char **argv) {
 		}
 
 		/* write content */
-		if(!(namelen = makepathname(name, sizeof(name), fields[FieldTitle])))
+		if(!(namelen = makepathname(fields[FieldTitle], name, sizeof(name))))
 			continue;
 		if(snprintf(filepath, sizeof(filepath), "%s/%s.html", dirpath, name) <= 0)
 			die("snprintf() format error");

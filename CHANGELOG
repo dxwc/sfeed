@@ -4,10 +4,7 @@ v0.9
 Features:
 ---------
 
-	* Feeds are now by default updated in parallel for a huge speedup in performance.
-	* Added hotkeys to sfeed_html to toggle showing only new items (n key) and
-	  focusing the menu (s key) or items (i key) using a tiny bit of
-	  javascript.
+	* Feeds are now by default updated in parallel for an increase in performance.
 	* Auto-detect XML character set encoding (sfeed_xmlenc).
 	* Auto-detect RSS/Atom feeds from web-pages (sfeed_web).
 	* Added sfeed_frames, a formatting program to output feeds as a HTML file with
