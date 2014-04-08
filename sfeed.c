@@ -57,11 +57,11 @@ typedef struct feedtag {
 } FeedTag;
 
 typedef struct feedcontext {
-	char tag[256];
-	int tagid;
+	String *field; /* pointer to current FeedItem field String */
+	FeedItem item; /* data for current feed item */
+	char tag[256]; /* current tag _inside_ a feeditem */
+	int tagid;     /* unique number for parsed tag (faster comparison) */
 	size_t taglen;
-	String *field;
-	FeedItem item;
 	int iscontent;
 	int iscontenttag;
 	int attrcount;
@@ -70,19 +70,9 @@ typedef struct feedcontext {
 static void die(const char *s);
 static void cleanup(void);
 
-#if 0
-static String *ctx.field = NULL; /* pointer to current FeedItem field String */
-static FeedItem feeditem; /* data for current feed item */
-static char ctx.tag[256] = ""; /* current tag _inside_ a feeditem */
-static size_t ctx.taglen = 0;
-static int ctx.tagid = 0; /* unique number for parsed tag (faster comparison) */
-static int ctx.iscontent = 0;
-static int ctx.iscontenttag = 0;
-static size_t ctx.attrcount = 0;
-#endif
 static FeedContext ctx;
 static XMLParser parser; /* XML parser state */
-static char *append = NULL;
+static char *append = NULL; /* append string after each output line */
 
 /* TODO: optimize lookup */
 static int /* unique number for parsed tag (faster comparison) */
