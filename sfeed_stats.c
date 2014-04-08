@@ -27,64 +27,63 @@ int
 main(void) {
 	char *fields[FieldLast], timenewestformat[64] = "";
 	unsigned long totalfeeds = 0, totalnew = 0, totalitems = 0;
-	unsigned int islink, isnew;
-	struct feed *f, *feedcurrent = NULL;
+	unsigned int isnew;
+	struct feed *f, *fcur = NULL;
 	time_t parsedtime, comparetime, timenewest = 0;
 	size_t size = 0;
 
 	atexit(cleanup);
 	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
 
-	if(!(feedcurrent = calloc(1, sizeof(struct feed))))
+	if(!(fcur = calloc(1, sizeof(struct feed))))
 		die("can't allocate enough memory");
-	feeds = feedcurrent;
+	feeds = fcur;
 
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
 		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
 		isnew = (parsedtime >= comparetime);
-		islink = (fields[FieldLink][0] != '\0');
 		/* first of feed section or new feed section. */
-		/* TODO: allocate feedcurrent before here, feedcurrent can be NULL */
-		if(!totalfeeds || (feedcurrent && strcmp(feedcurrent->name, fields[FieldFeedName]))) {
+		/* TODO: allocate fcur before here, fcur can be NULL */
+		if(!totalfeeds || (fcur && strcmp(fcur->name, fields[FieldFeedName]))) {
 			if(!(f = calloc(1, sizeof(struct feed))))
 				die("can't allocate enough memory");
 			if(totalfeeds) { /* end previous one. */
-				feedcurrent->next = f;
-				feedcurrent = f;
+				fcur->next = f;
+				fcur = f;
 			} else {
-				feedcurrent = f;
-				feeds = feedcurrent; /* first item. */
+				fcur = f;
+				feeds = fcur; /* first item. */
 			}
 			if(parsedtime > timenewest) {
 				timenewest = parsedtime;
 				strlcpy(timenewestformat, fields[FieldTimeFormatted],
 				        sizeof(timenewestformat));
 			}
-			if(parsedtime > feedcurrent->timenewest) {
-				feedcurrent->timenewest = parsedtime;
-				strlcpy(feedcurrent->timenewestformat, fields[FieldTimeFormatted],
-				        sizeof(feedcurrent->timenewestformat));
+			if(parsedtime > fcur->timenewest) {
+				fcur->timenewest = parsedtime;
+				strlcpy(fcur->timenewestformat, fields[FieldTimeFormatted],
+				        sizeof(fcur->timenewestformat));
 			}
 
-			/* TODO: memcpy and make feedcurrent->name static? */
-			if(!(feedcurrent->name = strdup(fields[FieldFeedName])))
+			/* TODO: memcpy and make fcur->name static? */
+			if(!(fcur->name = strdup(fields[FieldFeedName])))
 				die("can't allocate enough memory");
 
 			totalfeeds++;
 		}
 		totalnew += isnew;
-		feedcurrent->totalnew += isnew;
-		feedcurrent->total++;
+		fcur->totalnew += isnew;
+		fcur->total++;
 		totalitems++;
 	}
-	for(feedcurrent = feeds; feedcurrent; feedcurrent = feedcurrent->next) {
-		if(!feedcurrent->name || feedcurrent->name[0] == '\0')
+	for(fcur = feeds; fcur; fcur = fcur->next) {
+		if(!fcur->name || fcur->name[0] == '\0')
 			continue;
 		fprintf(stdout, "%c %-20.20s [%4lu/%-4lu]",
-		        feedcurrent->totalnew > 0 ? 'N' : ' ',
-		        feedcurrent->name, feedcurrent->totalnew, feedcurrent->total);
-		if(feedcurrent->timenewestformat && feedcurrent->timenewestformat[0])
-			fprintf(stdout, " %s", feedcurrent->timenewestformat);
+		        fcur->totalnew > 0 ? 'N' : ' ',
+		        fcur->name, fcur->totalnew, fcur->total);
+		if(fcur->timenewestformat && fcur->timenewestformat[0])
+			fprintf(stdout, " %s", fcur->timenewestformat);
 		putchar('\n');
 	}
 	printf("  ================================\n");
