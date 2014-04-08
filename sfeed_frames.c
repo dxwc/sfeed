@@ -287,10 +287,10 @@ main(int argc, char **argv) {
 	} else {
 		fputs("<frameset framespacing=\"0\" cols=\"*\" frameborder=\"1\">\n", fpindex);
 	}
-	fputs("	<frameset id=\"frameset\" framespacing=\"0\" cols=\"50%,50%\" frameborder=\"1\">\n"
-	      "		<frame name=\"items\" src=\"items.html\" target=\"items\">\n"
-	      "		<frame name=\"content\" target=\"content\">\n"
-	      "	</frameset>\n"
+	fputs("\t<frameset id=\"frameset\" framespacing=\"0\" cols=\"50%,50%\" frameborder=\"1\">\n"
+	      "\t\t<frame name=\"items\" src=\"items.html\" target=\"items\">\n"
+	      "\t\t<frame name=\"content\" target=\"content\">\n"
+	      "\t</frameset>\n"
 	      "</frameset>\n"
 	      "</html>", fpindex);
 
