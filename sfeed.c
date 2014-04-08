@@ -151,7 +151,7 @@ namedentitytostr(const char *e, char *buffer, size_t bufsiz) {
 		{ NULL, NULL }
 	};
 	size_t i;
-	if(*e != '&' || bufsiz < 2) /* doesnt start with & */
+	if(*e != '&' || bufsiz < 2) /* doesn't start with & */
 		return 0;
 	for(i = 0; entities[i][0]; i++) {
 		/* NOTE: compares max 7 chars */
@@ -356,13 +356,22 @@ parsetime(const char *s, char *buf, size_t bufsiz) {
 static void
 string_print(String *s) {
 	const char *p;
-	char buffer[BUFSIZ + 4];
-	size_t i;
+/*	char buffer[BUFSIZ + 4];
+	size_t i;*/
 
 	if(!s->len)
 		return;
 	/* skip leading whitespace */
 	for(p = s->data; *p && isspace((int)*p); p++);
+	for(; *p; p++) {
+		switch(*p) {
+		case '\n': fputs("\\n", stdout); break;
+		case '\\': fputs("\\\\", stdout); break;
+		case '\t': fputs("\\t", stdout); break;
+		default: putchar(*p); break;
+		}
+	}
+#if 0
 	for(i = 0; *p; p++) {
 		if(ISWSNOSPACE(*p)) { /* isspace(c) && c != ' ' */
 			if(*p == '\n') { /* escape newline */
@@ -386,6 +395,7 @@ string_print(String *s) {
 	}
 	if(i) /* write remaining */
 		fwrite(buffer, 1, i, stdout);
+#endif
 }
 
 static int
