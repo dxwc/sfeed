@@ -8,7 +8,7 @@
 #include "xml.h"
 
 static unsigned int isbase = 0, islink = 0, isfeedlink = 0, found = 0;
-static char feedlink[4096] = "", basehref[4096] = "";
+static char feedlink[4096] = "", basehref[4096] = "", feedtype[256] = "";
 
 static void
 xmltagstart(XMLParser *p, const char *tag, size_t taglen) {
@@ -24,6 +24,10 @@ xmltagstart(XMLParser *p, const char *tag, size_t taglen) {
 static void
 xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort) {
 	if(isfeedlink) {
+		if(*feedtype) {
+			fputs(feedtype, stdout);
+			putchar(' ' );
+		}
 		printlink(feedlink, basehref, stdout);
 		putchar('\n');
 		found++;
@@ -44,6 +48,7 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 			if(!strncasecmp(value, "application/atom", strlen("application/atom")) ||
 			   !strncasecmp(value, "application/rss", strlen("application/rss"))) {
 				isfeedlink = 1;
+				strlcpy(feedtype, value, sizeof(feedtype));
 			}
 		} else if(!strncasecmp(name, "href", namelen))
 			strlcpy(feedlink, value, sizeof(feedlink));
