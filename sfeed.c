@@ -365,12 +365,15 @@ string_print(String *s) {
 	/* skip leading whitespace */
 	for(p = s->data; *p && isspace((int)*p); p++);
 	for(; *p; p++) {
-		switch(*p) {
-		case '\n': fputs("\\n", stdout); break;
-		case '\\': fputs("\\\\", stdout); break;
-		case '\t': fputs("\\t", stdout); break;
-		default: putchar(*p); break;
-		}
+		if(ISWSNOSPACE(*p)) {
+			switch(*p) {
+			case '\n': fputs("\\n", stdout); break;
+			case '\\': fputs("\\\\", stdout); break;
+			case '\t': fputs("\\t", stdout); break;
+			default: break; /* ignore other whitespace chars */
+			}
+		} else
+			putchar(*p);
 	}
 #if 0
 	for(i = 0; *p; p++) {
