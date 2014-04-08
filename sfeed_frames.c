@@ -44,23 +44,20 @@ cleanup(void) {
 static void
 printcontent(const char *s, FILE *fp) {
 	const char *p;
-	int len = 0;
 
 	for(p = s; *p; p++) {
 		if(*p == '\\') {
 			p++;
 			if(*p == '\\')
 				fputc('\\', fp);
-			else if(*p == 't' && len)
+			else if(*p == 't')
 				fputc('\t', fp);
-			else if(*p == 'n' && len)
+			else if(*p == 'n')
 				fputc('\n', fp);
 			else
 				fputc(*p, fp); /* unknown */
-			len = 0;
 		} else {
 			fputc(*p, fp);
-			len++;
 		}
 	}
 }
