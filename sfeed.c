@@ -92,7 +92,7 @@ gettag(int feedtype, const char *name, size_t namelen) {
 	};
 	/* Atom, alphabetical order */
 	static FeedTag atomtag[] = {
-		{ "author", 6, AtomTagAuthor }, /* assume this is: <author><name></name></author> */
+		{ "author", 6, AtomTagAuthor },
 		{ "content", 7, AtomTagContent },
 		{ "id", 2, AtomTagId },
 		{ "link", 4, AtomTagLink },
@@ -417,7 +417,8 @@ isattr(const char *name, size_t len, const char *name2, size_t len2) {
 static void
 xml_handler_data(XMLParser *p, const char *s, size_t len) {
 	if(ctx.field) {
-		/* author>name */
+		/* add only data from <name> inside <author> tag
+		 * or any other non-<author> tag  */
 		if(ctx.tagid != AtomTagAuthor || !strcmp(p->tag, "name"))
 			string_append(ctx.field, s, len);
 	}
@@ -499,8 +500,9 @@ static void
 xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
 	if(ctx.iscontenttag) {
 		/* starts with div, handle as XML, dont convert entities */
-		/* TODO: test properly and do printf() to debug */
-		if(ctx.item.feedtype == FeedTypeAtom && !strncmp(name, "div", strlen("div")))
+		/* TODO: test properly */
+		if(ctx.item.feedtype == FeedTypeAtom &&
+		   !strncmp(name, "div", strlen("div")))
 			p->xmldataentity = NULL;
 	}
 	if(ctx.iscontent) {
@@ -586,11 +588,11 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen) {
 	char buffer[16];
 	size_t len;
 
-	/* TODO: for content HTML data entities, convert &amp; to & ? */
+	/* try to translate entity, else just pass as data */
 	if((len = entitytostr(data, buffer, sizeof(buffer))))
 		xml_handler_data(p, buffer, len);
 	else
-		xml_handler_data(p, data, datalen); /* can't convert entity, just use it's data */
+		xml_handler_data(p, data, datalen);
 }
 
 static void

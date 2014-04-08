@@ -30,7 +30,7 @@ main(void) {
 	char *fields[FieldLast];
 	unsigned long totalfeeds = 0, totalnew = 0;
 	unsigned int islink, isnew;
-	struct feed *f, *feedcurrent = NULL;
+	struct feed *f, *fcur = NULL;
 	time_t parsedtime, comparetime;
 	size_t size = 0;
 
@@ -46,27 +46,27 @@ main(void) {
 		"\t<body class=\"noframe\">\n",
 	stdout);
 
-	if(!(feedcurrent = calloc(1, sizeof(struct feed))))
+	if(!(fcur = calloc(1, sizeof(struct feed))))
 		die("can't allocate enough memory");
-	feeds = feedcurrent;
+	feeds = fcur;
 
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
 		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
 		isnew = (parsedtime >= comparetime);
 		islink = (fields[FieldLink][0] != '\0');
 		/* first of feed section or new feed section. */
-		/* TODO: allocate feedcurrent before here, feedcurrent can be NULL */
-		if(!totalfeeds || (feedcurrent && strcmp(feedcurrent->name, fields[FieldFeedName]))) {
+		/* TODO: allocate fcur before here, fcur can be NULL */
+		if(!totalfeeds || (fcur && strcmp(fcur->name, fields[FieldFeedName]))) {
 			if(!(f = calloc(1, sizeof(struct feed))))
 				die("can't allocate enough memory");
 			/*f->next = NULL;*/
 			if(totalfeeds) { /* end previous one. */
 				fputs("</table>\n", stdout);
-				feedcurrent->next = f;
-				feedcurrent = f;
+				fcur->next = f;
+				fcur = f;
 			} else {
-				feedcurrent = f;
-				feeds = feedcurrent; /* first item. */
+				fcur = f;
+				feeds = fcur; /* first item. */
 				if(fields[FieldFeedName][0] == '\0' || !showsidebar) {
 					/* set nosidebar class on div for styling */
 					fputs("\t\t<div id=\"items\" class=\"nosidebar\">\n", stdout);
@@ -75,31 +75,31 @@ main(void) {
 					fputs("\t\t<div id=\"items\">\n", stdout);
 			}
 
-			/* TODO: memcpy and make feedcurrent->name static? */
-			if(!(feedcurrent->name = strdup(fields[FieldFeedName])))
+			/* TODO: memcpy and make fcur->name static? */
+			if(!(fcur->name = strdup(fields[FieldFeedName])))
 				die("can't allocate enough memory");
 
 
 			/*
-			feedcurrent->totalnew = 0;
-			feedcurrent->total = 0;
-			feedcurrent->next = NULL;*/
+			fcur->totalnew = 0;
+			fcur->total = 0;
+			fcur->next = NULL;*/
 
 			if(fields[FieldFeedName][0] != '\0') {
 				fputs("<h2 id=\"", stdout);
-				printfeednameid(feedcurrent->name, stdout);
+				printfeednameid(fcur->name, stdout);
 				fputs("\"><a href=\"#", stdout);
-				printfeednameid(feedcurrent->name, stdout);
+				printfeednameid(fcur->name, stdout);
 				fputs("\">", stdout);
-				fputs(feedcurrent->name, stdout);
+				fputs(fcur->name, stdout);
 				fputs("</a></h2>\n", stdout);
 			}
 			fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", stdout);
 			totalfeeds++;
 		}
 		totalnew += isnew;
-		feedcurrent->totalnew += isnew;
-		feedcurrent->total++;
+		fcur->totalnew += isnew;
+		fcur->total++;
 		if(isnew)
 			fputs("<tr class=\"n\">", stdout);
 		else
@@ -128,20 +128,20 @@ main(void) {
 		fputs("</table>\n\t\t</div>\n", stdout); /* div items */
 	if(showsidebar) {
 		fputs("\t<div id=\"sidebar\">\n\t\t<ul>\n", stdout);
-		for(feedcurrent = feeds; feedcurrent; feedcurrent = feedcurrent->next) {
-			if(!feedcurrent->name || feedcurrent->name[0] == '\0')
+		for(fcur = feeds; fcur; fcur = fcur->next) {
+			if(!fcur->name || fcur->name[0] == '\0')
 				continue;
-			if(feedcurrent->totalnew)
+			if(fcur->totalnew)
 				fputs("<li class=\"n\"><a href=\"#", stdout);
 			else
 				fputs("<li><a href=\"#", stdout);
-			printfeednameid(feedcurrent->name, stdout);
+			printfeednameid(fcur->name, stdout);
 			fputs("\">", stdout);
-			if(feedcurrent->totalnew > 0)
+			if(fcur->totalnew > 0)
 				fputs("<b><u>", stdout);
-			fputs(feedcurrent->name, stdout);
-			fprintf(stdout, " (%lu)", feedcurrent->totalnew);
-			if(feedcurrent->totalnew > 0)
+			fputs(fcur->name, stdout);
+			fprintf(stdout, " (%lu)", fcur->totalnew);
+			if(fcur->totalnew > 0)
 				fputs("</u></b>", stdout);
 			fputs("</a></li>\n", stdout);
 		}

@@ -70,9 +70,9 @@ static size_t
 makepathname(const char *path, char *buffer, size_t bufsiz) {
 	size_t i = 0, r = 0;
 
-	for(; *path && i < bufsiz - 1; p++) {
+	for(; *path && i < bufsiz - 1; path++) {
 		if(isalpha((int)*path) || isdigit((int)*path)) {
-			buffer[i++] = tolower((int)*p);
+			buffer[i++] = tolower((int)*path);
 			r = 0;
 		} else {
 			if(!r) /* don't repeat '-'. */
@@ -94,7 +94,7 @@ fileexists(const char *path) {
 
 int
 main(int argc, char **argv) {
-	struct feed *f, *feedcurrent = NULL;
+	struct feed *f, *fcur = NULL;
 	char *fields[FieldLast];
 	char name[256]; /* TODO: bigger size? */
 	char *basepath = ".";
@@ -137,7 +137,7 @@ main(int argc, char **argv) {
 
 	while(parseline(&line, &linesize, fields, FieldLast, '\t', stdin) > 0) {
 		/* first of feed section or new feed section. */
-		if(!totalfeeds || (feedcurrent && strcmp(feedcurrent->name, fields[FieldFeedName]))) {
+		if(!totalfeeds || (fcur && strcmp(fcur->name, fields[FieldFeedName]))) {
 			/* TODO: makepathname isnt necesary if fields[FieldFeedName] is the same as the previous line */
 			/* TODO: move this part below where FieldFeedName is checked if its different ? */
 
@@ -164,29 +164,29 @@ main(int argc, char **argv) {
 				fputs("</table>\n", fpitems);
 
 
-				feedcurrent->next = f;
-				feedcurrent = feedcurrent->next;
+				fcur->next = f;
+				fcur = fcur->next;
 
 
 			} else {
 				/* first item. */
-				feedcurrent = f;
+				fcur = f;
 
-				feeds = feedcurrent;
+				feeds = fcur;
 				/* assume single feed (hide sidebar) */
 				if(fields[FieldFeedName][0] == '\0')
 					showsidebar = 0;
 			}
 			/* write menu link if new. */
-			if(!(feedcurrent->name = strdup(fields[FieldFeedName])))
+			if(!(fcur->name = strdup(fields[FieldFeedName])))
 				die("can't allocate enough memory");
 			if(fields[FieldFeedName][0] != '\0') {
 				fputs("<h2 id=\"", fpitems);
-				printfeednameid(feedcurrent->name, fpitems);
+				printfeednameid(fcur->name, fpitems);
 				fputs("\"><a href=\"#", fpitems);
-				printfeednameid(feedcurrent->name, fpitems);
+				printfeednameid(fcur->name, fpitems);
 				fputs("\">", fpitems);
-				fputs(feedcurrent->name, fpitems);
+				fputs(fcur->name, fpitems);
 				fputs("</a></h2>\n", fpitems);
 			}
 			fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", fpitems);
@@ -227,8 +227,8 @@ main(int argc, char **argv) {
 
 		isnew = (parsedtime >= comparetime);
 		totalnew += isnew;
-		feedcurrent->totalnew += isnew;
-		feedcurrent->total++;
+		fcur->totalnew += isnew;
+		fcur->total++;
 		if(isnew)
 			fputs("<tr class=\"n\">", fpitems);
 		else
@@ -256,20 +256,20 @@ main(int argc, char **argv) {
 		      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />\n"
 		      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 		      "</head><body class=\"frame\"><div id=\"sidebar\">", fpmenu);
-		for(feedcurrent = feeds; feedcurrent; feedcurrent = feedcurrent->next) {
-			if(!feedcurrent->name || feedcurrent->name[0] == '\0')
+		for(fcur = feeds; fcur; fcur = fcur->next) {
+			if(!fcur->name || fcur->name[0] == '\0')
 				continue;
-			if(feedcurrent->totalnew)
+			if(fcur->totalnew)
 				fputs("<a class=\"n\" href=\"items.html#", fpmenu);
 			else
 				fputs("<a href=\"items.html#", fpmenu);
-			printfeednameid(feedcurrent->name, fpmenu);
+			printfeednameid(fcur->name, fpmenu);
 			fputs("\" target=\"items\">", fpmenu);
-			if(feedcurrent->totalnew > 0)
+			if(fcur->totalnew > 0)
 				fputs("<b><u>", fpmenu);
-			fputs(feedcurrent->name, fpmenu);
-			fprintf(fpmenu, " (%lu)", feedcurrent->totalnew);
-			if(feedcurrent->totalnew > 0)
+			fputs(fcur->name, fpmenu);
+			fprintf(fpmenu, " (%lu)", fcur->totalnew);
+			if(fcur->totalnew > 0)
 				fputs("</u></b>", fpmenu);
 			fputs("</a><br/>\n", fpmenu);
 		}
