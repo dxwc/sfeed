@@ -1,12 +1,13 @@
-[ ] add plan9 mkfile?
-
+[ ] test with ubase/sbase tools.
 [ ] makefile:
 	[ ] allow easy override, allow easy -static builds.
-
+[ ] add man pages for all tools.
 [ ] dogfood sfeed_frames, html content.
 	[ ] content is double printed (see sfeed.c).
-	[ ] html content isnt unescaped (see ContentType (plain or html)), (sfeed_frames and sfeed_html).
+	[x] html content isnt unescaped (see ContentType (plain or html)), (sfeed_frames and sfeed_html).
 	[ ] in links browsers: items are centered in the table for some reason.
+
+[x] add plan9 mkfile?
 
 [ ] feeds file: empty tab (encoding cant be detected?)
 
