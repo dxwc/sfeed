@@ -341,7 +341,7 @@ parsetime(const char *s, char *buf, size_t bufsiz) {
 		NULL
 	};
 	char *p;
-	int i;
+	unsigned int i;
 
 	if(buf)
 		buf[0] = '\0';
