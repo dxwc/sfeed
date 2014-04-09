@@ -1,3 +1,9 @@
+[ ] test again on :
+	- Linux (glibc+gcc, musl-gcc, clang).
+	- OpenBSD
+	- Windows (cygwin gcc, mingw).
+	- DOS
+
 [ ] test with ubase/sbase tools.
 [ ] makefile:
 	[ ] allow easy override, allow easy -static builds.

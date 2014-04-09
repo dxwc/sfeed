@@ -7,7 +7,8 @@ Simple RSS and Atom parser (and some format programs).
 Dependencies
 ------------
 
-- C compiler (recommended to support C99 and POSIX >= 200809).
+- C compiler (recommended to support C99).
+- libc (recommended: C99 and POSIX >= 200809).
 
 
 Optional dependencies
@@ -26,9 +27,9 @@ Optional dependencies
 Platforms tested
 ----------------
 
-- Linux
+- Linux (glibc+gcc, musl-gcc, clang).
 - OpenBSD
-- Windows (cygwin, mingw).
+- Windows (cygwin gcc, mingw).
 - DOS
 
 
