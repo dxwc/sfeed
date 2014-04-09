@@ -9,7 +9,6 @@
 #include "xml.h"
 
 #define ISWSNOSPACE(c) (((unsigned)c - '\t') < 5) /* isspace(c) && c != ' ' */
-#define LEN(x) (sizeof (x) / sizeof *(x))
 
 enum { FeedTypeNone = 0, FeedTypeRSS = 1, FeedTypeAtom = 2 };
 static const char *feedtypes[] = { "", "rss", "atom" };
@@ -337,7 +336,7 @@ parsetime(const char *s, char *buf, size_t bufsiz) {
 	if(buf)
 		buf[0] = '\0';
 	memset(&tm, 0, sizeof(tm));
-	for(i = 0; i < LEN(formats); i++) {
+	for(i = 0; i < formats[i]; i++) {
 		if((p = strptime(s, formats[i], &tm))) {
 			tm.tm_isdst = -1; /* don't use DST */
 			if((t = mktime(&tm)) == -1) /* error */
