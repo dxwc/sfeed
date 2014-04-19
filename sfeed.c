@@ -103,23 +103,24 @@ gettag(int feedtype, const char *name, size_t namelen) {
 	};
 	int i, n;
 
-	if(namelen >= 2 && namelen <= 15) {
-		if(feedtype == FeedTypeRSS) {
-			for(i = 0; rsstag[i].name; i++) {
-				if(!(n = strncasecmp(rsstag[i].name, name, rsstag[i].namelen)))
-					return rsstag[i].id;
-				/* optimization: it's sorted so nothing after it matches. */
-				if(n > 0)
-					return TagUnknown;
-			}
-		} else if(feedtype == FeedTypeAtom) {
-			for(i = 0; atomtag[i].name; i++) {
-				if(!(n = strncasecmp(atomtag[i].name, name, atomtag[i].namelen)))
-					return atomtag[i].id;
-				/* optimization: it's sorted so nothing after it matches. */
-				if(n > 0)
-					return TagUnknown;
-			}
+	if(namelen < 2 || namelen > 15) /* optimization */
+		return TagUnknown;
+
+	if(feedtype == FeedTypeRSS) {
+		for(i = 0; rsstag[i].name; i++) {
+			if(!(n = strncasecmp(rsstag[i].name, name, rsstag[i].namelen)))
+				return rsstag[i].id;
+			/* optimization: it's sorted so nothing after it matches. */
+			if(n > 0)
+				return TagUnknown;
+		}
+	} else if(feedtype == FeedTypeAtom) {
+		for(i = 0; atomtag[i].name; i++) {
+			if(!(n = strncasecmp(atomtag[i].name, name, atomtag[i].namelen)))
+				return atomtag[i].id;
+			/* optimization: it's sorted so nothing after it matches. */
+			if(n > 0)
+				return TagUnknown;
 		}
 	}
 	return TagUnknown;

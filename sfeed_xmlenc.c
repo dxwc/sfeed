@@ -12,7 +12,7 @@ static void
 xmltagstart(XMLParser *p, const char *tag, size_t taglen) {
 	if(tags > 3) /* optimization: try to find processing instruction at start */
 		exit(EXIT_FAILURE);
-	isxmlpi = (tag[0] == '?' && (!strncasecmp(tag, "?xml", taglen))) ? 1 : 0;
+	isxmlpi = (!strncasecmp(tag, "?xml", taglen)) ? 1 : 0;
 	tags++;
 }
 
