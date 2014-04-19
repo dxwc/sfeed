@@ -96,10 +96,11 @@ int
 main(int argc, char **argv) {
 	struct feed *f, *fcur = NULL;
 	char *fields[FieldLast];
-	char name[256]; /* TODO: bigger size? */
+	char name[64]; /* TODO: bigger size? */
 	char *basepath = ".";
 	char dirpath[PATH_MAX], filepath[PATH_MAX];
 	char reldirpath[PATH_MAX], relfilepath[PATH_MAX];
+	char *feedname = "";
 	unsigned long totalfeeds = 0, totalnew = 0;
 	unsigned int isnew;
 	time_t parsedtime, comparetime;
@@ -136,13 +137,20 @@ main(int argc, char **argv) {
 	      "<body class=\"frame\"><div id=\"items\">", fpitems);
 
 	while(parseline(&line, &linesize, fields, FieldLast, '\t', stdin) > 0) {
-		/* first of feed section or new feed section. */
-		if(!totalfeeds || (fcur && strcmp(fcur->name, fields[FieldFeedName]))) {
+		feedname = fields[FieldFeedName];
+		if(feedname[0] == '\0') {
+			feedname = "unknown";
+			/* assume single feed (hide sidebar) */
+			if(!totalfeeds)
+				showsidebar = 0;
+		}
+		/* first of feed section or new feed section (differ from previous). */
+		if(!totalfeeds || (fcur && strcmp(fcur->name, feedname))) {
 			/* TODO: makepathname isnt necesary if fields[FieldFeedName] is the same as the previous line */
 			/* TODO: move this part below where FieldFeedName is checked if its different ? */
 
 			/* make directory for feedname */
-			if(!(namelen = makepathname(fields[FieldFeedName], name, sizeof(name))))
+			if(!(namelen = makepathname(feedname, name, sizeof(name))))
 				continue;
 
 			if(snprintf(dirpath, sizeof(dirpath), "%s/%s", basepath, name) <= 0)
@@ -151,7 +159,8 @@ main(int argc, char **argv) {
 			/* directory doesn't exist: try to create it. */
 			if(stat(dirpath, &st) == -1) {
 				if(mkdir(dirpath, S_IRWXU) == -1) {
-					fprintf(stderr, "sfeed_frames: can't make directory '%s': %s\n", dirpath, strerror(errno));
+					fprintf(stderr, "sfeed_frames: can't make directory '%s': %s\n",
+					        dirpath, strerror(errno));
 					exit(EXIT_FAILURE);
 				}
 			}
@@ -162,23 +171,15 @@ main(int argc, char **argv) {
 
 			if(totalfeeds) { /* end previous one. */
 				fputs("</table>\n", fpitems);
-
-
 				fcur->next = f;
 				fcur = fcur->next;
-
-
 			} else {
 				/* first item. */
 				fcur = f;
-
 				feeds = fcur;
-				/* assume single feed (hide sidebar) */
-				if(fields[FieldFeedName][0] == '\0')
-					showsidebar = 0;
 			}
 			/* write menu link if new. */
-			if(!(fcur->name = strdup(fields[FieldFeedName])))
+			if(!(fcur->name = strdup(feedname)))
 				die("can't allocate enough memory");
 			if(fields[FieldFeedName][0] != '\0') {
 				fputs("<h2 id=\"", fpitems);
@@ -192,7 +193,6 @@ main(int argc, char **argv) {
 			fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", fpitems);
 			totalfeeds++;
 		}
-
 		/* write content */
 		if(!(namelen = makepathname(fields[FieldTitle], name, sizeof(name))))
 			continue;
