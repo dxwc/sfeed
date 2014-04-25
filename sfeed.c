@@ -171,8 +171,8 @@ entitytostr(const char *e, char *buffer, size_t bufsiz) {
 
 	if(*e != '&' || bufsiz < 5) /* doesnt start with & */
 		return 0;
-	if(*(e+1) == '#') {
-		e++;
+	if(e[1] == '#') {
+		e += 2; /* skip &# */
 		if(*e == 'x') {
 			e++;
 			l = strtol(e, NULL, 16); /* hex */
