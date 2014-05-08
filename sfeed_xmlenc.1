@@ -1,0 +1,17 @@
+.TH SFEED 1 sfeed\-0.9
+.SH NAME
+sfeed_xmlenc \- get text\-encoding from XML
+.SH SYNOPSIS
+.B sfeed_xmlenc
+.SH DESCRIPTION
+It reads XML data from stdin and writes the found text\-encoding to stdout.
+.SH EXAMPLES
+.TP
+Get text\-encoding from from xkcd Atom feed:
+.nf
+wget http://www.xkcd.com/atom.xml -q -O - | ./sfeed_xmlenc
+.SH SEE ALSO
+.BR sh(1)
+.BR sfeed_update(1)
+.SH BUGS
+Please report them!
