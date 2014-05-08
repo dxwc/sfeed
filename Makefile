@@ -76,14 +76,17 @@ install: all
 	@echo installing manual pages to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@cp -f \
-		sfeed.1 sfeed_update.1 sfeed_plain.1 sfeed_html.1 \
-		sfeed_frames.1 sfeed_opml_import.1 sfeed_opml_export.1 \
+		sfeed.1 sfeed_update.1 sfeed_web.1 sfeed_plain.1 sfeed_html.1 \
+		sfeed_frames.1 sfeed_xmlenc.1 sfeed_opml_import.1 \
+		sfeed_opml_export.1 \
 		${DESTDIR}${MANPREFIX}/man1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/sfeed.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_update.1 \
+		${DESTDIR}${MANPREFIX}/man1/sfeed_web.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_plain.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_html.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_frames.1 \
+		${DESTDIR}${MANPREFIX}/man1/sfeed_xmlenc.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_opml_import.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_opml_export.1
 
@@ -106,9 +109,11 @@ uninstall:
 	@echo removing manual pages from ${DESTDIR}${MANPREFIX}/man1
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/sfeed.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_update.1 \
+		${DESTDIR}${MANPREFIX}/man1/sfeed_web.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_plain.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_html.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_frames.1 \
+		${DESTDIR}${MANPREFIX}/man1/sfeed_xmlenc.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_opml_import.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_opml_export.1
 
