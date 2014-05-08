@@ -39,6 +39,7 @@ cleanup(void) {
 	if(fpcontent)
 		fclose(fpcontent);
 	free(line); /* free line */
+	line = NULL;
 	feedsfree(feeds); /* free feeds linked-list */
 }
 
