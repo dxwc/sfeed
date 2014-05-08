@@ -53,18 +53,7 @@ sfeed_web: sfeed_web.o xml.o util.o
 clean:
 	@echo cleaning
 	@rm -f sfeed sfeed_plain sfeed_html sfeed_frames sfeed_opml_import \
-		sfeed_web sfeed_xmlenc ${OBJ} ${NAME}-${VERSION}.tar.gz
-
-dist: clean
-	@echo creating dist tarball
-	@mkdir -p ${NAME}-${VERSION}
-	@cp -R CHANGELOG LICENSE Makefile README config.mk \
-		TODO CREDITS sfeedrc.example style.css ${SRC} sfeed_update  \
-		sfeed.1 sfeed_update.1 sfeed_plain.1 sfeed_html.1 sfeed_opml_import.1 \
-		sfeed_frames.1 sfeed_opml_export sfeed_opml_export.1 ${NAME}-${VERSION}
-	@tar -cf ${NAME}-${VERSION}.tar ${NAME}-${VERSION}
-	@gzip ${NAME}-${VERSION}.tar
-	@rm -rf ${NAME}-${VERSION}
+		sfeed_web sfeed_xmlenc ${OBJ}
 
 install: all
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
@@ -80,24 +69,16 @@ install: all
 		${DESTDIR}${PREFIX}/bin/sfeed_opml_import \
 		${DESTDIR}${PREFIX}/bin/sfeed_opml_export \
 		${DESTDIR}${PREFIX}/bin/sfeed_web
-	@mkdir -p ${DESTDIR}${PREFIX}/share/sfeed
+	@echo installing example files to ${DESTDIR}${PREFIX}/share/${NAME}
+	@mkdir -p ${DESTDIR}${PREFIX}/share/${NAME}
 	@cp -f sfeedrc.example ${DESTDIR}${PREFIX}/share/${NAME}
 	@cp -f style.css ${DESTDIR}${PREFIX}/share/${NAME}
 	@echo installing manual pages to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
-	@sed "s/VERSION/${VERSION}/g" < sfeed.1 > ${DESTDIR}${MANPREFIX}/man1/sfeed.1
-	@sed "s/VERSION/${VERSION}/g" < sfeed_update.1 > \
-		${DESTDIR}${MANPREFIX}/man1/sfeed_update.1
-	@sed "s/VERSION/${VERSION}/g" < sfeed_plain.1 > \
-		${DESTDIR}${MANPREFIX}/man1/sfeed_plain.1
-	@sed "s/VERSION/${VERSION}/g" < sfeed_html.1 > \
-		${DESTDIR}${MANPREFIX}/man1/sfeed_html.1
-	@sed "s/VERSION/${VERSION}/g" < sfeed_frames.1 > \
-		${DESTDIR}${MANPREFIX}/man1/sfeed_frames.1
-	@sed "s/VERSION/${VERSION}/g" < sfeed_opml_import.1 > \
-		${DESTDIR}${MANPREFIX}/man1/sfeed_opml_import.1
-	@sed "s/VERSION/${VERSION}/g" < sfeed_opml_export.1 > \
-		${DESTDIR}${MANPREFIX}/man1/sfeed_opml_export.1
+	@cp -f \
+		sfeed.1 sfeed_update.1 sfeed_plain.1 sfeed_html.1 \
+		sfeed_frames.1 sfeed_opml_import.1 sfeed_opml_export.1 \
+		${DESTDIR}${MANPREFIX}/man1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/sfeed.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_update.1 \
 		${DESTDIR}${MANPREFIX}/man1/sfeed_plain.1 \
@@ -116,7 +97,9 @@ uninstall:
 		${DESTDIR}${PREFIX}/bin/sfeed_xmlenc \
 		${DESTDIR}${PREFIX}/bin/sfeed_opml_import \
 		${DESTDIR}${PREFIX}/bin/sfeed_opml_export \
-		${DESTDIR}${PREFIX}/bin/sfeed_web \
+		${DESTDIR}${PREFIX}/bin/sfeed_web
+	@echo removing example files from ${DESTDIR}${PREFIX}/share/${NAME}
+	@rm -f \
 		${DESTDIR}${PREFIX}/share/${NAME}/sfeedrc.example \
 		${DESTDIR}${PREFIX}/share/${NAME}/style.css
 	@-rmdir ${DESTDIR}${PREFIX}/share/${NAME}
