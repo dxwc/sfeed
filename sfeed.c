@@ -73,7 +73,6 @@ static FeedContext ctx;
 static XMLParser parser; /* XML parser state */
 static char *append = NULL; /* append string after each output line */
 
-/* TODO: optimize lookup */
 /* unique number for parsed tag (faster comparison) */
 static int
 gettag(int feedtype, const char *name, size_t namelen) {
@@ -387,6 +386,7 @@ string_print(String *s) {
 			putchar(*p);
 	}
 #if 0
+	/* NOTE: optimized string output, re-test this later */
 	for(i = 0; *p; p++) {
 		if(ISWSNOSPACE(*p)) { /* isspace(c) && c != ' ' */
 			if(*p == '\n') { /* escape newline */
@@ -639,64 +639,64 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 		}
 		return;
 	}
-	if(ctx.item.feedtype != FeedTypeNone) {
-		/* end of RSS or Atom entry / item */
-		/* TODO: optimize, use gettag() ? to tagid? */
-		if((ctx.item.feedtype == FeedTypeAtom &&
-		   istag(name, namelen, "entry", strlen("entry"))) || /* Atom */
-		   (ctx.item.feedtype == FeedTypeRSS &&
-		   istag(name, namelen, "item", strlen("item")))) /* RSS */
-		{
-			printf("%ld", (long)parsetime((&ctx.item.timestamp)->data,
-			              timebuf, sizeof(timebuf)));
+	if(ctx.item.feedtype == FeedTypeNone)
+		return;
+	/* end of RSS or Atom entry / item */
+	/* TODO: optimize, use gettag() ? to tagid? */
+	if((ctx.item.feedtype == FeedTypeAtom &&
+	   istag(name, namelen, "entry", strlen("entry"))) || /* Atom */
+	   (ctx.item.feedtype == FeedTypeRSS &&
+	   istag(name, namelen, "item", strlen("item")))) /* RSS */
+	{
+		printf("%ld", (long)parsetime((&ctx.item.timestamp)->data,
+					  timebuf, sizeof(timebuf)));
+		putchar(FieldSeparator);
+		fputs(timebuf, stdout);
+		putchar(FieldSeparator);
+		string_print(&ctx.item.title);
+		putchar(FieldSeparator);
+		string_print(&ctx.item.link);
+		putchar(FieldSeparator);
+		string_print(&ctx.item.content);
+		putchar(FieldSeparator);
+		fputs(contenttypes[ctx.item.contenttype], stdout);
+		putchar(FieldSeparator);
+		string_print(&ctx.item.id);
+		putchar(FieldSeparator);
+		string_print(&ctx.item.author);
+		putchar(FieldSeparator);
+		fputs(feedtypes[ctx.item.feedtype], stdout);
+		if(append) {
 			putchar(FieldSeparator);
-			fputs(timebuf, stdout);
-			putchar(FieldSeparator);
-			string_print(&ctx.item.title);
-			putchar(FieldSeparator);
-			string_print(&ctx.item.link);
-			putchar(FieldSeparator);
-			string_print(&ctx.item.content);
-			putchar(FieldSeparator);
-			fputs(contenttypes[ctx.item.contenttype], stdout);
-			putchar(FieldSeparator);
-			string_print(&ctx.item.id);
-			putchar(FieldSeparator);
-			string_print(&ctx.item.author);
-			putchar(FieldSeparator);
-			fputs(feedtypes[ctx.item.feedtype], stdout);
-			if(append) {
-				putchar(FieldSeparator);
-				fputs(append, stdout);
-			}
-			putchar('\n');
-
-			/* clear strings */
-			string_clear(&ctx.item.timestamp);
-			string_clear(&ctx.item.title);
-			string_clear(&ctx.item.link);
-			string_clear(&ctx.item.content);
-			string_clear(&ctx.item.id);
-			string_clear(&ctx.item.author);
-			ctx.item.feedtype = FeedTypeNone;
-			ctx.item.contenttype = ContentTypePlain;
-			ctx.tag[0] = '\0'; /* unset tag */
-			ctx.taglen = 0;
-			ctx.tagid = TagUnknown;
-
-			/* not sure if needed */
-			ctx.iscontenttag = 0;
-			ctx.iscontent = 0;
-		} else if(!strcmp(ctx.tag, name)) { /* clear */ /* XXX: optimize ? */
-			ctx.field = NULL;
-			ctx.tag[0] = '\0'; /* unset tag */
-			ctx.taglen = 0;
-			ctx.tagid = TagUnknown;
-
-			/* not sure if needed */
-			ctx.iscontenttag = 0;
-			ctx.iscontent = 0;
+			fputs(append, stdout);
 		}
+		putchar('\n');
+
+		/* clear strings */
+		string_clear(&ctx.item.timestamp);
+		string_clear(&ctx.item.title);
+		string_clear(&ctx.item.link);
+		string_clear(&ctx.item.content);
+		string_clear(&ctx.item.id);
+		string_clear(&ctx.item.author);
+		ctx.item.feedtype = FeedTypeNone;
+		ctx.item.contenttype = ContentTypePlain;
+		ctx.tag[0] = '\0'; /* unset tag */
+		ctx.taglen = 0;
+		ctx.tagid = TagUnknown;
+
+		/* not sure if needed */
+		ctx.iscontenttag = 0;
+		ctx.iscontent = 0;
+	} else if(!strcmp(ctx.tag, name)) { /* clear */ /* XXX: optimize ? */
+		ctx.field = NULL;
+		ctx.tag[0] = '\0'; /* unset tag */
+		ctx.taglen = 0;
+		ctx.tagid = TagUnknown;
+
+		/* not sure if needed */
+		ctx.iscontenttag = 0;
+		ctx.iscontent = 0;
 	}
 }
 

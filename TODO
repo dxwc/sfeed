@@ -9,4 +9,6 @@
 [ ] feeds file: empty tab (encoding can't be detected?)
 [ ] optimize
 	[ ] afgets()
-	[ ] namedentitytostr, xml parser, etc.
+	[ ] gettag() lookup.
+	[ ] namedentitytostr lookup.
+	[ ] xml parser, etc.
