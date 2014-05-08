@@ -6,7 +6,7 @@ sfeed \- simple RSS and Atom parser
 .SH DESCRIPTION
 Read XML RSS or Atom feed data from stdin. Write feed data in a
 tab-separated format to stdout.
-.SH TAB-SEPARATED FORMAT
+.SH TAB-SEPARATED FORMAT FIELDS
 The items are saved in a TSV-like format except newlines, tabs and
 backslash are escaped with \\ (\\n, \\t and \\\\). Carriage returns (\\r) are
 removed.
@@ -26,7 +26,7 @@ string
 .B item content
 string
 .TP
-.B item contenttype
+.B item content\-type
 string (html or plain)
 .TP
 .B item id

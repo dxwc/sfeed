@@ -11,12 +11,12 @@ config file, if not specified uses the location $HOME/.sfeed/sfeedrc by default 
 .SH DESCRIPTION
 .TP
 Update feeds and merge with old feeds in the file $HOME/.sfeed/feeds by default.
-.SH TAB-SEPARATED FORMAT
+.SH TAB-SEPARATED FORMAT FIELDS
 The items are saved in a TSV-like format except newlines, tabs and
 backslash are escaped with \\ (\\n, \\t and \\\\). Carriage returns (\\r) are
 removed.
 .TP
-.B item timestamp (unix timestamp in GMT+0)
+.B  timestamp (unix timestamp in GMT+0)
 string
 .TP
 .B item timestamp (formatted)
@@ -31,7 +31,7 @@ string
 .B item content
 string
 .TP
-.B item contenttype
+.B item content\-type
 string (html or plain)
 .TP
 .B item id
