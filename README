@@ -20,8 +20,8 @@ Optional dependencies
 - curl: http://curl.haxx.se/
   used by sfeed_update, can be replaced with any tool like wget, fetch.
 - iconv command-line utilities: http://www.gnu.org/software/libiconv/
-  used by sfeed_update. If your RSS/Atom feeds are already utf-8 then you
-  don't need this.
+  used by sfeed_update. If the text in your RSS/Atom feeds are already UTF-8
+  encoded then you don't need this.
 
 
 Platforms tested
@@ -30,7 +30,6 @@ Platforms tested
 - Linux (glibc+gcc, musl-gcc, clang).
 - OpenBSD
 - Windows (cygwin gcc, mingw).
-- DOS
 
 
 Files
