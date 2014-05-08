@@ -20,9 +20,5 @@ LDFLAGS = ${LIBS}
 #CFLAGS = -O2 -std=c99 -DVERSION=\"${VERSION}\" -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE
 #LDFLAGS = -s ${LIBS}
 
-# Solaris
-#CFLAGS = -fast ${INCS} -DVERSION=\"${VERSION}\"
-#LDFLAGS = ${LIBS}
-
 # compiler and linker
 #CC = cc
