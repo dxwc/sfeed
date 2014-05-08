@@ -24,8 +24,11 @@ xmltagend(XMLParser *p, const char *tag, size_t taglen, int isshort) {
 static void
 xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name, size_t namelen, const char *value, size_t valuelen) {
 	if(isxmlpi && (!strncasecmp(name, "encoding", namelen))) {
-		for(; *value; value++)
-			putc(tolower((int)*value), stdout); /* output lowercase */
+		if(*value) {
+			for(; *value; value++)
+				putc(tolower((int)*value), stdout); /* output lowercase */
+			putchar('\n');
+		}
 		exit(EXIT_SUCCESS);
 	}
 }
