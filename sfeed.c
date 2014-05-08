@@ -126,17 +126,22 @@ gettag(int feedtype, const char *name, size_t namelen) {
 	return TagUnknown;
 }
 
-static unsigned long
-codepointtoutf8(unsigned long cp) {
-	if(cp >= 0x10000) /* 4 bytes */
-		return 0xf0808080 | ((cp & 0xfc0000) << 6) | ((cp & 0x3f000) << 4) |
+static size_t
+codepointtoutf8(unsigned long cp, unsigned long *utf) {
+	if(cp >= 0x10000) { /* 4 bytes */
+		*utf = 0xf0808080 | ((cp & 0xfc0000) << 6) | ((cp & 0x3f000) << 4) |
 		       ((cp & 0xfc0) << 2) | (cp & 0x3f);
-	else if(cp >= 0x00800) /* 3 bytes */
-		return 0xe08080 | ((cp & 0x3f000) << 4) | ((cp & 0xfc0) << 2) |
+		return 4;
+	} else if(cp >= 0x00800) { /* 3 bytes */
+		*utf = 0xe08080 | ((cp & 0x3f000) << 4) | ((cp & 0xfc0) << 2) |
 		       (cp & 0x3f);
-	else if(cp >= 0x80) /* 2 bytes */
-		return 0xc080 | ((cp & 0xfc0) << 2) | (cp & 0x3f);
-	return cp; /* 1 byte */
+		return 3;
+	} else if(cp >= 0x80) { /* 2 bytes */
+		*utf = 0xc080 | ((cp & 0xfc0) << 2) | (cp & 0x3f);
+		return 2;
+	}
+	*utf = cp & 0xff;
+	return *utf ? 1 : 0; /* 1 byte */
 }
 
 static int
@@ -167,7 +172,8 @@ namedentitytostr(const char *e, char *buffer, size_t bufsiz) {
 
 static int
 entitytostr(const char *e, char *buffer, size_t bufsiz) {
-	unsigned long l = 0, cp = 0;
+	unsigned long l = 0, cp = 0, b;
+	size_t len;
 
 	if(*e != '&' || bufsiz < 5) /* doesnt start with & */
 		return 0;
@@ -178,30 +184,32 @@ entitytostr(const char *e, char *buffer, size_t bufsiz) {
 			l = strtol(e, NULL, 16); /* hex */
 		} else
 			l = strtol(e, NULL, 10); /* decimal */
-		if((cp = codepointtoutf8(l))) {
-			buffer[0] = l & 0xff;
-			buffer[1] = (l >> 8) & 0xff;
-			buffer[2] = (l >> 16) & 0xff;
-			buffer[3] = (l >> 24) & 0xff;
-			buffer[4] = '\0';
-			/* escape whitespace */
-			if(ISWSNOSPACE(buffer[0])) { /* isspace(c) && c != ' ' */
-				if(buffer[0] == '\n') { /* escape newline */
-					buffer[0] = '\\';
-					buffer[1] = 'n';
-					buffer[2] = '\0';
-				} else if(buffer[0] == '\\') { /* escape \ */
-					buffer[0] = '\\';
-					buffer[1] = '\\';
-					buffer[2] = '\0';
-				} else if(buffer[0] == '\t') { /* tab */
-					buffer[0] = '\\';
-					buffer[1] = 't';
-					buffer[2] = '\0';
-				}
+		if(!(len = codepointtoutf8(l, &cp)))
+			return 0;
+		/* make string */
+		for(b = 0; b < len; b++)
+			buffer[b] = (cp >> (8 * (len - 1 - b))) & 0xff;
+		buffer[len] = '\0';
+		/* escape whitespace */
+		if(ISWSNOSPACE(buffer[0])) { /* isspace(c) && c != ' ' */
+			if(buffer[0] == '\n') { /* escape newline */
+				buffer[0] = '\\';
+				buffer[1] = 'n';
+				buffer[2] = '\0';
+				return 2;
+			} else if(buffer[0] == '\\') { /* escape \ */
+				buffer[0] = '\\';
+				buffer[1] = '\\';
+				buffer[2] = '\0';
+				return 2;
+			} else if(buffer[0] == '\t') { /* escape tab */
+				buffer[0] = '\\';
+				buffer[1] = 't';
+				buffer[2] = '\0';
+				return 2;
 			}
 		}
-		return 1;
+		return len;
 	} else /* named entity */
 		return namedentitytostr(e, buffer, bufsiz);
 	return 0;
