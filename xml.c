@@ -28,12 +28,13 @@ xmlparser_parseattrs(XMLParser *x) {
 
 	while((c = xmlparser_getnext(x)) != EOF) {
 		if(isspace(c)) { /* TODO: simplify endname ? */
-			if(namelen) /* do nothing */
+			if(namelen)
 				endname = 1;
 			else
 				continue;
 		}
-		if(c == '?'); /* ignore */
+		if(c == '?')
+			; /* ignore */
 		else if(c == '=') {
 			x->name[namelen] = '\0';
 		} else if(namelen && ((endname && isalpha(c)) || (c == '>' || c == '/'))) {
@@ -66,7 +67,8 @@ xmlparser_parseattrs(XMLParser *x) {
 							break;
 						if(valuelen < sizeof(x->data) - 1)
 							x->data[valuelen++] = c;
-						else { /* TODO: entity too long? this should be very strange. */
+						else {
+							/* TODO: entity too long? this should be very strange. */
 							x->data[valuelen] = '\0';
 							if(x->xmlattr)
 								x->xmlattr(x, x->tag, x->taglen, x->name, namelen, x->data, valuelen);
@@ -138,7 +140,9 @@ xmlparser_parsecomment(XMLParser *x) {
 			}
 			i = 0;
 		}
-		if(datalen < sizeof(x->data) - 1) /* || (c == '-' && d >= sizeof(x->data) - 4)) { */ /* TODO: what if the end has --, and its cut on the boundary, test this. */
+		 /* || (c == '-' && d >= sizeof(x->data) - 4)) { */
+		/* TODO: what if the end has --, and its cut on the boundary, test this. */
+		if(datalen < sizeof(x->data) - 1)
 			x->data[datalen++] = c;
 		else {
 			x->data[datalen] = '\0';
@@ -181,7 +185,8 @@ xmlparser_parsecdata(XMLParser *x) {
 			}
 			i = 0;
 		}
-		if(datalen < sizeof(x->data) - 1) { /* TODO: what if the end has ]>, and its cut on the boundary */
+		/* TODO: what if the end has ]>, and its cut on the boundary */
+		if(datalen < sizeof(x->data) - 1) {
 			x->data[datalen++] = c;
 		} else {
 			x->data[datalen] = '\0';
@@ -266,7 +271,8 @@ xmlparser_parse(XMLParser *x) {
 						x->tag[taglen++] = c;
 				}
 			}
-		} else { /* parse data */
+		} else {
+			/* parse data */
 			datalen = 0;
 			if(x->xmldatastart)
 				x->xmldatastart(x);

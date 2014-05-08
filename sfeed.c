@@ -688,7 +688,8 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 		/* not sure if needed */
 		ctx.iscontenttag = 0;
 		ctx.iscontent = 0;
-	} else if(!strcmp(ctx.tag, name)) { /* clear */ /* XXX: optimize ? */
+	} else if(!strcmp(ctx.tag, name)) { /* clear */
+		/* XXX: optimize ? */
 		ctx.field = NULL;
 		ctx.tag[0] = '\0'; /* unset tag */
 		ctx.taglen = 0;
