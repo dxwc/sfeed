@@ -74,7 +74,8 @@ static XMLParser parser; /* XML parser state */
 static char *append = NULL; /* append string after each output line */
 
 /* TODO: optimize lookup */
-static int /* unique number for parsed tag (faster comparison) */
+/* unique number for parsed tag (faster comparison) */
+static int
 gettag(int feedtype, const char *name, size_t namelen) {
 	/* RSS, alphabetical order */
 	static FeedTag rsstag[] = {
@@ -277,7 +278,8 @@ cleanup(void) {
 	string_free(&ctx.item.author);
 }
 
-static void /* print error message to stderr */
+/* print error message to stderr */
+static void
 die(const char *s) {
 	fputs("sfeed: ", stderr);
 	fputs(s, stderr);
@@ -507,7 +509,7 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 static void
 xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
 	if(ctx.iscontenttag) {
-		/* starts with div, handle as XML, dont convert entities */
+		/* starts with div, handle as XML, don't convert entities */
 		/* TODO: test properly */
 		if(ctx.item.feedtype == FeedTypeAtom &&
 		   !strncmp(name, "div", strlen("div")))
