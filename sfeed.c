@@ -525,62 +525,9 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
 
 	/* TODO: cleanup, merge with code below ?, return function if FeedTypeNone */
 /*	ctx.iscontenttag = 0;*/
-	if(ctx.item.feedtype != FeedTypeNone) { /* in item */
-		if(ctx.tag[0] == '\0') { /* set tag if not already set. */
-			if(namelen >= sizeof(ctx.tag) - 2) /* check overflow */
-				return;
-			memcpy(ctx.tag, name, namelen + 1); /* copy including nul byte */
-			ctx.taglen = namelen;
-			ctx.tagid = gettag(ctx.item.feedtype, ctx.tag, ctx.taglen);
-			if(ctx.item.feedtype == FeedTypeRSS) {
-				if(ctx.tagid == TagUnknown)
-					ctx.field = NULL;
-				else if(ctx.tagid == RSSTagPubdate || ctx.tagid == RSSTagDcdate)
-					ctx.field = &ctx.item.timestamp;
-				else if(ctx.tagid == RSSTagTitle)
-					ctx.field = &ctx.item.title;
-				else if(ctx.tagid == RSSTagLink)
-					ctx.field = &ctx.item.link;
-				else if(ctx.tagid == RSSTagDescription ||
-					    ctx.tagid == RSSTagContentencoded) {
-					/* clear previous summary, assumes previous content was not a summary text */
-					if(ctx.tagid == RSSTagContentencoded && ctx.item.content.len)
-						string_clear(&ctx.item.content);
-					/* ignore, prefer content:encoded over description */
-					if(!(ctx.tagid == RSSTagDescription && ctx.item.content.len)) {
-						ctx.iscontenttag = 1;
-						ctx.field = &ctx.item.content;
-					}
-				} else if(ctx.tagid == RSSTagGuid)
-					ctx.field = &ctx.item.id;
-				else if(ctx.tagid == RSSTagAuthor || ctx.tagid == RSSTagDccreator)
-					ctx.field = &ctx.item.author;
-			} else if(ctx.item.feedtype == FeedTypeAtom) {
-				if(ctx.tagid == TagUnknown)
-					ctx.field = NULL;
-				else if(ctx.tagid == AtomTagPublished || ctx.tagid == AtomTagUpdated)
-					ctx.field = &ctx.item.timestamp;
-				else if(ctx.tagid == AtomTagTitle)
-					ctx.field = &ctx.item.title;
-				else if(ctx.tagid == AtomTagSummary || ctx.tagid == AtomTagContent) {
-					/* clear previous summary, assumes previous content was not a summary text */
-					if(ctx.tagid == AtomTagContent && ctx.item.content.len)
-						string_clear(&ctx.item.content);
-					/* ignore, prefer content:encoded over description */
-					if(!(ctx.tagid == AtomTagSummary && ctx.item.content.len)) {
-						ctx.iscontenttag = 1;
-						ctx.field = &ctx.item.content;
-					}
-				} else if(ctx.tagid == AtomTagId)
-					ctx.field = &ctx.item.id;
-				else if(ctx.tagid == AtomTagLink)
-					ctx.field = &ctx.item.link;
-				else if(ctx.tagid == AtomTagAuthor)
-					ctx.field = &ctx.item.author;
-			}
-			/* TODO: prefer content encoded over content? test */
-		}
-	} else { /* start of RSS or Atom item / entry */
+
+	/* start of RSS or Atom item / entry */
+	if(ctx.item.feedtype == FeedTypeNone) {
 		if(istag(name, namelen, "entry", strlen("entry"))) { /* Atom */
 			ctx.item.feedtype = FeedTypeAtom;
 			ctx.item.contenttype = ContentTypePlain; /* Default content type */
@@ -590,6 +537,61 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
 			ctx.item.contenttype = ContentTypeHTML; /* Default content type */
 			ctx.field = NULL; /* XXX: optimization */
 		}
+		return;
+	}
+
+	/* tag already set: return */
+	if(ctx.tag[0] != '\0')
+		return;
+	/* in item */
+	if(namelen >= sizeof(ctx.tag) - 2) /* check overflow */
+		return;
+	memcpy(ctx.tag, name, namelen + 1); /* copy including nul byte */
+	ctx.taglen = namelen;
+	ctx.tagid = gettag(ctx.item.feedtype, ctx.tag, ctx.taglen);
+	if(ctx.tagid == TagUnknown)
+		ctx.field = NULL;
+	if(ctx.item.feedtype == FeedTypeRSS) {
+		if(ctx.tagid == RSSTagPubdate || ctx.tagid == RSSTagDcdate)
+			ctx.field = &ctx.item.timestamp;
+		else if(ctx.tagid == RSSTagTitle)
+			ctx.field = &ctx.item.title;
+		else if(ctx.tagid == RSSTagLink)
+			ctx.field = &ctx.item.link;
+		else if(ctx.tagid == RSSTagDescription ||
+				ctx.tagid == RSSTagContentencoded) {
+			/* clear content, assumes previous content was not a summary text */
+			if(ctx.tagid == RSSTagContentencoded && ctx.item.content.len)
+				string_clear(&ctx.item.content);
+			/* ignore, prefer content:encoded over description */
+			if(!(ctx.tagid == RSSTagDescription && ctx.item.content.len)) {
+				ctx.iscontenttag = 1;
+				ctx.field = &ctx.item.content;
+			}
+		} else if(ctx.tagid == RSSTagGuid)
+			ctx.field = &ctx.item.id;
+		else if(ctx.tagid == RSSTagAuthor || ctx.tagid == RSSTagDccreator)
+			ctx.field = &ctx.item.author;
+	} else if(ctx.item.feedtype == FeedTypeAtom) {
+		if(ctx.tagid == AtomTagPublished || ctx.tagid == AtomTagUpdated)
+			ctx.field = &ctx.item.timestamp;
+		else if(ctx.tagid == AtomTagTitle)
+			ctx.field = &ctx.item.title;
+		else if(ctx.tagid == AtomTagSummary || ctx.tagid == AtomTagContent) {
+			/* clear content, assumes previous content was not a summary text */
+			if(ctx.tagid == AtomTagContent && ctx.item.content.len)
+				string_clear(&ctx.item.content);
+			/* ignore, prefer content:encoded over description */
+			if(!(ctx.tagid == AtomTagSummary && ctx.item.content.len)) {
+				ctx.iscontenttag = 1;
+				ctx.field = &ctx.item.content;
+			}
+		} else if(ctx.tagid == AtomTagId)
+			ctx.field = &ctx.item.id;
+		else if(ctx.tagid == AtomTagLink)
+			ctx.field = &ctx.item.link;
+		else if(ctx.tagid == AtomTagAuthor)
+			ctx.field = &ctx.item.author;
 	}
 }
 
