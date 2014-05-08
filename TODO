@@ -1,22 +1,10 @@
-[ ] test again on :
+[ ] test again on:
 	- Linux (glibc+gcc, musl-gcc, clang).
 	- OpenBSD
 	- Windows (cygwin gcc, mingw).
-	- DOS
-
 [ ] test with ubase/sbase tools.
-[ ] makefile:
-	[ ] allow easy override, allow easy -static builds.
-[ ] add man pages for all tools.
+[ ] remove sfeed_stats ?
 [ ] dogfood sfeed_frames, html content.
-	[ ] content is double printed (see sfeed.c).
-	[x] html content isnt unescaped (see ContentType (plain or html)), (sfeed_frames and sfeed_html).
 	[ ] in links browsers: items are centered in the table for some reason.
-
-[ ] compile and test on plan9
-
-[x] add plan9 mkfile?
-
-[ ] feeds file: empty tab (encoding cant be detected?)
-
+[ ] feeds file: empty tab (encoding can't be detected?)
 [ ] optimize afgets()
