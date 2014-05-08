@@ -7,4 +7,6 @@
 [ ] dogfood sfeed_frames, html content.
 	[ ] in links browsers: items are centered in the table for some reason.
 [ ] feeds file: empty tab (encoding can't be detected?)
-[ ] optimize afgets()
+[ ] optimize
+	[ ] afgets()
+	[ ] namedentitytostr, xml parser, etc.

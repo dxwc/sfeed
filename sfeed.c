@@ -145,9 +145,8 @@ codepointtoutf8(unsigned long cp, unsigned long *utf) {
 	return *utf ? 1 : 0; /* 1 byte */
 }
 
-static int
+static size_t
 namedentitytostr(const char *e, char *buffer, size_t bufsiz) {
-	/* TODO: optimize lookup? */
 	char *entities[6][2] = {
 		{ "&lt;", "<" },
 		{ "&gt;", ">" },
@@ -171,12 +170,14 @@ namedentitytostr(const char *e, char *buffer, size_t bufsiz) {
 	return 0;
 }
 
-static int
+/* convert named- or numeric entity string to buffer string
+ * returns byte-length of string. */
+static size_t
 entitytostr(const char *e, char *buffer, size_t bufsiz) {
 	unsigned long l = 0, cp = 0, b;
 	size_t len;
 
-	if(*e != '&' || bufsiz < 5) /* doesnt start with & */
+	if(*e != '&' || bufsiz < 5) /* doesn't start with & */
 		return 0;
 	if(e[1] == '#') {
 		e += 2; /* skip &# */
@@ -197,17 +198,17 @@ entitytostr(const char *e, char *buffer, size_t bufsiz) {
 				buffer[0] = '\\';
 				buffer[1] = 'n';
 				buffer[2] = '\0';
-				return 2;
+				return 2; /* len */
 			} else if(buffer[0] == '\\') { /* escape \ */
 				buffer[0] = '\\';
 				buffer[1] = '\\';
 				buffer[2] = '\0';
-				return 2;
+				return 2; /* len */
 			} else if(buffer[0] == '\t') { /* escape tab */
 				buffer[0] = '\\';
 				buffer[1] = 't';
 				buffer[2] = '\0';
-				return 2;
+				return 2; /* len */
 			}
 		}
 		return len;
@@ -601,7 +602,7 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen) {
 	size_t len;
 
 	/* try to translate entity, else just pass as data */
-	if((len = entitytostr(data, buffer, sizeof(buffer))))
+	if((len = entitytostr(data, buffer, sizeof(buffer))) > 0)
 		xml_handler_data(p, buffer, len);
 	else
 		xml_handler_data(p, data, datalen);
