@@ -323,7 +323,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz) {
 	else if(sscanf(p, "%c%02d%02d", &c, &tzhour, &tzmin) > 0);
 	else if(sscanf(p, "%c%d", &c, &tzhour) > 0)
 		tzmin = 0;
-	snprintf(buf, sizeof(buf) - 1, "%s%c%02d%02d", tzname, c, tzhour, tzmin);
+	snprintf(buf, bufsiz, "%s%c%02d%02d", tzname, c, tzhour, tzmin);
 	/* TODO: test + or - offset */
 	return (tzhour * 3600) + (tzmin * 60) * (c == '-' ? -1 : 1);
 }
