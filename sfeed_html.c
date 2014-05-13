@@ -7,7 +7,6 @@
 #include "util.h"
 
 static int showsidebar = 1; /* show sidebar ? */
-
 static struct feed *feeds = NULL; /* start of feeds linked-list. */
 static char *line = NULL;
 
@@ -18,11 +17,10 @@ cleanup(void) {
 	feedsfree(feeds); /* free feeds linked-list */
 }
 
-static void /* print error message to stderr */
+/* print error message to stderr */
+static void
 die(const char *s) {
-	fputs("sfeed_html: ", stderr);
-	fputs(s, stderr);
-	fputc('\n', stderr);
+	fprintf(stderr, "sfeed_html: %s\n", s);
 	exit(EXIT_FAILURE);
 }
 
@@ -53,10 +51,9 @@ main(void) {
 
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
 		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
-		isnew = (parsedtime >= comparetime);
-		islink = (fields[FieldLink][0] != '\0');
+		isnew = (parsedtime >= comparetime) ? 1 : 0;
+		islink = (fields[FieldLink][0] != '\0') ? 1 : 0;
 		/* first of feed section or new feed section. */
-		/* TODO: allocate fcur before here, fcur can be NULL */
 		if(!totalfeeds || (fcur && strcmp(fcur->name, fields[FieldFeedName]))) {
 			if(!(f = calloc(1, sizeof(struct feed))))
 				die("can't allocate enough memory");
@@ -79,12 +76,6 @@ main(void) {
 			/* TODO: memcpy and make fcur->name static? */
 			if(!(fcur->name = strdup(fields[FieldFeedName])))
 				die("can't allocate enough memory");
-
-
-			/*
-			fcur->totalnew = 0;
-			fcur->total = 0;
-			fcur->next = NULL;*/
 
 			if(fields[FieldFeedName][0] != '\0') {
 				fputs("<h2 id=\"", stdout);

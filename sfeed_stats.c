@@ -15,11 +15,10 @@ cleanup(void) {
 	feedsfree(feeds); /* free feeds linked-list */
 }
 
-static void /* print error message to stderr */
+/* print error message to stderr */
+static void
 die(const char *s) {
-	fputs("sfeed_stats: ", stderr);
-	fputs(s, stderr);
-	fputc('\n', stderr);
+	fprintf(stderr, "sfeed_stats: %s\n", s);
 	exit(EXIT_FAILURE);
 }
 
@@ -41,9 +40,8 @@ main(void) {
 
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
 		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
-		isnew = (parsedtime >= comparetime);
+		isnew = (parsedtime >= comparetime) ? 1 : 0;
 		/* first of feed section or new feed section. */
-		/* TODO: allocate fcur before here, fcur can be NULL */
 		if(!totalfeeds || (fcur && strcmp(fcur->name, fields[FieldFeedName]))) {
 			if(!(f = calloc(1, sizeof(struct feed))))
 				die("can't allocate enough memory");

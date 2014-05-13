@@ -216,11 +216,11 @@ entitytostr(const char *e, char *buffer, size_t bufsiz) {
 	return 0;
 }
 
+/* clear string only; don't free, prevents unnecessary reallocation */
 static void
 string_clear(String *s) {
 	if(s->data)
-		s->data[0] = '\0'; /* clear string only; don't free, prevents
-		                      unnecessary reallocation */
+		s->data[0] = '\0';
 	s->len = 0;
 }
 
@@ -258,7 +258,7 @@ static void
 string_append(String *s, const char *data, size_t len) {
 	if(!len || *data == '\0')
 		return;
-	/* check if allocation is necesary, dont shrink buffer
+	/* check if allocation is necesary, don't shrink buffer
 	   should be more than bufsiz ofcourse */
 	if(s->len + len > s->bufsiz)
 		string_buffer_realloc(s, s->len + len);
@@ -281,9 +281,7 @@ cleanup(void) {
 /* print error message to stderr */
 static void
 die(const char *s) {
-	fputs("sfeed: ", stderr);
-	fputs(s, stderr);
-	fputc('\n', stderr);
+	fprintf(stderr, "sfeed: %s\n", s);
 	exit(EXIT_FAILURE);
 }
 
@@ -307,7 +305,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz) {
 	/* TODO: cleanup / simplify */
 	if(isalpha((int)*p)) {
 		if(*p == 'Z' || *p == 'z') {
-			memcpy(buf, "GMT+00:00", strlen("GMT+00:00") + 1);
+			strlcpy(buf, "GMT+00:00", sizeof(buf));
 			return 0;
 		} else {
 			for(i = 0, t = &tzname[0]; i < (sizeof(tzname) - 1) &&
@@ -316,7 +314,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz) {
 			*t = '\0';
 		}
 	} else
-		memcpy(tzname, "GMT", strlen("GMT") + 1);
+		strlcpy(tzname, "GMT", sizeof(tzname));
 	if(!(*p)) {
 		strlcpy(buf, tzname, bufsiz);
 		return 0;
@@ -325,7 +323,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz) {
 	else if(sscanf(p, "%c%02d%02d", &c, &tzhour, &tzmin) > 0);
 	else if(sscanf(p, "%c%d", &c, &tzhour) > 0)
 		tzmin = 0;
-	sprintf(buf, "%s%c%02d%02d", tzname, c, tzhour, tzmin);
+	snprintf(buf, sizeof(buf) - 1, "%s%c%02d%02d", tzname, c, tzhour, tzmin);
 	/* TODO: test + or - offset */
 	return (tzhour * 3600) + (tzmin * 60) * (c == '-' ? -1 : 1);
 }
@@ -335,7 +333,7 @@ parsetime(const char *s, char *buf, size_t bufsiz) {
 	time_t t = -1; /* can't parse */
 	char tz[64] = "";
 	struct tm tm;
-	char *formats[] = {
+	const char *formats[] = {
 		"%a, %d %b %Y %H:%M:%S",
 		"%Y-%m-%d %H:%M:%S",
 		"%Y-%m-%dT%H:%M:%S",
@@ -344,7 +342,7 @@ parsetime(const char *s, char *buf, size_t bufsiz) {
 	char *p;
 	unsigned int i;
 
-	if(buf)
+	if(buf && bufsiz > 0)
 		buf[0] = '\0';
 	memset(&tm, 0, sizeof(tm));
 	for(i = 0; formats[i]; i++) {
@@ -367,11 +365,7 @@ parsetime(const char *s, char *buf, size_t bufsiz) {
 static void
 string_print(String *s) {
 	const char *p;
-/*	char buffer[BUFSIZ + 4];
-	size_t i;*/
 
-	if(!s->len)
-		return;
 	/* skip leading whitespace */
 	for(p = s->data; *p && isspace((int)*p); p++);
 	for(; *p; p++) {
@@ -385,32 +379,6 @@ string_print(String *s) {
 		} else
 			putchar(*p);
 	}
-#if 0
-	/* NOTE: optimized string output, re-test this later */
-	for(i = 0; *p; p++) {
-		if(ISWSNOSPACE(*p)) { /* isspace(c) && c != ' ' */
-			if(*p == '\n') { /* escape newline */
-				buffer[i++] = '\\';
-				buffer[i++] = 'n';
-			} else if(*p == '\\') { /* escape \ */
-				buffer[i++] = '\\';
-				buffer[i++] = '\\';
-			} else if(*p == '\t') { /* tab */
-				buffer[i++] = '\\';
-				buffer[i++] = 't';
-			}
-			/* ignore other whitespace chars, except space */
-		} else {
-			buffer[i++] = *p;
-		}
-		if(i >= BUFSIZ) { /* align write size with BUFSIZ */
-			fwrite(buffer, 1, BUFSIZ, stdout);
-			i -= BUFSIZ;
-		}
-	}
-	if(i) /* write remaining */
-		fwrite(buffer, 1, i, stdout);
-#endif
 }
 
 static int
@@ -545,9 +513,7 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
 	if(ctx.tag[0] != '\0')
 		return;
 	/* in item */
-	if(namelen >= sizeof(ctx.tag) - 2) /* check overflow */
-		return;
-	memcpy(ctx.tag, name, namelen + 1); /* copy including nul byte */
+	strlcpy(ctx.tag, name, sizeof(ctx.tag));
 	ctx.taglen = namelen;
 	ctx.tagid = gettag(ctx.item.feedtype, ctx.tag, ctx.taglen);
 	if(ctx.tagid == TagUnknown)
@@ -649,7 +615,7 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 	   istag(name, namelen, "item", strlen("item")))) /* RSS */
 	{
 		printf("%ld", (long)parsetime((&ctx.item.timestamp)->data,
-					  timebuf, sizeof(timebuf)));
+		       timebuf, sizeof(timebuf)));
 		putchar(FieldSeparator);
 		fputs(timebuf, stdout);
 		putchar(FieldSeparator);
@@ -688,7 +654,8 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 		/* not sure if needed */
 		ctx.iscontenttag = 0;
 		ctx.iscontent = 0;
-	} else if(!strcmp(ctx.tag, name)) { /* clear */
+	} else if(ctx.taglen == namelen && !strcmp(ctx.tag, name)) {
+		/* clear */
 		/* XXX: optimize ? */
 		ctx.field = NULL;
 		ctx.tag[0] = '\0'; /* unset tag */

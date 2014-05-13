@@ -43,5 +43,6 @@ main(void) {
 		putchar('\n');
 	}
 	free(line);
+	line = NULL;
 	return EXIT_SUCCESS;
 }

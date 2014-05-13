@@ -27,7 +27,7 @@ Optional dependencies
 Platforms tested
 ----------------
 
-- Linux (glibc+gcc, musl-gcc, clang).
+- Linux (glibc+gcc, musl-gcc, clang, tcc).
 - OpenBSD
 - Windows (cygwin gcc, mingw).
 

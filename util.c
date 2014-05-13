@@ -43,7 +43,8 @@ printlink(const char *link, const char *baseurl, FILE *fp) {
 	int isrelative;
 
 	/* protocol part */
-	for(p = link; *p && (isalpha((int)*p) || isdigit((int)*p) || *p == '+' || *p == '-' || *p == '.'); p++);
+	for(p = link; *p && (isalpha((int)*p) || isdigit((int)*p) ||
+		                *p == '+' || *p == '-' || *p == '.'); p++);
 	/* relative link (baseurl is used). */
 	isrelative = strncmp(p, "://", strlen("://"));
 	if(isrelative) {
@@ -82,7 +83,7 @@ parseline(char **line, size_t *size, char **fields,
 	unsigned int i = 0;
 	char *prev, *s;
 
-	if(afgets(line, size, fp)) {
+	if(getline(line, size, fp) > 0) {
 		for(prev = *line; (s = strchr(prev, separator)) && i <= maxfields; i++) {
 			*s = '\0';
 			fields[i] = prev;
@@ -95,7 +96,8 @@ parseline(char **line, size_t *size, char **fields,
 	return i;
 }
 
-/* print feed name for id; spaces and tabs in string as "-" (spaces in anchors are not valid). */
+/* print feed name for id; spaces and tabs in string as "-"
+ * (spaces in anchors are not valid). */
 void
 printfeednameid(const char *s, FILE *fp) {
 	for(; *s; s++)

@@ -13,18 +13,15 @@
 #include "util.h"
 
 static unsigned int showsidebar = 1; /* show sidebar ? */
-
 static FILE *fpindex = NULL, *fpitems = NULL, *fpmenu = NULL;
 static FILE *fpcontent = NULL;
 static char *line = NULL;
 static struct feed *feeds = NULL;
 
-/* print string to stderr and exit program with EXIT_FAILURE */
+/* print error message to stderr */
 static void
 die(const char *s) {
-	fputs("sfeed_frames: ", stderr);
-	fputs(s, stderr);
-	fputc('\n', stderr);
+	fprintf(stderr, "sfeed_frames: %s\n", s);
 	exit(EXIT_FAILURE);
 }
 
@@ -98,10 +95,9 @@ main(int argc, char **argv) {
 	struct feed *f, *fcur = NULL;
 	char *fields[FieldLast];
 	char name[64]; /* TODO: bigger size? */
-	char *basepath = ".";
 	char dirpath[PATH_MAX], filepath[PATH_MAX];
 	char reldirpath[PATH_MAX], relfilepath[PATH_MAX];
-	char *feedname = "";
+	char *feedname = "", *basepath = ".";
 	unsigned long totalfeeds = 0, totalnew = 0;
 	unsigned int isnew;
 	time_t parsedtime, comparetime;
@@ -226,7 +222,7 @@ main(int argc, char **argv) {
 		contenttime.modtime = parsedtime;
 		utime(filepath, &contenttime);
 
-		isnew = (parsedtime >= comparetime);
+		isnew = (parsedtime >= comparetime) ? 1 : 0;
 		totalnew += isnew;
 		fcur->totalnew += isnew;
 		fcur->total++;

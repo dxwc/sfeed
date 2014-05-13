@@ -1,14 +1,16 @@
 [ ] test again on:
-	- Linux (glibc+gcc, musl-gcc, clang).
+	- Linux (glibc+gcc, musl-gcc, clang, tcc).
 	- OpenBSD
 	- Windows (cygwin gcc, mingw).
-[ ] test with ubase/sbase tools.
+[ ] test shellscripts with ubase/sbase tools.
+	[ ] sfeed_update
+	[ ] sfeed_opml_export
 [ ] remove sfeed_stats ?
 [ ] dogfood sfeed_frames, html content.
 	[ ] in links browsers: items are centered in the table for some reason.
 [ ] feeds file: empty tab (encoding can't be detected?)
 [ ] optimize
-	[ ] afgets()
 	[ ] gettag() lookup.
 	[ ] namedentitytostr lookup.
 	[ ] xml parser, etc.
+[ ] cleanup code.

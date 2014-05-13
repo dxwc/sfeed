@@ -34,7 +34,7 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name, size_t n
 }
 
 int
-main(int argc, char **argv) {
+main(void) {
 	XMLParser x;
 
 	xmlparser_init(&x, stdin);

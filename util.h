@@ -17,7 +17,6 @@ enum { FieldUnixTimestamp = 0, FieldTimeFormatted, FieldTitle, FieldLink,
 #undef strlcpy
 size_t strlcpy(char *, const char *, size_t);
 
-char * afgets(char **p, size_t *size, FILE *fp);
 void feedsfree(struct feed *f);
 unsigned int parseline(char **line, size_t *size, char **fields,
                        unsigned int maxfields, int separator, FILE *fp);
