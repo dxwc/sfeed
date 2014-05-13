@@ -33,43 +33,7 @@ strlcpy(char *dst, const char *src, size_t siz) {
 		while (*s++)
 			;
 	}
-	return(s - src - 1);    /* count does not include NUL */
-}
-
-char *
-afgets(char **p, size_t *size, FILE *fp) {
-	char buf[BUFSIZ], *alloc = NULL;
-	size_t n, len = 0, allocsiz;
-	int end = 0;
-
-	while(!end && !feof(fp) && fgets(buf, sizeof(buf), fp)) {
-		n = strlen(buf);
-		if(buf[n - 1] == '\n') { /* dont store newlines. */
-			buf[n - 1] = '\0';
-			n--;
-			end = 1; /* newline found, end */
-		}
-		len += n;
-		allocsiz = len + 1;
-		if(allocsiz > *size) {
-			if((alloc = realloc(*p, allocsiz))) {
-				*p = alloc;
-				*size = allocsiz;
-			} else {
-				free(*p);
-				*p = NULL;
-				fputs("error: could not realloc\n", stderr);
-				exit(EXIT_FAILURE);
-				return NULL;
-			}
-		}
-		strlcpy((*p + (len - n)), buf, n + 1);
-	}
-	if(*p && len > 0) {
-		(*p)[len] = '\0';
-		return *p;
-	}
-	return NULL;
+	return(s - src - 1); /* count does not include NUL */
 }
 
 /* print link; if link is relative use baseurl to make it absolute */
