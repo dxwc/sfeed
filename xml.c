@@ -5,20 +5,17 @@
 
 #include "xml.h"
 
-void
-xmlparser_init(XMLParser *x, FILE *fp) {
-	memset(x, 0, sizeof(XMLParser));
-	x->fp = fp;
-}
-
 static __inline__ int /* like getc(), but do some smart buffering */
 xmlparser_getnext(XMLParser *x) {
+	return fgetc(x->fp);
+#if 0
 	if(x->readoffset >= x->readlastbytes) {
 		x->readoffset = 0;
 		if(!(x->readlastbytes = fread(x->readbuf, 1, sizeof(x->readbuf), x->fp)))
 			return EOF; /* 0 bytes read, assume EOF */
 	}
 	return (int)x->readbuf[x->readoffset++];
+#endif
 }
 
 static __inline__ void
@@ -141,7 +138,7 @@ xmlparser_parsecomment(XMLParser *x) {
 			i = 0;
 		}
 		 /* || (c == '-' && d >= sizeof(x->data) - 4)) { */
-		/* TODO: what if the end has --, and its cut on the boundary, test this. */
+		/* TODO: what if the end has --, and it's cut on the boundary, test this. */
 		if(datalen < sizeof(x->data) - 1)
 			x->data[datalen++] = c;
 		else {
@@ -185,7 +182,7 @@ xmlparser_parsecdata(XMLParser *x) {
 			}
 			i = 0;
 		}
-		/* TODO: what if the end has ]>, and its cut on the boundary */
+		/* TODO: what if the end has ]>, and it's cut on the boundary */
 		if(datalen < sizeof(x->data) - 1) {
 			x->data[datalen++] = c;
 		} else {
@@ -196,6 +193,12 @@ xmlparser_parsecdata(XMLParser *x) {
 			datalen = 1;
 		}
 	}
+}
+
+void
+xmlparser_init(XMLParser *x, FILE *fp) {
+	memset(x, 0, sizeof(XMLParser));
+	x->fp = fp;
 }
 
 void

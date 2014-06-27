@@ -12,6 +12,7 @@ static char *line = NULL;
 static void
 cleanup(void) {
 	free(line); /* free line */
+	line = NULL;
 	feedsfree(feeds); /* free feeds linked-list */
 }
 

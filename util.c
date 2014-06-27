@@ -76,6 +76,12 @@ printlink(const char *link, const char *baseurl, FILE *fp) {
 	fputs(link, fp);
 }
 
+/* read a field-separated line from 'fp',
+ * separated by a character 'separator',
+ * 'fields' is a list of pointer with a maximum size of 'maxfields'.
+ * 'line' buffer is allocated using malloc, 'size' will contain the
+ * allocated buffer size.
+ * returns: amount of fields read. */
 unsigned int
 parseline(char **line, size_t *size, char **fields,
           unsigned int maxfields, int separator, FILE *fp)

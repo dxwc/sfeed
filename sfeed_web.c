@@ -26,7 +26,7 @@ xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort) {
 	if(isfeedlink) {
 		if(*feedtype) {
 			fputs(feedtype, stdout);
-			putchar(' ' );
+			putchar(' ');
 		}
 		printlink(feedlink, basehref, stdout);
 		putchar('\n');
