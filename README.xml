@@ -11,8 +11,8 @@ Dependencies
 Features
 --------
 
-- Relatively small parser suitable for embedded systems.
-- Pretty simple API comparable to libexpat.
+- Relatively small parser.
+- Pretty simple API comparable with libexpat.
 
 
 Supports
@@ -29,10 +29,12 @@ Supports
 Caveats
 -------
 
-- Internally static buffers are used, callbacks like XMLParser.xmldata can be
+- Internally static buffers are used, callbacks like XMLParser.xmldata are
   called multiple times for the same tag if the data size is bigger than the
   internal buffer size (sizeof(XMLParser.data)). To differentiate between this
   you can use xml*start and xml*end.
+- If xmlattrentity or xmldataentity is NULL it will pass the data to xmlattr
+  and xmldata.
 - No table of (HTML / XML) named entities you should handle this with the
   XMLParser.xmldataentity callback yourself.
 - The XML is not checked for errors so it will happily continue parsing invalid
@@ -42,7 +44,7 @@ Caveats
 Interface / API
 ---------------
 
-Should be straightforward, see xml.h
+Should be straightforward, see xml.{c,h} and the example below.
 
 
 Files
