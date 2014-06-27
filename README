@@ -7,7 +7,7 @@ Simple RSS and Atom parser (and some format programs).
 Dependencies
 ------------
 
-- C compiler (recommended to support C99).
+- C compiler (C99).
 - libc (recommended: C99 and POSIX >= 200809).
 
 
@@ -17,11 +17,12 @@ Optional dependencies
 - make (for Makefile) or mk (for mkfile) (plan9 or 9base).
 - POSIX shell
   used by sfeed_update and sfeed_opml_export.
-- curl: http://curl.haxx.se/
+- curl binary: http://curl.haxx.se/
   used by sfeed_update, can be replaced with any tool like wget, fetch.
 - iconv command-line utilities: http://www.gnu.org/software/libiconv/
   used by sfeed_update. If the text in your RSS/Atom feeds are already UTF-8
-  encoded then you don't need this.
+  encoded then you don't need this. For an alternative minimal iconv
+  implementation: http://git.etalabs.net/cgit/noxcuse/tree/src/iconv.c
 
 
 Platforms tested
@@ -47,7 +48,7 @@ sfeed_opml_export - Generate an opml file based on a sfeedrc config file.
 sfeed_xmlenc      - Detect character-set encoding from XML stream.
 sfeed_web         - Find urls to RSS/Atom feed from a webpage.
 sfeedrc.example   - Example config file.
-style.css         - Example stylesheet to use with sfeed_html or sfeed_frames.
+style.css         - Example stylesheet to use with sfeed_html and sfeed_frames.
 
 
 Files read at runtime by sfeed_update
