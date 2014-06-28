@@ -27,8 +27,7 @@ xmlparser_parseattrs(XMLParser *x) {
 		if(isspace(c)) { /* TODO: simplify endname ? */
 			if(namelen)
 				endname = 1;
-			else
-				continue;
+			continue;
 		}
 		if(c == '?')
 			; /* ignore */
