@@ -499,11 +499,12 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 static void
 xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
 	if(ctx.iscontenttag) {
-		/* starts with div, handle as XML, don't convert entities */
-		/* TODO: test properly */
+		/* starts with div, handle as XML, don't convert entities (set handle to NULL) */
 		if(ctx.item.feedtype == FeedTypeAtom &&
-		   !strncmp(name, "div", strlen("div"))) /* TODO: strncmp -> strcmp? */
+		   namelen == strlen("div") &&
+		   !strncmp(name, "div", strlen("div"))) {
 			p->xmldataentity = NULL;
+		}
 	}
 	if(ctx.iscontent) {
 		ctx.attrcount = 0;
