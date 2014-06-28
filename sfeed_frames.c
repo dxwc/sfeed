@@ -7,8 +7,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <utime.h>
-#include <errno.h>
 #include <limits.h>
+#include <errno.h>
 
 #include "util.h"
 
@@ -216,7 +216,10 @@ main(int argc, char **argv) {
 		}
 
 		/* write item. */
+		errno = 0;
 		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
+		if(errno != 0)
+			parsedtime = 0;
 		/* set modified and access time of file to time of item. */
 		contenttime.actime = parsedtime;
 		contenttime.modtime = parsedtime;

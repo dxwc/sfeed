@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "util.h"
 
@@ -50,7 +51,10 @@ main(void) {
 	feeds = fcur;
 
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
+		errno = 0;
 		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
+		if(errno != 0)
+			parsedtime = 0;
 		isnew = (parsedtime >= comparetime) ? 1 : 0;
 		islink = (fields[FieldLink][0] != '\0') ? 1 : 0;
 		/* first of feed section or new feed section. */

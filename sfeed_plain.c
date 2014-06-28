@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <errno.h>
 
 #include "util.h"
 
@@ -27,7 +28,10 @@ main(void) {
 
 	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
+		errno = 0;
 		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
+		if(errno != 0)
+			parsedtime = 0;
 		if(parsedtime >= comparetime)
 			fputs(" N  ", stdout);
 		else

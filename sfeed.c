@@ -188,7 +188,7 @@ entitytostr(const char *e, char *buffer, size_t bufsiz) {
 			l = strtoul(e + 1, NULL, 16); /* hex */
 		else
 			l = strtoul(e, NULL, 10); /* decimal */
-		if(errno != 0 || !l)
+		if(errno != 0)
 			return 0; /* invalid value */
 		if(!(len = codepointtoutf8(l, &cp)))
 			return 0;
