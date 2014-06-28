@@ -244,6 +244,7 @@ static int
 string_buffer_realloc(String *s, size_t newlen) {
 	char *p;
 	size_t alloclen;
+
 	for(alloclen = 16; alloclen <= newlen; alloclen *= 2);
 	if(!(p = realloc(s->data, alloclen))) {
 		string_free(s); /* free previous allocation */
@@ -405,13 +406,19 @@ xml_handler_data(XMLParser *p, const char *s, size_t len) {
 
 static void
 xml_handler_cdata(XMLParser *p, const char *s, size_t len) {
+	(void)p;
+
 	if(ctx.field)
 		string_append(ctx.field, s, len);
 }
 
 static void
 xml_handler_attr_start(struct xmlparser *p, const char *tag, size_t taglen,
-                       const char *name, size_t namelen) {
+	const char *name, size_t namelen)
+{
+	(void)tag;
+	(void)taglen;
+
 	if(ctx.iscontent && !ctx.iscontenttag) {
 		if(!ctx.attrcount)
 			xml_handler_data(p, " ", 1);
@@ -424,7 +431,13 @@ xml_handler_attr_start(struct xmlparser *p, const char *tag, size_t taglen,
 
 static void
 xml_handler_attr_end(struct xmlparser *p, const char *tag, size_t taglen,
-                     const char *name, size_t namelen) {
+	const char *name, size_t namelen)
+{
+	(void)tag;
+	(void)taglen;
+	(void)name;
+	(void)namelen;
+
 	if(ctx.iscontent && !ctx.iscontenttag) {
 		xml_handler_data(p, "\"", 1);
 		ctx.attrcount = 0;
@@ -433,7 +446,11 @@ xml_handler_attr_end(struct xmlparser *p, const char *tag, size_t taglen,
 
 static void
 xml_handler_start_element_parsed(XMLParser *p, const char *tag, size_t taglen,
-                                 int isshort) {
+	int isshort)
+{
+	(void)tag;
+	(void)taglen;
+
 	if(ctx.iscontent && !ctx.iscontenttag) {
 		if(isshort)
 			xml_handler_data(p, "/>", 2);
@@ -444,8 +461,12 @@ xml_handler_start_element_parsed(XMLParser *p, const char *tag, size_t taglen,
 
 static void
 xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
-                 const char *name, size_t namelen, const char *value,
-                 size_t valuelen) {
+	const char *name, size_t namelen, const char *value,
+	size_t valuelen)
+{
+	(void)tag;
+	(void)taglen;
+
 	if(ctx.iscontent && !ctx.iscontenttag) {
 		xml_handler_data(p, value, valuelen);
 		return;

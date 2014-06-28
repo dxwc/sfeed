@@ -22,6 +22,9 @@ isattr(const char *s1, const char *s2) {
 
 static void
 xml_handler_start_element(XMLParser *p, const char *tag, size_t taglen) {
+	(void)p;
+	(void)taglen;
+
 	if(istag(tag, "outline")) {
 		feedurl[0] = '\0';
 		feedname[0] = '\0';
@@ -33,6 +36,10 @@ static void
 xml_handler_end_element(XMLParser *p, const char *tag, size_t taglen,
 	int isshort)
 {
+	(void)p;
+	(void)taglen;
+	(void)isshort;
+
 	if(istag(tag, "outline")) {
 		printf("\tfeed \"%s\" \"%s\" \"%s\"\n",
 		       feedname[0] ? feedname : "unnamed",
@@ -45,6 +52,11 @@ static void
 xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 	const char *name, size_t namelen, const char *value, size_t valuelen)
 {
+	(void)p;
+	(void)taglen;
+	(void)namelen;
+	(void)valuelen;
+
 	if(istag(tag, "outline")) {
 		if(isattr(name, "text") || isattr(name, "title"))
 			strlcpy(feedname, value, sizeof(feedname));

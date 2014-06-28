@@ -12,6 +12,8 @@ static char feedlink[4096] = "", basehref[4096] = "", feedtype[256] = "";
 
 static void
 xmltagstart(XMLParser *p, const char *tag, size_t taglen) {
+	(void)p;
+
 	isbase = islink = isfeedlink = 0;
 	if(taglen == 4) { /* optimization */
 		if(!strncasecmp(tag, "base", taglen))
@@ -23,6 +25,11 @@ xmltagstart(XMLParser *p, const char *tag, size_t taglen) {
 
 static void
 xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort) {
+	(void)p;
+	(void)tag;
+	(void)taglen;
+	(void)isshort;
+
 	if(isfeedlink) {
 		if(*feedtype) {
 			fputs(feedtype, stdout);
@@ -37,6 +44,10 @@ xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort) {
 static void
 xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
         size_t namelen, const char *value, size_t valuelen) {
+	(void)p;
+	(void)tag;
+	(void)taglen;
+	(void)valuelen;
 
 	if(namelen != 4) /* optimization */
 		return;
