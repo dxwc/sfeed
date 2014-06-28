@@ -12,7 +12,7 @@
 
 #include "util.h"
 
-static unsigned int showsidebar = 1; /* show sidebar ? */
+static int showsidebar = 1; /* show sidebar ? */
 static FILE *fpindex = NULL, *fpitems = NULL, *fpmenu = NULL;
 static FILE *fpcontent = NULL;
 static char *line = NULL;
@@ -143,8 +143,8 @@ main(int argc, char **argv) {
 		}
 		/* first of feed section or new feed section (differ from previous). */
 		if(!totalfeeds || (fcur && strcmp(fcur->name, feedname))) {
-			/* TODO: makepathname isnt necesary if fields[FieldFeedName] is the same as the previous line */
-			/* TODO: move this part below where FieldFeedName is checked if its different ? */
+			/* TODO: makepathname isn't necesary if fields[FieldFeedName] is the same as the previous line */
+			/* TODO: move this part below where FieldFeedName is checked if it's different ? */
 
 			/* make directory for feedname */
 			if(!(namelen = makepathname(feedname, name, sizeof(name))))

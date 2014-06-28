@@ -4,6 +4,8 @@
 #include <strings.h>
 #include <time.h>
 #include <ctype.h>
+#include <stdint.h>
+#include <errno.h>
 
 #include "util.h"
 #include "xml.h"
@@ -127,7 +129,7 @@ gettag(int feedtype, const char *name, size_t namelen) {
 }
 
 static size_t
-codepointtoutf8(unsigned long cp, unsigned long *utf) {
+codepointtoutf8(uint32_t cp, uint32_t *utf) {
 	if(cp >= 0x10000) { /* 4 bytes */
 		*utf = 0xf0808080 | ((cp & 0xfc0000) << 6) | ((cp & 0x3f000) << 4) |
 		       ((cp & 0xfc0) << 2) | (cp & 0x3f);
@@ -173,18 +175,21 @@ namedentitytostr(const char *e, char *buffer, size_t bufsiz) {
  * returns byte-length of string. */
 static size_t
 entitytostr(const char *e, char *buffer, size_t bufsiz) {
-	unsigned long l = 0, cp = 0, b;
-	size_t len;
+	uint32_t l = 0, cp = 0;
+	size_t len = 0, b;
+	int c;
 
 	if(*e != '&' || bufsiz < 5) /* doesn't start with & */
 		return 0;
 	if(e[1] == '#') {
 		e += 2; /* skip &# */
-		if(*e == 'x') {
-			e++;
-			l = strtol(e, NULL, 16); /* hex */
-		} else
-			l = strtol(e, NULL, 10); /* decimal */
+		errno = 0;
+		if(*e == 'x')
+			l = strtoul(e + 1, NULL, 16); /* hex */
+		else
+			l = strtoul(e, NULL, 10); /* decimal */
+		if(errno != 0 || !l)
+			return 0; /* invalid value */
 		if(!(len = codepointtoutf8(l, &cp)))
 			return 0;
 		/* make string */
@@ -193,27 +198,22 @@ entitytostr(const char *e, char *buffer, size_t bufsiz) {
 		buffer[len] = '\0';
 		/* escape whitespace */
 		if(ISWSNOSPACE(buffer[0])) { /* isspace(c) && c != ' ' */
-			if(buffer[0] == '\n') { /* escape newline */
+			switch(buffer[0]) {
+			case '\n': c = 'n';  break;
+			case '\\': c = '\\'; break;
+			case '\t': c = 't';  break;
+			default:   c = '\0'; break;
+			}
+			if(c != '\0') {
 				buffer[0] = '\\';
-				buffer[1] = 'n';
+				buffer[1] = c;
 				buffer[2] = '\0';
-				return 2; /* len */
-			} else if(buffer[0] == '\\') { /* escape \ */
-				buffer[0] = '\\';
-				buffer[1] = '\\';
-				buffer[2] = '\0';
-				return 2; /* len */
-			} else if(buffer[0] == '\t') { /* escape tab */
-				buffer[0] = '\\';
-				buffer[1] = 't';
-				buffer[2] = '\0';
-				return 2; /* len */
+				len = 2;
 			}
 		}
-		return len;
 	} else /* named entity */
-		return namedentitytostr(e, buffer, bufsiz);
-	return 0;
+		len = namedentitytostr(e, buffer, bufsiz);
+	return len;
 }
 
 /* clear string only; don't free, prevents unnecessary reallocation */
@@ -502,7 +502,7 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
 		/* starts with div, handle as XML, don't convert entities */
 		/* TODO: test properly */
 		if(ctx.item.feedtype == FeedTypeAtom &&
-		   !strncmp(name, "div", strlen("div")))
+		   !strncmp(name, "div", strlen("div"))) /* TODO: strncmp -> strcmp? */
 			p->xmldataentity = NULL;
 	}
 	if(ctx.iscontent) {
