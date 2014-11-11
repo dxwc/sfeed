@@ -93,11 +93,6 @@ makepathname(const char *path, char *buffer, size_t bufsiz) {
 	return i;
 }
 
-static int
-fileexists(const char *path) {
-	return (!access(path, F_OK));
-}
-
 int
 main(int argc, char **argv) {
 	struct feed *f, *fcur = NULL;
@@ -205,7 +200,9 @@ main(int argc, char **argv) {
 			die("snprintf() format error");
 		if(snprintf(relfilepath, sizeof(relfilepath), "%s/%s.html", reldirpath, name) <= 0)
 			die("snprintf() format error");
-		if(!fileexists(filepath) && (fpcontent = fopen(filepath, "w+b"))) {
+
+		/* file doesn't exist yet and has write access */
+		if(access(filepath, F_OK) != 0 && (fpcontent = fopen(filepath, "w+b"))) {
 			fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
 			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>\n"
 			      "<body class=\"frame\"><div class=\"content\">"
