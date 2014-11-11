@@ -60,6 +60,7 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 	} else if(islink) {
 		if(!strncasecmp(name, "type", namelen)) {
 			if(!strncasecmp(value, "application/atom", strlen("application/atom")) ||
+			   !strncasecmp(value, "application/xml", strlen("application/xml")) ||
 			   !strncasecmp(value, "application/rss", strlen("application/rss"))) {
 				isfeedlink = 1;
 				strlcpy(feedtype, value, sizeof(feedtype));
