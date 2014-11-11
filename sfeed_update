@@ -95,7 +95,7 @@ feeds() {
 # load config file.
 loadconfig "$1"
 # fetch feeds and store in temporary file.
-TMPDIR=$(mktemp -d -t "sfeed_XXXXXX")
+TMPDIR=$(mktemp -d "/tmp/sfeed_XXXXXX")
 # get date of last modified feedfile in format:
 # YYYYmmdd HH:MM:SS [+-][0-9]*
 lastupdated=$(stat -c "%y" "$sfeedfile" 2> /dev/null | cut -c 1-4,6-7,9-10,11-19,30-)
@@ -115,7 +115,7 @@ wait
 [ "$isrunning" = "0" ] && cleanup && exit 1
 # concat all individual feed files to a single file.
 # NOTE: mktemp uses $TMPDIR for temporary directory.
-tmpfile=$(mktemp -t "sfeed_XXXXXX")
+tmpfile=$(mktemp "sfeed_XXXXXX")
 find "$TMPDIR" -type f -exec cat {} \; > "$tmpfile"
 # get new data and merge with old.
 merge "$sfeedfile" "$tmpfile" > "$sfeedfilenew"
