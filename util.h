@@ -23,3 +23,4 @@ unsigned int parseline(char **line, size_t *size, char **fields,
 void printfeednameid(const char *s, FILE *fp);
 void printhtmlencoded(const char *s, FILE *fp);
 void printlink(const char *link, const char *baseurl, FILE *fp);
+void printutf8pad(FILE *fp, const char *s, size_t len, int pad);

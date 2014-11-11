@@ -135,3 +135,17 @@ feedsfree(struct feed *f) {
 		free(f);
 	}
 }
+
+void
+printutf8pad(FILE *fp, const char *s, size_t len, int pad) {
+    size_t n = 0, i;
+
+    for(i = 0; s[i] && n < len; i++) {
+        /* start of character */
+        if((s[i] & 0xc0) != 0x80)
+            n++;
+        putc(s[i], fp);
+    }
+    for(; n < len; n++)
+        putc(pad, fp);
+}

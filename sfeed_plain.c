@@ -6,20 +6,6 @@
 
 #include "util.h"
 
-static void
-printutf8padded(FILE *fp, const char *s, size_t len, int pad) {
-	size_t n = 0, i;
-
-	for(i = 0; s[i] && n < len; i++) {
-		/* start of character */
-		if((s[i] & 0xc0) != 0x80)
-			n++;
-		putc(s[i], fp);
-	}
-	for(; n < len; n++)
-		putc(pad, fp);
-}
-
 int
 main(void) {
 	char *line = NULL, *fields[FieldLast];
@@ -39,7 +25,7 @@ main(void) {
 		if(fields[FieldFeedName][0] != '\0')
 			printf("%-15.15s  ", fields[FieldFeedName]);
 		printf("%-30.30s  ", fields[FieldTimeFormatted]);
-		printutf8padded(stdout, fields[FieldTitle], 70, ' ');
+		printutf8pad(stdout, fields[FieldTitle], 70, ' ');
 		fputs("  ", stdout);
 		if(fields[FieldBaseSiteUrl][0] != '\0')
 			printlink(fields[FieldLink], fields[FieldBaseSiteUrl], stdout);
