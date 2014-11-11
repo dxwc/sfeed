@@ -259,14 +259,16 @@ xmlparser_parse(XMLParser *x) {
 								x->xmltagend(x, &(x->tag)[1], x->taglen, 0);
 						} else {
 							x->taglen = taglen;
+							/* start tag */
 							if(x->xmltagstart)
-								x->xmltagstart(x, x->tag, x->taglen); /* start tag */
+								x->xmltagstart(x, x->tag, x->taglen);
 							if(isspace(c))
 								xmlparser_parseattrs(x);
 							if(x->xmltagstartparsed)
 								x->xmltagstartparsed(x, x->tag, x->taglen, x->isshorttag);
 						}
-						if((x->isshorttag || ispi) && x->xmltagend) /* call tagend for shortform or processing instruction */
+						/* call tagend for shortform or processing instruction */
+						if((x->isshorttag || ispi) && x->xmltagend)
 							x->xmltagend(x, x->tag, x->taglen, 1);
 						break;
 					} else if(taglen < sizeof(x->tag) - 1)
