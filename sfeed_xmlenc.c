@@ -1,15 +1,16 @@
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <stdlib.h>
-#include <ctype.h>
 
 #include "xml.h"
 
 static int isxmlpi = 0, tags = 0;
 
 static void
-xmltagstart(XMLParser *p, const char *tag, size_t taglen) {
+xmltagstart(XMLParser *p, const char *tag, size_t taglen)
+{
 	(void)p;
 
 	/* optimization: try to find processing instruction at start */
@@ -20,7 +21,8 @@ xmltagstart(XMLParser *p, const char *tag, size_t taglen) {
 }
 
 static void
-xmltagend(XMLParser *p, const char *tag, size_t taglen, int isshort) {
+xmltagend(XMLParser *p, const char *tag, size_t taglen, int isshort)
+{
 	(void)p;
 	(void)tag;
 	(void)taglen;
@@ -50,7 +52,8 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 }
 
 int
-main(void) {
+main(void)
+{
 	XMLParser x;
 
 	xmlparser_init(&x, stdin);

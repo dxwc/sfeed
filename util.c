@@ -1,9 +1,10 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
+#include <time.h>
+#include <wchar.h>
 
 #include "util.h"
 
@@ -14,7 +15,8 @@
  * Returns strlen(src); if retval >= siz, truncation occurred.
  */
 size_t
-strlcpy(char *dst, const char *src, size_t siz) {
+strlcpy(char *dst, const char *src, size_t siz)
+{
 	char *d = dst;
 	const char *s = src;
 	size_t n = siz;
@@ -38,7 +40,8 @@ strlcpy(char *dst, const char *src, size_t siz) {
 
 /* print link; if link is relative use baseurl to make it absolute */
 void
-printlink(const char *link, const char *baseurl, FILE *fp) {
+printlink(const char *link, const char *baseurl, FILE *fp)
+{
 	const char *ebaseproto, *ebasedomain, *p;
 	int isrelative;
 
@@ -105,7 +108,8 @@ parseline(char **line, size_t *size, char **fields,
 /* print feed name for id; spaces and tabs in string as "-"
  * (spaces in anchors are not valid). */
 void
-printfeednameid(const char *s, FILE *fp) {
+printfeednameid(const char *s, FILE *fp)
+{
 	for(; *s; s++)
 		fputc(isspace((int)*s) ? '-' : tolower((int)*s), fp);
 }
@@ -124,7 +128,8 @@ printhtmlencoded(const char *s, FILE *fp) {
 }
 
 void
-feedsfree(struct feed *f) {
+feedsfree(struct feed *f)
+{
 	struct feed *next = NULL;
 
 	for(; f; f = next) {
@@ -137,14 +142,21 @@ feedsfree(struct feed *f) {
 }
 
 void
-printutf8pad(FILE *fp, const char *s, size_t len, int pad) {
+printutf8pad(FILE *fp, const char *s, size_t len, int pad)
+{
+	wchar_t w;
     size_t n = 0, i;
+	int r;
 
-    for(i = 0; s[i] && n < len; i++) {
-        /* start of character */
-        if((s[i] & 0xc0) != 0x80)
-            n++;
-        putc(s[i], fp);
+    for(i = 0; *s && n < len; i++, s++) {
+		if(ISUTF8(*s)) {
+			if((r = mbtowc(&w, s, 4)) == -1)
+				break;
+			if((r = wcwidth(w)) == -1)
+				r = 1;
+			n += (size_t)r;
+		}
+        putc(*s, fp);
     }
     for(; n < len; n++)
         putc(pad, fp);

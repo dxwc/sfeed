@@ -1,9 +1,9 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 #include "util.h"
 
@@ -12,7 +12,8 @@ static struct feed *feeds = NULL; /* start of feeds linked-list. */
 static char *line = NULL;
 
 static void
-cleanup(void) {
+cleanup(void)
+{
 	free(line); /* free line */
 	line = NULL;
 	feedsfree(feeds); /* free feeds linked-list */
@@ -20,13 +21,15 @@ cleanup(void) {
 
 /* print error message to stderr */
 static void
-die(const char *s) {
+die(const char *s)
+{
 	fprintf(stderr, "sfeed_html: %s\n", s);
 	exit(EXIT_FAILURE);
 }
 
 int
-main(void) {
+main(void)
+{
 	char *fields[FieldLast];
 	unsigned long totalfeeds = 0, totalnew = 0;
 	unsigned int islink, isnew;

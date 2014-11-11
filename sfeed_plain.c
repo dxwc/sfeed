@@ -1,13 +1,14 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 #include "util.h"
 
 int
-main(void) {
+main(void)
+{
 	char *line = NULL, *fields[FieldLast];
 	time_t parsedtime, comparetime;
 	size_t size = 0;

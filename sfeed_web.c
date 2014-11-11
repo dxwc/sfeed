@@ -1,8 +1,8 @@
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <stdlib.h>
-#include <ctype.h>
 
 #include "util.h"
 #include "xml.h"
@@ -11,7 +11,8 @@ static unsigned int isbase = 0, islink = 0, isfeedlink = 0, found = 0;
 static char feedlink[4096] = "", basehref[4096] = "", feedtype[256] = "";
 
 static void
-xmltagstart(XMLParser *p, const char *tag, size_t taglen) {
+xmltagstart(XMLParser *p, const char *tag, size_t taglen)
+{
 	(void)p;
 
 	isbase = islink = isfeedlink = 0;
@@ -24,7 +25,8 @@ xmltagstart(XMLParser *p, const char *tag, size_t taglen) {
 }
 
 static void
-xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort) {
+xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort)
+{
 	(void)p;
 	(void)tag;
 	(void)taglen;
@@ -43,7 +45,8 @@ xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort) {
 
 static void
 xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
-        size_t namelen, const char *value, size_t valuelen) {
+        size_t namelen, const char *value, size_t valuelen)
+{
 	(void)p;
 	(void)tag;
 	(void)taglen;
@@ -67,7 +70,8 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 }
 
 int
-main(int argc, char **argv) {
+main(int argc, char *argv[])
+{
 	XMLParser x;
 
 	/* base href */

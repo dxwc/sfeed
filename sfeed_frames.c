@@ -1,14 +1,14 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
 #include <ctype.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <utime.h>
-#include <limits.h>
 #include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+#include <utime.h>
 
 #include "util.h"
 
@@ -20,13 +20,15 @@ static struct feed *feeds = NULL;
 
 /* print error message to stderr */
 static void
-die(const char *s) {
+die(const char *s)
+{
 	fprintf(stderr, "sfeed_frames: %s\n", s);
 	exit(EXIT_FAILURE);
 }
 
 static void
-cleanup(void) {
+cleanup(void)
+{
 	if(fpmenu) {
 		fclose(fpmenu);
 		fpmenu = NULL;
@@ -51,7 +53,8 @@ cleanup(void) {
 /* print text, ignore tabs, newline and carriage return etc
  * print some HTML 2.0 / XML 1.0 as normal text */
 static void
-printcontent(const char *s, FILE *fp) {
+printcontent(const char *s, FILE *fp)
+{
 	const char *p;
 
 	for(p = s; *p; p++) {
@@ -73,7 +76,8 @@ printcontent(const char *s, FILE *fp) {
 
 /* TODO: bufsiz - 1 ? */
 static size_t
-makepathname(const char *path, char *buffer, size_t bufsiz) {
+makepathname(const char *path, char *buffer, size_t bufsiz)
+{
 	size_t i = 0, r = 0;
 
 	for(; *path && i < bufsiz - 1; path++) {
@@ -94,7 +98,8 @@ makepathname(const char *path, char *buffer, size_t bufsiz) {
 }
 
 int
-main(int argc, char **argv) {
+main(int argc, char *argv[])
+{
 	struct feed *f, *fcur = NULL;
 	char *fields[FieldLast];
 	char name[64]; /* TODO: bigger size? */

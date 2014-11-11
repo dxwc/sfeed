@@ -11,17 +11,20 @@ static XMLParser parser; /* XML parser state */
 static char feedurl[2048], feedname[2048], basesiteurl[2048];
 
 static int
-istag(const char *s1, const char *s2) {
+istag(const char *s1, const char *s2)
+{
 	return !strcasecmp(s1, s2);
 }
 
 static int
-isattr(const char *s1, const char *s2) {
+isattr(const char *s1, const char *s2)
+{
 	return !strcasecmp(s1, s2);
 }
 
 static void
-xml_handler_start_element(XMLParser *p, const char *tag, size_t taglen) {
+xml_handler_start_element(XMLParser *p, const char *tag, size_t taglen)
+{
 	(void)p;
 	(void)taglen;
 
@@ -68,7 +71,8 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 }
 
 int
-main(void) {
+main(void)
+{
 	xmlparser_init(&parser, stdin);
 
 	parser.xmltagstart = xml_handler_start_element;

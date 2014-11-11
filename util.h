@@ -1,5 +1,7 @@
 #include <time.h>
 
+#define ISUTF8(c) (((c) & 0xc0) != 0x80)
+
 /* feed info */
 struct feed {
 	char *name; /* feed name */
