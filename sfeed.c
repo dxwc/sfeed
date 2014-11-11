@@ -68,8 +68,35 @@ typedef struct feedcontext {
 	int attrcount;
 } FeedContext;
 
-static void die(const char *s);
-static void cleanup(void);
+static void   cleanup(void);
+static size_t codepointtoutf8(uint32_t, uint32_t *);
+static void   die(const char *);
+static size_t entitytostr(const char *, char *, size_t);
+static int    gettag(int, const char *, size_t);
+static int    gettimetz(const char *, char *, size_t);
+static int    isattr(const char *, size_t, const char *, size_t);
+static int    istag(const char *, size_t, const char *, size_t);
+static size_t namedentitytostr(const char *, char *, size_t);
+static time_t parsetime(const char *, char *, size_t);
+static void   string_append(String *, const char *, size_t);
+static void   string_buffer_init(String *, size_t);
+static int    string_buffer_realloc(String *, size_t);
+static void   string_clear(String *);
+static void   string_free(String *);
+static void   string_print(String *);
+static void   xml_handler_attr(XMLParser *, const char *, size_t,
+                               const char *, size_t, const char *, size_t);
+static void   xml_handler_attr_start(XMLParser *, const char *, size_t,
+                                     const char *, size_t);
+static void   xml_handler_attr_end(struct xmlparser *, const char *, size_t,
+                                   const char *, size_t);
+static void   xml_handler_cdata(XMLParser *, const char *, size_t);
+static void   xml_handler_data(XMLParser *, const char *, size_t);
+static void   xml_handler_data_entity(XMLParser *, const char *, size_t);
+static void   xml_handler_end_element(XMLParser *, const char *, size_t, int);
+static void   xml_handler_start_element(XMLParser *, const char *, size_t);
+static void   xml_handler_start_element_parsed(XMLParser *, const char *,
+                                               size_t, int);
 
 static FeedContext ctx;
 static XMLParser parser; /* XML parser state */
@@ -77,31 +104,32 @@ static char *append = NULL; /* append string after each output line */
 
 /* unique number for parsed tag (faster comparison) */
 static int
-gettag(int feedtype, const char *name, size_t namelen) {
+gettag(int feedtype, const char *name, size_t namelen)
+{
 	/* RSS, alphabetical order */
 	static FeedTag rsstag[] = {
-		{ "author", 6, RSSTagAuthor },
+		{ "author",           6, RSSTagAuthor },
 		{ "content:encoded", 15, RSSTagContentencoded },
-		{ "dc:creator", 10, RSSTagDccreator },
-		{ "dc:date", 7, RSSTagDcdate },
-		{ "description", 11, RSSTagDescription },
-		{ "guid", 4, RSSTagGuid },
-		{ "link", 4, RSSTagLink },
-		{ "pubdate", 7, RSSTagPubdate },
-		{ "title", 5, RSSTagTitle },
-		{ NULL, 0, -1 }
+		{ "dc:creator",      10, RSSTagDccreator },
+		{ "dc:date",          7, RSSTagDcdate },
+		{ "description",     11, RSSTagDescription },
+		{ "guid",             4, RSSTagGuid },
+		{ "link",             4, RSSTagLink },
+		{ "pubdate",          7, RSSTagPubdate },
+		{ "title",            5, RSSTagTitle },
+		{ NULL,               0, -1 }
 	};
 	/* Atom, alphabetical order */
 	static FeedTag atomtag[] = {
-		{ "author", 6, AtomTagAuthor },
-		{ "content", 7, AtomTagContent },
-		{ "id", 2, AtomTagId },
-		{ "link", 4, AtomTagLink },
+		{ "author",    6, AtomTagAuthor },
+		{ "content",   7, AtomTagContent },
+		{ "id",        2, AtomTagId },
+		{ "link",      4, AtomTagLink },
 		{ "published", 9, AtomTagPublished },
-		{ "summary", 7, AtomTagSummary },
-		{ "title", 5, AtomTagTitle },
-		{ "updated", 7, AtomTagUpdated },
-		{ NULL, 0, -1 }
+		{ "summary",   7, AtomTagSummary },
+		{ "title",     5, AtomTagTitle },
+		{ "updated",   7, AtomTagUpdated },
+		{ NULL,        0, -1 }
 	};
 	int i, n;
 
@@ -129,7 +157,8 @@ gettag(int feedtype, const char *name, size_t namelen) {
 }
 
 static size_t
-codepointtoutf8(uint32_t cp, uint32_t *utf) {
+codepointtoutf8(uint32_t cp, uint32_t *utf)
+{
 	if(cp >= 0x10000) { /* 4 bytes */
 		*utf = 0xf0808080 | ((cp & 0xfc0000) << 6) | ((cp & 0x3f000) << 4) |
 		       ((cp & 0xfc0) << 2) | (cp & 0x3f);
@@ -147,7 +176,8 @@ codepointtoutf8(uint32_t cp, uint32_t *utf) {
 }
 
 static size_t
-namedentitytostr(const char *e, char *buffer, size_t bufsiz) {
+namedentitytostr(const char *e, char *buffer, size_t bufsiz)
+{
 	char *entities[6][2] = {
 		{ "&lt;", "<" },
 		{ "&gt;", ">" },
@@ -174,7 +204,8 @@ namedentitytostr(const char *e, char *buffer, size_t bufsiz) {
 /* convert named- or numeric entity string to buffer string
  * returns byte-length of string. */
 static size_t
-entitytostr(const char *e, char *buffer, size_t bufsiz) {
+entitytostr(const char *e, char *buffer, size_t bufsiz)
+{
 	uint32_t l = 0, cp = 0;
 	size_t len = 0, b;
 	int c;
@@ -218,14 +249,16 @@ entitytostr(const char *e, char *buffer, size_t bufsiz) {
 
 /* clear string only; don't free, prevents unnecessary reallocation */
 static void
-string_clear(String *s) {
+string_clear(String *s)
+{
 	if(s->data)
 		s->data[0] = '\0';
 	s->len = 0;
 }
 
 static void
-string_buffer_init(String *s, size_t len) {
+string_buffer_init(String *s, size_t len)
+{
 	if(!(s->data = malloc(len)))
 		die("can't allocate enough memory");
 	s->bufsiz = len;
@@ -233,7 +266,8 @@ string_buffer_init(String *s, size_t len) {
 }
 
 static void
-string_free(String *s) {
+string_free(String *s)
+{
 	free(s->data);
 	s->data = NULL;
 	s->bufsiz = 0;
@@ -241,7 +275,8 @@ string_free(String *s) {
 }
 
 static int
-string_buffer_realloc(String *s, size_t newlen) {
+string_buffer_realloc(String *s, size_t newlen)
+{
 	char *p;
 	size_t alloclen;
 
@@ -256,7 +291,8 @@ string_buffer_realloc(String *s, size_t newlen) {
 }
 
 static void
-string_append(String *s, const char *data, size_t len) {
+string_append(String *s, const char *data, size_t len)
+{
 	if(!len || *data == '\0')
 		return;
 	/* check if allocation is necesary, don't shrink buffer
@@ -270,7 +306,8 @@ string_append(String *s, const char *data, size_t len) {
 
 /* cleanup, free allocated memory, etc */
 static void
-cleanup(void) {
+cleanup(void)
+{
 	string_free(&ctx.item.timestamp);
 	string_free(&ctx.item.title);
 	string_free(&ctx.item.link);
@@ -281,7 +318,8 @@ cleanup(void) {
 
 /* print error message to stderr */
 static void
-die(const char *s) {
+die(const char *s)
+{
 	fprintf(stderr, "sfeed: %s\n", s);
 	exit(EXIT_FAILURE);
 }
@@ -289,7 +327,8 @@ die(const char *s) {
 /* get timezone from string, return as formatted string and time offset,
  * for the offset it assumes GMT */
 static int
-gettimetz(const char *s, char *buf, size_t bufsiz) {
+gettimetz(const char *s, char *buf, size_t bufsiz)
+{
 	const char *p = s;
 	char tzname[16] = "", *t = NULL;
 	int tzhour = 0, tzmin = 0;
@@ -330,7 +369,8 @@ gettimetz(const char *s, char *buf, size_t bufsiz) {
 }
 
 static time_t
-parsetime(const char *s, char *buf, size_t bufsiz) {
+parsetime(const char *s, char *buf, size_t bufsiz)
+{
 	time_t t = -1; /* can't parse */
 	char tz[64] = "";
 	struct tm tm;
@@ -364,7 +404,8 @@ parsetime(const char *s, char *buf, size_t bufsiz) {
 
 /* print text, escape tabs, newline and carriage return etc */
 static void
-string_print(String *s) {
+string_print(String *s)
+{
 	const char *p;
 
 	/* skip leading whitespace */
@@ -383,7 +424,8 @@ string_print(String *s) {
 }
 
 static int
-istag(const char *name, size_t len, const char *name2, size_t len2) {
+istag(const char *name, size_t len, const char *name2, size_t len2)
+{
 	return (len == len2 && !strcasecmp(name, name2));
 }
 
@@ -395,7 +437,8 @@ isattr(const char *name, size_t len, const char *name2, size_t len2) {
 /* NOTE: this handler can be called multiple times if the data in this
  * block is bigger than the buffer */
 static void
-xml_handler_data(XMLParser *p, const char *s, size_t len) {
+xml_handler_data(XMLParser *p, const char *s, size_t len)
+{
 	if(ctx.field) {
 		/* add only data from <name> inside <author> tag
 		 * or any other non-<author> tag  */
@@ -405,7 +448,8 @@ xml_handler_data(XMLParser *p, const char *s, size_t len) {
 }
 
 static void
-xml_handler_cdata(XMLParser *p, const char *s, size_t len) {
+xml_handler_cdata(XMLParser *p, const char *s, size_t len)
+{
 	(void)p;
 
 	if(ctx.field)
@@ -413,7 +457,7 @@ xml_handler_cdata(XMLParser *p, const char *s, size_t len) {
 }
 
 static void
-xml_handler_attr_start(struct xmlparser *p, const char *tag, size_t taglen,
+xml_handler_attr_start(XMLParser *p, const char *tag, size_t taglen,
 	const char *name, size_t namelen)
 {
 	(void)tag;
@@ -482,7 +526,7 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 			{
 				ctx.item.contenttype = ContentTypeHTML;
 				ctx.iscontent = 1;
-/*				p->xmldataentity = NULL;*/
+/*				p->xmldataentity = NULL;*/ /* TODO: don't convert entities? test this */
 				p->xmlattrstart = xml_handler_attr_start;
 				p->xmlattrend = xml_handler_attr_end;
 				p->xmltagstartparsed = xml_handler_start_element_parsed;
@@ -497,7 +541,8 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 }
 
 static void
-xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
+xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
+{
 	if(ctx.iscontenttag) {
 		/* starts with div, handle as XML, don't convert entities (set handle to NULL) */
 		if(ctx.item.feedtype == FeedTypeAtom &&
@@ -585,7 +630,8 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen) {
 }
 
 static void
-xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen) {
+xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
+{
 	char buffer[16];
 	size_t len;
 
@@ -597,7 +643,8 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen) {
 }
 
 static void
-xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int isshort) {
+xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int isshort)
+{
 	char timebuf[64];
 	int tagid;
 
@@ -691,13 +738,12 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 }
 
 int
-main(int argc, char **argv) {
+main(int argc, char *argv[])
+{
 	atexit(cleanup);
 
 	if(argc > 1)
 		append = argv[1];
-
-	memset(&ctx, 0, sizeof(ctx));
 
 	/* init strings and initial memory pool size */
 	string_buffer_init(&ctx.item.timestamp, 64);
