@@ -27,14 +27,22 @@ die(const char *s) {
 
 static void
 cleanup(void) {
-	if(fpmenu)
+	if(fpmenu) {
 		fclose(fpmenu);
-	if(fpitems)
+		fpmenu = NULL;
+	}
+	if(fpitems) {
 		fclose(fpitems);
-	if(fpindex)
+		fpitems = NULL;
+	}
+	if(fpindex) {
 		fclose(fpindex);
-	if(fpcontent)
+		fpindex = NULL;
+	}
+	if(fpcontent) {
 		fclose(fpcontent);
+		fpcontent = NULL;
+	}
 	free(line); /* free line */
 	line = NULL;
 	feedsfree(feeds); /* free feeds linked-list */
