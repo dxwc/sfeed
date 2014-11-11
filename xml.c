@@ -274,7 +274,7 @@ xmlparser_parse(XMLParser *x) {
 				}
 			}
 		} else {
-			/* parse data */
+			/* parse tag data */
 			datalen = 0;
 			if(x->xmldatastart)
 				x->xmldatastart(x);
