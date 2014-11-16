@@ -1,13 +1,20 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "xml.h"
 
 static __inline__ int /* like getc(), but do some smart buffering */
-xmlparser_getnext(XMLParser *x) {
-	return fgetc(x->fp);
+xmlparser_getnext(XMLParser *x)
+{
+	int c;
+	if(ferror(x->fp))
+		return EOF;
+	if(feof(x->fp))
+		return EOF;
+	c = fgetc(x->fp);
+	return c;
 #if 0
 	if(x->readoffset >= x->readlastbytes) {
 		x->readoffset = 0;
@@ -19,7 +26,8 @@ xmlparser_getnext(XMLParser *x) {
 }
 
 static __inline__ void
-xmlparser_parseattrs(XMLParser *x) {
+xmlparser_parseattrs(XMLParser *x)
+{
 	size_t namelen = 0, valuelen;
 	int c, endsep, endname = 0;
 
@@ -113,7 +121,8 @@ xmlparser_parseattrs(XMLParser *x) {
 }
 
 static __inline__ void
-xmlparser_parsecomment(XMLParser *x) {
+xmlparser_parsecomment(XMLParser *x)
+{
 	size_t datalen = 0, i = 0;
 	int c;
 
@@ -158,7 +167,8 @@ xmlparser_parsecomment(XMLParser *x) {
  *
  */
 static __inline__ void
-xmlparser_parsecdata(XMLParser *x) {
+xmlparser_parsecdata(XMLParser *x)
+{
 	size_t datalen = 0, i = 0;
 	int c;
 
@@ -195,13 +205,15 @@ xmlparser_parsecdata(XMLParser *x) {
 }
 
 void
-xmlparser_init(XMLParser *x, FILE *fp) {
+xmlparser_init(XMLParser *x, FILE *fp)
+{
 	memset(x, 0, sizeof(XMLParser));
 	x->fp = fp;
 }
 
 void
-xmlparser_parse(XMLParser *x) {
+xmlparser_parse(XMLParser *x)
+{
 	int c, ispi;
 	size_t datalen, tagdatalen, taglen;
 

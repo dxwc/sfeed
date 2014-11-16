@@ -1,3 +1,12 @@
+[ ] check read errors:
+	ferror, return code of fread, fwrite, fclose...
+
+[x] handle invalid value in strtoul.
+[x] compile with -Wextra and use (void) to ignore unused parameters?
+[x] use uint32_t for codepointtoutf8?
+
+[ ] separate codepointtoutf8 and entity handling from sfeed.c into xml.c?
+
 [ ] test again on:
 	- Linux (glibc+gcc, musl-gcc, clang, tcc).
 	- OpenBSD
