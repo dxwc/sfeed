@@ -1,36 +1,31 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct xmlparser {
 	/* handlers */
-	void (*xmltagstart)(struct xmlparser *p, const char *tag, size_t taglen);
-	void (*xmltagstartparsed)(struct xmlparser *p, const char *tag,
-	      size_t taglen, int isshort);
-	void (*xmltagend)(struct xmlparser *p, const char *tag, size_t taglen,
-	      int isshort);
-	void (*xmldatastart)(struct xmlparser *p);
-	void (*xmldata)(struct xmlparser *p, const char *data, size_t datalen);
-	void (*xmldataend)(struct xmlparser *p);
-	void (*xmldataentity)(struct xmlparser *p, const char *data,
-	      size_t datalen);
-	void (*xmlattrstart)(struct xmlparser *p, const char *tag, size_t taglen,
-	      const char *name, size_t namelen);
-	void (*xmlattr)(struct xmlparser *p, const char *tag, size_t taglen,
-	      const char *name, size_t namelen, const char *value,
-	      size_t valuelen);
-	void (*xmlattrend)(struct xmlparser *p, const char *tag, size_t taglen,
-	      const char *name, size_t namelen);
-	void (*xmlattrentity)(struct xmlparser *p, const char *tag, size_t taglen,
-	      const char *name, size_t namelen, const char *value,
-	      size_t valuelen);
-	void (*xmlcdatastart)(struct xmlparser *p);
-	void (*xmlcdata)(struct xmlparser *p, const char *data, size_t datalen);
-	void (*xmlcdataend)(struct xmlparser *p);
-	void (*xmlcommentstart)(struct xmlparser *p);
-	void (*xmlcomment)(struct xmlparser *p, const char *comment,
-	      size_t commentlen);
-	void (*xmlcommentend)(struct xmlparser *p);
+	void (*xmltagstart)(struct xmlparser *, const char *, size_t);
+	void (*xmltagstartparsed)(struct xmlparser *, const char *,
+	      size_t, int);
+	void (*xmltagend)(struct xmlparser *, const char *, size_t, int);
+	void (*xmldatastart)(struct xmlparser *);
+	void (*xmldata)(struct xmlparser *, const char *, size_t);
+	void (*xmldataend)(struct xmlparser *);
+	void (*xmldataentity)(struct xmlparser *, const char *, size_t);
+	void (*xmlattrstart)(struct xmlparser *, const char *, size_t,
+	      const char *, size_t);
+	void (*xmlattr)(struct xmlparser *, const char *, size_t,
+	      const char *, size_t, const char *, size_t);
+	void (*xmlattrend)(struct xmlparser *, const char *, size_t,
+	      const char *, size_t);
+	void (*xmlattrentity)(struct xmlparser *, const char *, size_t,
+	      const char *, size_t, const char *, size_t);
+	void (*xmlcdatastart)(struct xmlparser *);
+	void (*xmlcdata)(struct xmlparser *, const char *, size_t);
+	void (*xmlcdataend)(struct xmlparser *);
+	void (*xmlcommentstart)(struct xmlparser *);
+	void (*xmlcomment)(struct xmlparser *, const char *, size_t);
+	void (*xmlcommentend)(struct xmlparser *);
 
 	FILE *fp; /* file stream to read from */
 
@@ -45,5 +40,5 @@ typedef struct xmlparser {
 	unsigned char readbuf[BUFSIZ]; /* read buffer used by xmlparser_getnext */
 } XMLParser;
 
-void xmlparser_init(XMLParser *x, FILE *fp);
-void xmlparser_parse(XMLParser *x);
+void xmlparser_init(XMLParser *, FILE *);
+void xmlparser_parse(XMLParser *);
