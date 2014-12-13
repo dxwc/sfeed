@@ -1,3 +1,5 @@
+[ ] use openbsd sys/queue.h for util.c linked-list and sfeed_frames.c
+
 [ ] check read errors:
 	ferror, return code of fread, fwrite, fclose...
 
