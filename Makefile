@@ -53,13 +53,7 @@ LIBCOMPATOBJ = $(LIBCOMPATSRC:.c=.o)
 OBJ = ${SRC:.c=.o} \
 	$(LIBCOMPATOBJ)
 
-all: options $(BIN)
-
-options:
-	@echo ${NAME} build options:
-	@echo "CFLAGS   = ${CFLAGS}"
-	@echo "LDFLAGS  = ${LDFLAGS}"
-	@echo "CC       = ${CC}"
+all: $(BIN)
 
 .c.o:
 	${CC} -c ${CFLAGS} $<
@@ -123,28 +117,28 @@ clean:
 	rm -f ${BIN} ${OBJ} ${LIBCOMPAT}
 
 install: all
-	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
+	# installing executable files and scripts.
 	mkdir -p ${DESTDIR}${PREFIX}/bin
 	cp -f ${BIN} ${SCRIPTS} ${DESTDIR}${PREFIX}/bin
 	for f in $(BIN) $(SCRIPTS); do chmod 755 ${DESTDIR}${PREFIX}/bin/$$f; done
-	@echo installing example files to ${DESTDIR}${PREFIX}/share/${NAME}
+	# installing example files.
 	mkdir -p ${DESTDIR}${PREFIX}/share/${NAME}
 	cp -f sfeedrc.example ${DESTDIR}${PREFIX}/share/${NAME}
 	cp -f style.css ${DESTDIR}${PREFIX}/share/${NAME}
-	@echo installing manual pages to ${DESTDIR}${MANPREFIX}/man1
+	# installing manual pages.
 	mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	cp -f ${MAN1} ${DESTDIR}${MANPREFIX}/man1
 	for m in $(MAN1); do chmod 644 ${DESTDIR}${MANPREFIX}/man1/$$m; done
 
 uninstall:
-	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
+	# removing executable files and scripts.
 	for f in $(BIN) $(SCRIPTS); do rm -f ${DESTDIR}${PREFIX}/bin/$$f; done
-	@echo removing example files from ${DESTDIR}${PREFIX}/share/${NAME}
-	@rm -f \
+	# removing example files.
+	rm -f \
 		${DESTDIR}${PREFIX}/share/${NAME}/sfeedrc.example \
 		${DESTDIR}${PREFIX}/share/${NAME}/style.css
-	@-rmdir ${DESTDIR}${PREFIX}/share/${NAME}
-	@echo removing manual pages from ${DESTDIR}${MANPREFIX}/man1
+	-rmdir ${DESTDIR}${PREFIX}/share/${NAME}
+	# removing manual pages.
 	for m in $(MAN1); do rm -f ${DESTDIR}${MANPREFIX}/man1/$$m; done
 
-.PHONY: all options clean dist install uninstall
+.PHONY: all clean dist install uninstall doc-html doc-oldman doc
