@@ -64,7 +64,7 @@ options:
 .c.o:
 	${CC} -c ${CFLAGS} $<
 
-dist: $(BIN)
+dist: $(BIN) doc
 	mkdir -p release/${VERSION}
 	# legacy man-pages (add doc-oldman as dependency rule).
 	#for m in $(MAN1); do cp -f doc/man/$$m release/${VERSION}/; done
@@ -72,6 +72,9 @@ dist: $(BIN)
 		Makefile config.mk \
 		sfeedrc.example style.css \
 		release/${VERSION}/
+	# copy doc.
+	cp -rf doc/ release/${VERSION}/
+	# make tarball
 	rm -f sfeed-${VERSION}.tar.gz
 	(cd release/${VERSION}; \
 	tar -czf ../../sfeed-${VERSION}.tar.gz .)
