@@ -7,11 +7,15 @@
 .SH "SYNOPSIS"
 .HP 6n
 \fBsfeed\fR
-[\fIsuffix\ string\fR]
+[\fIsuffix\ string\fR\ |\ \fB\-\fR\fIv\fR]
 .SH "DESCRIPTION"
 \fBsfeed\fR
 reads RSS or Atom feed data (XML) from stdin. It writes the feed data in a
 tab-separated format to stdout.
+.SH "OPTIONS"
+.TP 19n
+\fB\-v\fR
+show program version
 .SH "TAB-SEPARATED FORMAT FIELDS"
 The items are saved in a TSV-like format except newlines, tabs and
 backslash are escaped with \\ (\\n, \\t and \\\\). Carriage returns (\\r) are
