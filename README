@@ -9,6 +9,9 @@ Dependencies
 
 - C compiler (C99).
 - libc (recommended: C99 and POSIX >= 200809).
+- mandoc for documentation: http://mdocml.bsd.lv/ . If your host
+  system doesn't have mandoc you can convert the pages to the legacy format
+  with mandoc -Tman (make doc-oldman).
 
 
 Optional dependencies
