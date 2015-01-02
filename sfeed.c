@@ -35,9 +35,9 @@ enum {
 
 /* String data / memory pool */
 typedef struct string {
-	char *data; /* data */
-	size_t len; /* string length */
-	size_t bufsiz; /* allocated size */
+	char   *data;   /* data */
+	size_t  len;    /* string length */
+	size_t  bufsiz; /* allocated size */
 } String;
 
 /* Feed item */
@@ -46,10 +46,10 @@ typedef struct feeditem {
 	String title;
 	String link;
 	String content;
-	int contenttype; /* ContentTypePlain or ContentTypeHTML */
+	int    contenttype; /* ContentTypePlain or ContentTypeHTML */
 	String id;
 	String author;
-	int feedtype; /* FeedTypeRSS or FeedTypeAtom */
+	int    feedtype;    /* FeedTypeRSS or FeedTypeAtom */
 } FeedItem;
 
 typedef struct feedtag {
@@ -226,7 +226,7 @@ entitytostr(const char *e, char *buffer, size_t bufsiz)
 			buffer[b] = (cp >> (8 * (len - 1 - b))) & 0xff;
 		buffer[len] = '\0';
 		/* escape whitespace */
-		if(ISWSNOSPACE(buffer[0])) { /* isspace(c) && c != ' ' */
+		if(ISWSNOSPACE(buffer[0])) {
 			switch(buffer[0]) {
 			case '\n': c = 'n';  break;
 			case '\\': c = '\\'; break;
