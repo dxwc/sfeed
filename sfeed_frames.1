@@ -1,29 +1,42 @@
-.TH SFEED 1 sfeed\-0.9
-.SH NAME
-sfeed_frames \- format feeds file (TSV) from sfeed_update to HTML with frames
-.SH SYNOPSIS
-.B sfeed_frames
-.RB [path]
-.SH OPTIONS
-.TP
-.B [path]
-Path to write files to, default is ".". On success path will contain the
-files: index.html which is the main HTML file with the frames,
-items.html which contains all the items as HTML links to the local content,
-menu.html which contains navigation anchor links with the feed names
-(to items.html).
-.SH FILE STRUCTURE
+.Dd December 25, 2014
+.Dt SFEED_FRAMES 1
+.Os
+.Sh NAME
+.Nm sfeed_frames
+.Nd formats a feeds file to HTML with frames
+.Sh SYNOPSIS
+.Nm
+.Op Ar directory path
+.Sh DESCRIPTION
+.Nm
+formats a feeds file (TSV) from
+.Xr sfeed_update 1
+to HTML. It reads TSV data from stdin and writes HTML to the specified
+directory. For the exact TSV format see
+.Xr sfeed_update 1 .
+.Sh OPTIONS
+.Bl -tag -width 14n
+.It Ar directory path
+Path to write files to, default is ".". On success the specified directory will
+contain the files:
+.Bl -tag -width 13n
+.It Ar index.html:
+this is the main HTML file referencing to the frames (items.html and
+menu.html).
+.It Ar items.html:
+this contains all the items as HTML links to the local content.
+.It Ar menu.html:
+menu frame which contains navigation "anchor" links to the feed names
+(in items.html).
+.Sh FILE STRUCTURE
+.Pp
 Directory for each feed category in the format: path/feedname/itemname.html.
 The feedname and item names are normalized, whitespace characters are replaced
-with a \-, multiple whitespace is replaced by a single \- and trailing
-whitespace is ignored.
-.SH DESCRIPTION
-Format feeds file (TSV) from sfeed_update to HTML. It reads TSV data from
-stdin and writes HTML to the specified directory. For the exact TSV format
-see sfeed_update(1).
-.SH SEE ALSO
-.BR sfeed_plain(1)
-.BR sfeed_update(1)
-.BR sfeed(1)
-.SH BUGS
-Please report them!
+with a \-, multiple whitespaces are replaced by a single \- and trailing
+whitespace will be removed.
+.Sh SEE ALSO
+.Xr sfeed_plain 1 ,
+.Xr sfeed_update 1 ,
+.Xr sfeed 1
+.Sh AUTHORS
+.An Hiltjo Posthuma Aq Mt hiltjo@codemadness.org

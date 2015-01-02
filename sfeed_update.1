@@ -1,59 +1,63 @@
-.TH SFEED 1 sfeed\-0.9
-.SH NAME
-sfeed_update \- update feeds and merge with old feeds
-.SH SYNOPSIS
-.B sfeed_update
-.RB [configfile]
-.SH OPTIONS
-.TP
-.B [configfile]
-config file, if not specified uses the location $HOME/.sfeed/sfeedrc by default (see FILES READ section for more information).
-.SH DESCRIPTION
-.TP
-Update feeds and merge with old feeds in the file $HOME/.sfeed/feeds by default.
-.SH TAB-SEPARATED FORMAT FIELDS
+.Dd December 25, 2014
+.Dt SFEED_UPDATE 1
+.Os
+.Sh NAME
+.Nm sfeed_update
+.Nd update feeds and merge with old feeds
+.Sh SYNOPSIS
+.Nm
+.Op Ar configfile
+.Sh DESCRIPTION
+.Nm
+updates feeds and merges the new data with the previous feeds. This is the file
+$HOME/.sfeed/feeds by default.
+.Sh OPTIONS
+.Bl -tag -width 17n
+.It Ar configfile
+config file, if not specified uses the location $HOME/.sfeed/sfeedrc by default
+see the
+.Sx FILES READ
+section for more information.
+.Sh TAB-SEPARATED FORMAT FIELDS
+.Pp
 The items are saved in a TSV-like format except newlines, tabs and
 backslash are escaped with \\ (\\n, \\t and \\\\). Carriage returns (\\r) are
 removed.
-.TP
-.B  timestamp (unix timestamp in GMT+0)
+.Pp
+The order and format of the fields are:
+.Pp
+.Bl -tag -width 17n
+.It Ar item timestamp
+string, UNIX timestamp in GMT+0
+.It Ar item timestamp
+string, date and time in the format: YYYY-mm-dd HH:MM:SS tzname[+-]HHMM
+.It Ar item title
 string
-.TP
-.B item timestamp (formatted)
-string (YYYY-mm-dd HH:MM:SS tzname[+-]HHMM
-.TP
-.B item title
+.It Ar item link
 string
-.TP
-.B item link
+.It Ar item content
 string
-.TP
-.B item content
+.It Ar item content\-type
+string, "html" or "plain"
+.It Ar item id
 string
-.TP
-.B item content\-type
-string (html or plain)
-.TP
-.B item id
+.It Ar item author
 string
-.TP
-.B item author
+.It Ar feed type
+string, "rss" or "atom"
+.Sh EXTRA FIELDS
+.Pp
+Extra fields added by sfeed_update:
+.Bl -tag -width 17n
+.It Ar feed name
 string
-.TP
-.B feed type
-string (rss or atom)
-.TP
-.B feed name
-string (extra field added by sfeed_update)
-.TP
-.B feed url
-string (extra field added by sfeed_update)
-.TP
-.B item baseurl site
-string (extra field added by sfeed_update)
-.SH FILES READ
-.TP
-.B sfeedrc
+.It Ar feed url
+string
+.It Ar item baseurl site
+string
+.Sh FILES READ
+.Bl -tag -width 17n
+.It Ar sfeedrc
 Config file, see the sfeedrc.example file for an example.
 This file is evaluated as a shellscript in sfeed_update.
 You can for example override the fetchfeed() function to
@@ -62,24 +66,23 @@ override the merge() function to change the merge logic.
 The function feeds() is called to fetch the feeds. By
 default the function feed() is executed as a parallel
 job to speedup updating.
-.SH FILES WRITTEN
-.TP
-.B feeds
+.Sh FILES WRITTEN
+.Bl -tag -width 17n
+.It Ar feeds
 Tab-separated format containing all feeds.
 The sfeed_update script merges new items with this file.
-.TP
-.B feeds.new
+.It Ar feeds.new
 Temporary file used by sfeed_update to merge items.
-.SH EXAMPLES
-.TP
+.Sh EXAMPLES
+.Pp
 To update feeds and format the feeds file:
-.nf
+.Bd -literal
 sfeed_update "configfile"
 sfeed_plain < $HOME/.sfeed/feeds > $HOME/.sfeed/feeds.txt
 sfeed_html < $HOME/.sfeed/feeds > $HOME/.sfeed/feeds.html
-.SH SEE ALSO
-.BR sh(1)
-.BR sfeed_plain(1)
-.BR sfeed_html(1)
-.SH BUGS
-Please report them!
+.Sh SEE ALSO
+.Xr sh 1 ,
+.Xr sfeed_plain 1 ,
+.Xr sfeed_html 1
+.Sh AUTHORS
+.An Hiltjo Posthuma Aq Mt hiltjo@codemadness.org

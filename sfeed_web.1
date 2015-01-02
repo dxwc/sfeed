@@ -1,24 +1,36 @@
-.TH SFEED 1 sfeed\-0.9
-.SH NAME
-sfeed_web \- find urls to feeds from a webpage
-.SH SYNOPSIS
-.B sfeed_web
-.RB [baseurl]
-.SH OPTIONS
-.TP
-.B [baseurl]
-Optional baseurl if site uses relative urls to feed.
-.SH DESCRIPTION
-It reads the HTML website as XML data from stdin and writes the found urls to
-stdout in the format:
-
-content\-type<space>url
-
-content\-type is usually: application/atom+xml or application/rss+xml
-.SH EXAMPLES
-.TP
+.Dd December 25, 2014
+.Dt SFEED_WEB 1
+.Os
+.Sh NAME
+.Nm sfeed_web
+.Nd finds urls to feeds from a HTML webpage
+.Sh SYNOPSIS
+.Nm
+.Op Ar baseurl
+.Sh DESCRIPTION
+.Nm
+reads the HTML website as XML or HTML data from stdin and writes the found
+urls to stdout.
+.Sh OPTIONS
+.Bl -tag -width 8n
+.It Ar baseurl
+optional base url to use for found feed urls that are relative.
+.Sh OUTPUT FORMAT
+.Pp
+content\-type<space>url<newline>
+.Bl -tag -width 13n
+.It Ar content\-type
+Usually application/atom+xml or application/rss+xml.
+.It Ar url
+Found url to the feed. If the url is relative and the baseurl option is
+specified then the url is changed accordingly.
+.Sh EXAMPLES
+.Pp
 Get urls from xkcd website:
-.nf
+.Bd -literal
 wget http://www.xkcd.com -q -O - | sfeed_web "http://www.xkcd.com/"
-.SH BUGS
-Please report them!
+.Sh SEE ALSO
+.Xr sh 1 ,
+.Xr sfeed_update 1
+.Sh AUTHORS
+.An Hiltjo Posthuma Aq Mt hiltjo@codemadness.org

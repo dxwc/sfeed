@@ -1,15 +1,22 @@
-.TH SFEED 1 sfeed\-0.9
-.SH NAME
-sfeed_plain \- format feeds file (TSV) from sfeed_update to plain text
-.SH SYNOPSIS
-.B sfeed
-.SH DESCRIPTION
-Format feeds file (TSV) from sfeed_update to plain text. It reads TSV data
-from stdin and writes plain text to stdout. For the exact TSV format see
-sfeed_update(1).
-.SH SEE ALSO
-.BR sfeed_html(1)
-.BR sfeed_update(1)
-.BR sfeed(1)
-.SH BUGS
-Please report them!
+.Dd December 25, 2014
+.Dt SFEED_PLAIN 1
+.Os
+.Sh NAME
+.Nm sfeed_plain
+.Nd formats a feeds file to plain text
+.Sh SYNOPSIS
+.Nm sfeed_plain
+.Sh DESCRIPTION
+.Nm
+formats a feeds file (TSV) from
+.Xr sfeed_update 1
+to plain text. It reads TSV data from stdin and writes formatted plain text to
+stdout. For the exact TSV format see
+.Xr sfeed_update 1 .
+.Sh SEE ALSO
+.Xr sfeed_html 1 ,
+.Xr sfeed_update 1 ,
+.Xr sfeed 1
+.Sh AUTHORS
+.An Hiltjo Posthuma Aq Mt hiltjo@codemadness.org
+
