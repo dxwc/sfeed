@@ -2,6 +2,7 @@
 #include "compat.h"
 #endif
 
+#include <stdio.h>
 #include <time.h>
 
 #define ISUTF8(c) (((c) & 0xc0) != 0x80)
@@ -20,10 +21,9 @@ enum { FieldUnixTimestamp = 0, FieldTimeFormatted, FieldTitle, FieldLink,
        FieldContent, FieldContentType, FieldId, FieldAuthor, FieldFeedType,
        FieldFeedName, FieldFeedUrl, FieldBaseSiteUrl, FieldLast };
 
-void feedsfree(struct feed *f);
-unsigned int parseline(char **line, size_t *size, char **fields,
-                       unsigned int maxfields, int separator, FILE *fp);
-void printfeednameid(const char *s, FILE *fp);
-void printhtmlencoded(const char *s, FILE *fp);
-void printlink(const char *link, const char *baseurl, FILE *fp);
-void printutf8pad(FILE *fp, const char *s, size_t len, int pad);
+void feedsfree(struct feed *);
+unsigned int parseline(char **, size_t *, char **, unsigned int, int, FILE *);
+void printfeednameid(const char *, FILE *);
+void printhtmlencoded(const char *, FILE *);
+void printlink(const char *, const char *, FILE *);
+void printutf8pad(FILE *, const char *, size_t, int);

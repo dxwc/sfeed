@@ -5,26 +5,31 @@ PREFIX = /usr/local
 MANPREFIX = ${PREFIX}/share/man
 
 # includes and libs
-INCS =
+INCS = -I.
 LIBS = -lc
 
 # debug
 CFLAGS = -fstack-protector-all -O0 -g -std=c99 -Wall -Wextra -pedantic \
-	-DVERSION=\"${VERSION}\" -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700
+	${INCS} \
+	-DVERSION=\"${VERSION}\" -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -D_BSD_SOURCE
 LDFLAGS = ${LIBS}
 
 # optimized
-#CFLAGS = -O2 -std=c99 -DVERSION=\"${VERSION}\" -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700
+#CFLAGS = -O2 -std=c99 \
+#	${INCS} \
+#	-DVERSION=\"${VERSION}\" -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -D_BSD_SOURCE
 #LDFLAGS = -s ${LIBS}
 
-# tcc
-#CC = tcc
-#CFLAGS = -DVERSION=\"${VERSION}\" -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700
-#LDFLAGS = -s ${LIBS}
+# optimized static
+#CFLAGS = -static -O2 -std=c99 \
+#	${INCS} \
+#	-DVERSION=\"${VERSION}\" -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -D_BSD_SOURCE
+#LDFLAGS = -static -s ${LIBS}
 
 # uncomment for compat
 CFLAGS += -DCOMPAT
-LDFLAGS += -L. -lcompat
+# if your libc doesn't support strlcpy.c
+EXTRAOBJ = strlcpy.o
 
 # compiler and linker
 #CC = cc

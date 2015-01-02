@@ -10,6 +10,7 @@ SRC = \
 	sfeed_plain.c\
 	sfeed_web.c\
 	sfeed_xmlenc.c\
+	strlcpy.c\
 	util.c\
 	xml.c
 BIN = \
@@ -45,13 +46,7 @@ HDR = \
 	util.h\
 	xml.h
 
-LIBCOMPAT = libcompat.a
-LIBCOMPATSRC = \
-	compat/strlcpy.c
-LIBCOMPATOBJ = $(LIBCOMPATSRC:.c=.o)
-
-OBJ = ${SRC:.c=.o} \
-	$(LIBCOMPATOBJ)
+OBJ = ${SRC:.c=.o}
 
 all: $(BIN)
 
@@ -88,33 +83,29 @@ doc-oldman: $(MAN1)
 
 ${OBJ}: config.mk
 
-$(LIBCOMPAT): $(LIBCOMPATDOBJ)
-	$(AR) -r -c $@ $?
-	$(RANLIB) $@
+sfeed: sfeed.o xml.o util.o ${EXTRAOBJ}
+	${CC} -o $@ $? ${LDFLAGS}
 
-sfeed: sfeed.o xml.o util.o
-	${CC} -o $@ sfeed.o xml.o util.o ${LDFLAGS}
+sfeed_opml_import: sfeed_opml_import.o xml.o util.o ${EXTRAOBJ}
+	${CC} -o $@ $? ${LDFLAGS}
 
-sfeed_opml_import: sfeed_opml_import.o xml.o util.o
-	${CC} -o $@ sfeed_opml_import.o xml.o util.o ${LDFLAGS}
+sfeed_plain: sfeed_plain.o util.o ${EXTRAOBJ}
+	${CC} -o $@ $? ${LDFLAGS}
 
-sfeed_plain: sfeed_plain.o util.o
-	${CC} -o $@ sfeed_plain.o util.o ${LDFLAGS}
+sfeed_html: sfeed_html.o util.o ${EXTRAOBJ}
+	${CC} -o $@ $? ${LDFLAGS}
 
-sfeed_html: sfeed_html.o util.o
-	${CC} -o $@ sfeed_html.o util.o ${LDFLAGS}
+sfeed_frames: sfeed_frames.o util.o ${EXTRAOBJ}
+	${CC} -o $@ $? ${LDFLAGS}
 
-sfeed_frames: sfeed_frames.o util.o
-	${CC} -o $@ sfeed_frames.o util.o ${LDFLAGS}
+sfeed_xmlenc: sfeed_xmlenc.o xml.o ${EXTRAOBJ}
+	${CC} -o $@ $? ${LDFLAGS}
 
-sfeed_xmlenc: sfeed_xmlenc.o xml.o
-	${CC} -o $@ sfeed_xmlenc.o xml.o ${LDFLAGS}
-
-sfeed_web: sfeed_web.o xml.o util.o
-	${CC} -o $@ sfeed_web.o xml.o util.o ${LDFLAGS}
+sfeed_web: sfeed_web.o xml.o util.o ${EXTRAOBJ}
+	${CC} -o $@ $? ${LDFLAGS}
 
 clean:
-	rm -f ${BIN} ${OBJ} ${LIBCOMPAT}
+	rm -f ${BIN} ${OBJ}
 
 install: all
 	# installing executable files and scripts.
