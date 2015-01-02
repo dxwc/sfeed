@@ -86,28 +86,28 @@ doc-oldman: $(MAN1)
 ${OBJ}: config.mk
 
 sfeed: sfeed.o xml.o util.o ${EXTRAOBJ}
-	${CC} -o $@ $? ${LDFLAGS}
+	${CC} -o $@ $^ ${LDFLAGS}
 
 sfeed_frames: sfeed_frames.o util.o ${EXTRAOBJ}
-	${CC} -o $@ $? ${LDFLAGS}
+	${CC} -o $@ $^ ${LDFLAGS}
 
 sfeed_html: sfeed_html.o util.o ${EXTRAOBJ}
-	${CC} -o $@ $? ${LDFLAGS}
+	${CC} -o $@ $^ ${LDFLAGS}
 
 sfeed_opml_import: sfeed_opml_import.o xml.o util.o ${EXTRAOBJ}
-	${CC} -o $@ $? ${LDFLAGS}
+	${CC} -o $@ $^ ${LDFLAGS}
 
 sfeed_plain: sfeed_plain.o util.o ${EXTRAOBJ}
-	${CC} -o $@ $? ${LDFLAGS}
+	${CC} -o $@ $^ ${LDFLAGS}
 
 sfeed_stats: sfeed_stats.o util.o ${EXTRAOBJ}
-	${CC} -o $@ $? ${LDFLAGS}
+	${CC} -o $@ $^ ${LDFLAGS}
 
 sfeed_web: sfeed_web.o xml.o util.o ${EXTRAOBJ}
-	${CC} -o $@ $? ${LDFLAGS}
+	${CC} -o $@ $^ ${LDFLAGS}
 
 sfeed_xmlenc: sfeed_xmlenc.o xml.o ${EXTRAOBJ}
-	${CC} -o $@ $? ${LDFLAGS}
+	${CC} -o $@ $^ ${LDFLAGS}
 
 clean:
 	rm -f ${BIN} ${OBJ}
