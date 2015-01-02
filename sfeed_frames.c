@@ -2,6 +2,7 @@
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,6 +35,20 @@ cleanup(void)
 	fpitems = NULL;
 	fpindex = NULL;
 	fpcontent = NULL;
+}
+
+static void
+xerr(int eval, const char *fmt, ...)
+{
+	int saved_errno = errno;
+	va_list ap;
+
+	cleanup();
+
+	errno = saved_errno;
+	va_start(ap, fmt);
+	verr(eval, fmt, ap);
+	va_end(ap);
 }
 
 /* print text, ignore tabs, newline and carriage return etc
@@ -99,7 +114,6 @@ main(int argc, char *argv[])
 	struct stat st;
 	struct utimbuf contenttime;
 
-	atexit(cleanup);
 	memset(&contenttime, 0, sizeof(contenttime));
 
 	if(argc > 1 && argv[1][0] != '\0')
@@ -112,17 +126,17 @@ main(int argc, char *argv[])
 
 	/* write main index page */
 	if(snprintf(dirpath, sizeof(dirpath), "%s/index.html", basepath) <= 0)
-		err(1, "snprintf");
+		xerr(1, "snprintf");
 	if(!(fpindex = fopen(dirpath, "w+b")))
-		err(1, "fopen");
+		xerr(1, "fopen");
 	if(snprintf(dirpath, sizeof(dirpath), "%s/menu.html", basepath) <= 0)
-		err(1, "snprintf");
+		xerr(1, "snprintf");
 	if(!(fpmenu = fopen(dirpath, "w+b")))
-		err(1, "fopen: can't write menu.html");
+		xerr(1, "fopen: can't write menu.html");
 	if(snprintf(dirpath, sizeof(dirpath), "%s/items.html", basepath) <= 0)
-		err(1, "snprintf");
+		xerr(1, "snprintf");
 	if(!(fpitems = fopen(dirpath, "w+b")))
-		err(1, "fopen");
+		xerr(1, "fopen");
 	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
 	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>"
 	      "<body class=\"frame\"><div id=\"items\">", fpitems);
@@ -145,17 +159,15 @@ main(int argc, char *argv[])
 				continue;
 
 			if(snprintf(dirpath, sizeof(dirpath), "%s/%s", basepath, name) <= 0)
-				err(1, "snprintf");
+				xerr(1, "snprintf");
 
 			/* directory doesn't exist: try to create it. */
-			if(stat(dirpath, &st) == -1) {
-				if(mkdir(dirpath, S_IRWXU) == -1)
-					err(1, "sfeed_frames: can't make directory '%s'", dirpath);
-			}
+			if(stat(dirpath, &st) == -1 && mkdir(dirpath, S_IRWXU) == -1)
+				xerr(1, "sfeed_frames: can't make directory '%s'", dirpath);
 			strlcpy(reldirpath, name, sizeof(reldirpath)); /* TODO: check truncation */
 
 			if(!(f = calloc(1, sizeof(struct feed))))
-				err(1, "calloc");
+				xerr(1, "calloc");
 
 			if(totalfeeds) { /* end previous one. */
 				fputs("</table>\n", fpitems);
@@ -168,7 +180,7 @@ main(int argc, char *argv[])
 			}
 			/* write menu link if new. */
 			if(!(fcur->name = strdup(feedname)))
-				err(1, "strdup");
+				xerr(1, "strdup");
 			if(fields[FieldFeedName][0] != '\0') {
 				fputs("<h2 id=\"", fpitems);
 				printfeednameid(fcur->name, fpitems);
@@ -185,9 +197,9 @@ main(int argc, char *argv[])
 		if(!(namelen = makepathname(fields[FieldTitle], name, sizeof(name))))
 			continue;
 		if(snprintf(filepath, sizeof(filepath), "%s/%s.html", dirpath, name) <= 0)
-			err(1, "snprintf");
+			xerr(1, "snprintf");
 		if(snprintf(relfilepath, sizeof(relfilepath), "%s/%s.html", reldirpath, name) <= 0)
-			err(1, "snprintf");
+			xerr(1, "snprintf");
 
 		/* file doesn't exist yet and has write access */
 		if(access(filepath, F_OK) != 0 && (fpcontent = fopen(filepath, "w+b"))) {
@@ -285,6 +297,8 @@ main(int argc, char *argv[])
 	      "\t</frameset>\n"
 	      "</frameset>\n"
 	      "</html>", fpindex);
+
+	cleanup();
 
 	return 0;
 }
