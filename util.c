@@ -69,7 +69,8 @@ parseline(char **line, size_t *size, char **fields,
 			prev = s + 1;
 		}
 		fields[i] = prev;
-		for(i++; i < maxfields; i++) /* make non-parsed fields empty. */
+		/* make non-parsed fields empty. */
+		for(i++; i < maxfields; i++)
 			fields[i] = "";
 	}
 	return i;
@@ -101,10 +102,10 @@ void
 printutf8pad(FILE *fp, const char *s, size_t len, int pad)
 {
 	wchar_t w;
-    size_t n = 0, i;
+	size_t n = 0, i;
 	int r;
 
-    for(i = 0; *s && n < len; i++, s++) {
+	for(i = 0; *s && n < len; i++, s++) {
 		if(ISUTF8(*s)) {
 			if((r = mbtowc(&w, s, 4)) == -1)
 				break;
@@ -112,8 +113,8 @@ printutf8pad(FILE *fp, const char *s, size_t len, int pad)
 				r = 1;
 			n += (size_t)r;
 		}
-        putc(*s, fp);
-    }
-    for(; n < len; n++)
-        putc(pad, fp);
+		putc(*s, fp);
+	}
+	for(; n < len; n++)
+		putc(pad, fp);
 }

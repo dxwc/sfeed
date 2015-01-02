@@ -37,7 +37,8 @@ typedef struct xmlparser {
 	char data[BUFSIZ]; /* data buffer used for tag and attribute data */
 	size_t readoffset;
 	size_t readlastbytes;
-	unsigned char readbuf[BUFSIZ]; /* read buffer used by xmlparser_getnext */
+	/* read buffer used by xmlparser_getnext */
+	unsigned char readbuf[BUFSIZ];
 } XMLParser;
 
 void xmlparser_init(XMLParser *, FILE *);
