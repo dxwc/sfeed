@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -18,36 +19,21 @@ static FILE *fpcontent = NULL;
 static char *line = NULL;
 static struct feed *feeds = NULL;
 
-/* print error message to stderr */
-static void
-die(const char *s)
-{
-	fprintf(stderr, "sfeed_frames: %s\n", s);
-	exit(EXIT_FAILURE);
-}
-
 static void
 cleanup(void)
 {
-	if(fpmenu) {
+	if(fpmenu)
 		fclose(fpmenu);
-		fpmenu = NULL;
-	}
-	if(fpitems) {
+	if(fpitems)
 		fclose(fpitems);
-		fpitems = NULL;
-	}
-	if(fpindex) {
+	if(fpindex)
 		fclose(fpindex);
-		fpindex = NULL;
-	}
-	if(fpcontent) {
+	if(fpcontent)
 		fclose(fpcontent);
-		fpcontent = NULL;
-	}
-	free(line); /* free line */
-	line = NULL;
-	feedsfree(feeds); /* free feeds linked-list */
+	fpmenu = NULL;
+	fpitems = NULL;
+	fpindex = NULL;
+	fpcontent = NULL;
 }
 
 /* print text, ignore tabs, newline and carriage return etc
@@ -126,17 +112,17 @@ main(int argc, char *argv[])
 
 	/* write main index page */
 	if(snprintf(dirpath, sizeof(dirpath), "%s/index.html", basepath) <= 0)
-		die("snprintf() format error");
+		err(1, "snprintf");
 	if(!(fpindex = fopen(dirpath, "w+b")))
-		die("can't write index.html");
+		err(1, "fopen");
 	if(snprintf(dirpath, sizeof(dirpath), "%s/menu.html", basepath) <= 0)
-		die("snprintf() format error");
+		err(1, "snprintf");
 	if(!(fpmenu = fopen(dirpath, "w+b")))
-		die("can't write menu.html");
+		err(1, "fopen: can't write menu.html");
 	if(snprintf(dirpath, sizeof(dirpath), "%s/items.html", basepath) <= 0)
-		die("snprintf() format error");
+		err(1, "snprintf");
 	if(!(fpitems = fopen(dirpath, "w+b")))
-		die("can't write items.html");
+		err(1, "fopen");
 	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
 	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>"
 	      "<body class=\"frame\"><div id=\"items\">", fpitems);
@@ -159,20 +145,17 @@ main(int argc, char *argv[])
 				continue;
 
 			if(snprintf(dirpath, sizeof(dirpath), "%s/%s", basepath, name) <= 0)
-				die("snprintf() format error");
+				err(1, "snprintf");
 
 			/* directory doesn't exist: try to create it. */
 			if(stat(dirpath, &st) == -1) {
-				if(mkdir(dirpath, S_IRWXU) == -1) {
-					fprintf(stderr, "sfeed_frames: can't make directory '%s': %s\n",
-					        dirpath, strerror(errno));
-					exit(EXIT_FAILURE);
-				}
+				if(mkdir(dirpath, S_IRWXU) == -1)
+					err(1, "sfeed_frames: can't make directory '%s'", dirpath);
 			}
-			strlcpy(reldirpath, name, sizeof(reldirpath));
+			strlcpy(reldirpath, name, sizeof(reldirpath)); /* TODO: check truncation */
 
 			if(!(f = calloc(1, sizeof(struct feed))))
-				die("can't allocate enough memory");
+				err(1, "calloc");
 
 			if(totalfeeds) { /* end previous one. */
 				fputs("</table>\n", fpitems);
@@ -185,7 +168,7 @@ main(int argc, char *argv[])
 			}
 			/* write menu link if new. */
 			if(!(fcur->name = strdup(feedname)))
-				die("can't allocate enough memory");
+				err(1, "strdup");
 			if(fields[FieldFeedName][0] != '\0') {
 				fputs("<h2 id=\"", fpitems);
 				printfeednameid(fcur->name, fpitems);
@@ -202,9 +185,9 @@ main(int argc, char *argv[])
 		if(!(namelen = makepathname(fields[FieldTitle], name, sizeof(name))))
 			continue;
 		if(snprintf(filepath, sizeof(filepath), "%s/%s.html", dirpath, name) <= 0)
-			die("snprintf() format error");
+			err(1, "snprintf");
 		if(snprintf(relfilepath, sizeof(relfilepath), "%s/%s.html", reldirpath, name) <= 0)
-			die("snprintf() format error");
+			err(1, "snprintf");
 
 		/* file doesn't exist yet and has write access */
 		if(access(filepath, F_OK) != 0 && (fpcontent = fopen(filepath, "w+b"))) {
@@ -303,5 +286,5 @@ main(int argc, char *argv[])
 	      "</frameset>\n"
 	      "</html>", fpindex);
 
-	return EXIT_SUCCESS;
+	return 0;
 }

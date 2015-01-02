@@ -98,20 +98,6 @@ printhtmlencoded(const char *s, FILE *fp) {
 }
 
 void
-feedsfree(struct feed *f)
-{
-	struct feed *next = NULL;
-
-	for(; f; f = next) {
-		next = f->next;
-		f->next = NULL;
-		free(f->name);
-		f->name = NULL;
-		free(f);
-	}
-}
-
-void
 printutf8pad(FILE *fp, const char *s, size_t len, int pad)
 {
 	wchar_t w;

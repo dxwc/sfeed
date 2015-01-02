@@ -74,7 +74,6 @@ int
 main(void)
 {
 	xmlparser_init(&parser, stdin);
-
 	parser.xmltagstart = xml_handler_start_element;
 	parser.xmltagend = xml_handler_end_element;
 	parser.xmlattr = xml_handler_attr;
@@ -91,5 +90,6 @@ main(void)
 	    "	# feed <name> <feedurl> <basesiteurl> [encoding]\n", stdout);
 	xmlparser_parse(&parser);
 	fputs("}\n", stdout);
-	return EXIT_SUCCESS;
+
+	return 0;
 }

@@ -34,7 +34,5 @@ main(void)
 			printlink(fields[FieldLink], fields[FieldFeedUrl], stdout);
 		putchar('\n');
 	}
-	free(line);
-	line = NULL;
-	return EXIT_SUCCESS;
+	return 0;
 }

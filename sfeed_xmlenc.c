@@ -15,7 +15,7 @@ xmltagstart(XMLParser *p, const char *tag, size_t taglen)
 
 	/* optimization: try to find processing instruction at start */
 	if(tags > 3)
-		exit(EXIT_FAILURE);
+		exit(1);
 	isxmlpi = (!strncasecmp(tag, "?xml", taglen)) ? 1 : 0;
 	tags++;
 }
@@ -47,7 +47,7 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 				putc(tolower((int)*value), stdout);
 			putchar('\n');
 		}
-		exit(EXIT_SUCCESS);
+		exit(0);
 	}
 }
 
@@ -63,5 +63,5 @@ main(void)
 
 	xmlparser_parse(&x);
 
-	return EXIT_FAILURE;
+	return 1;
 }
