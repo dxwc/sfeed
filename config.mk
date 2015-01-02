@@ -27,9 +27,9 @@ LDFLAGS = ${LIBS}
 #LDFLAGS = -static -s ${LIBS}
 
 # uncomment for compat
-CFLAGS += -DCOMPAT
+#CFLAGS += -DCOMPAT
 # uncomment if your libc doesn't support strlcpy
-EXTRAOBJ = strlcpy.o
+#EXTRAOBJ = strlcpy.o
 
 # compiler and linker
 #CC = cc

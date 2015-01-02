@@ -14,7 +14,7 @@ Dependencies
 Optional dependencies
 ---------------------
 
-- make (for Makefile) or mk (for mkfile) (plan9 or 9base).
+- make (for Makefile).
 - POSIX shell
   used by sfeed_update and sfeed_opml_export.
 - curl binary: http://curl.haxx.se/
@@ -42,15 +42,17 @@ Files
 
 sfeed             - Binary (from sfeed.c); read XML RSS or Atom feed data from
                     stdin. Write feed data in tab-separated format to stdout.
-sfeed_update      - Shellscript; update feeds and merge with old feeds in the
-                    file $HOME/.sfeed/feeds by default.
-sfeed_plain       - Format feeds file (TSV) from sfeed_update to plain text.
 sfeed_html        - Format feeds file (TSV) from sfeed_update to HTML.
 sfeed_frames      - Format feeds as a HTML file with frames.
 sfeed_opml_import - Generate a sfeedrc config file based on an opml file.
 sfeed_opml_export - Generate an opml file based on a sfeedrc config file.
-sfeed_xmlenc      - Detect character-set encoding from XML stream.
+sfeed_plain       - Format feeds file (TSV) from sfeed_update to plain text.
+sfeed_stats       - Format feeds file to show a summary listing of the total
+                    amount, new amount and timestamp of the latest item.
+sfeed_update      - Shellscript; update feeds and merge with old feeds in the
+                    file $HOME/.sfeed/feeds by default.
 sfeed_web         - Find urls to RSS/Atom feed from a webpage.
+sfeed_xmlenc      - Detect character-set encoding from XML stream.
 sfeedrc.example   - Example config file.
 style.css         - Example stylesheet to use with sfeed_html and sfeed_frames.
 
@@ -105,13 +107,9 @@ item baseurl site        - string (extra field added by sfeed_update)
 Build and install
 -----------------
 
-Using make (respects DESTDIR and PREFIX variable):
+Using make (respects $DESTDIR and $PREFIX):
 
 make install
-
-or using plan9 mk:
-
-mk install
 
 
 Usage
@@ -157,7 +155,7 @@ sfeed_opml_import < opmlfile.xml > $HOME/.sfeed/sfeedrc
 
 
 Export an opml file of your feeds from a sfeedrc config file (configfile
-arguments is optional):
+argument is optional):
 
 sfeed_opml_export configfile > myfeeds.opml
 

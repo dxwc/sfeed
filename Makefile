@@ -39,7 +39,6 @@ MAN1 = \
 	sfeed_xmlenc.1
 DOC = \
 	CHANGELOG\
-	CREDITS\
 	LICENSE\
 	README\
 	README.xml\
