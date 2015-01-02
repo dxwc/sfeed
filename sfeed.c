@@ -309,7 +309,8 @@ gettimetz(const char *s, char *buf, size_t bufsiz)
 	unsigned int i;
 	char c;
 
-	buf[0] = '\0';
+	if(buf && bufsiz > 0)
+		buf[0] = '\0';
 	if(bufsiz < sizeof(tzname) + STRSIZ(" -00:00"))
 		return 0;
 	for(; *p && isspace((int)*p); p++); /* skip whitespace */
@@ -319,7 +320,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz)
 	/* TODO: cleanup / simplify */
 	if(isalpha((int)*p)) {
 		if(*p == 'Z' || *p == 'z') {
-			strlcpy(buf, "GMT+00:00", sizeof(buf));
+			strlcpy(buf, "GMT+00:00", bufsiz);
 			return 0;
 		} else {
 			for(i = 0, t = &tzname[0]; i < (sizeof(tzname) - 1) &&
@@ -333,8 +334,10 @@ gettimetz(const char *s, char *buf, size_t bufsiz)
 		strlcpy(buf, tzname, bufsiz);
 		return 0;
 	}
-	if((sscanf(p, "%c%02d:%02d", &c, &tzhour, &tzmin)) > 0);
-	else if(sscanf(p, "%c%02d%02d", &c, &tzhour, &tzmin) > 0);
+	if((sscanf(p, "%c%02d:%02d", &c, &tzhour, &tzmin)) > 0)
+		;
+	else if(sscanf(p, "%c%02d%02d", &c, &tzhour, &tzmin) > 0)
+		;
 	else if(sscanf(p, "%c%d", &c, &tzhour) > 0)
 		tzmin = 0;
 	snprintf(buf, bufsiz, "%s%c%02d%02d", tzname, c, tzhour, tzmin);
