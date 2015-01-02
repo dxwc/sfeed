@@ -1,3 +1,7 @@
+#ifdef COMPAT
+#include "compat.h"
+#endif
+
 #include <time.h>
 
 #define ISUTF8(c) (((c) & 0xc0) != 0x80)
@@ -15,9 +19,6 @@ struct feed {
 enum { FieldUnixTimestamp = 0, FieldTimeFormatted, FieldTitle, FieldLink,
        FieldContent, FieldContentType, FieldId, FieldAuthor, FieldFeedType,
        FieldFeedName, FieldFeedUrl, FieldBaseSiteUrl, FieldLast };
-
-#undef strlcpy
-size_t strlcpy(char *, const char *, size_t);
 
 void feedsfree(struct feed *f);
 unsigned int parseline(char **line, size_t *size, char **fields,
