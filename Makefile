@@ -10,9 +10,10 @@ SRC = \
 	sfeed_plain.c\
 	sfeed_web.c\
 	sfeed_xmlenc.c\
-	strlcpy.c\
 	util.c\
 	xml.c
+COMPATSRC = \
+	strlcpy.c
 BIN = \
 	sfeed\
 	sfeed_frames\
@@ -46,7 +47,7 @@ HDR = \
 	util.h\
 	xml.h
 
-OBJ = ${SRC:.c=.o}
+OBJ = ${SRC:.c=.o} ${EXTRAOBJ}
 
 all: $(BIN)
 
@@ -57,7 +58,7 @@ dist: $(BIN) doc
 	mkdir -p release/${VERSION}
 	# legacy man-pages (add doc-oldman as dependency rule).
 	#for m in $(MAN1); do cp -f doc/man/$$m release/${VERSION}/; done
-	cp -f ${MAN1} ${HDR} ${SCRIPTS} ${SRC} ${DOC} \
+	cp -f ${MAN1} ${HDR} ${SCRIPTS} ${SRC} ${COMPATSRC} ${DOC} \
 		Makefile config.mk \
 		sfeedrc.example style.css \
 		release/${VERSION}/

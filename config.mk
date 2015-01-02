@@ -28,7 +28,7 @@ LDFLAGS = ${LIBS}
 
 # uncomment for compat
 CFLAGS += -DCOMPAT
-# if your libc doesn't support strlcpy.c
+# uncomment if your libc doesn't support strlcpy
 EXTRAOBJ = strlcpy.o
 
 # compiler and linker
