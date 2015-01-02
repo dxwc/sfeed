@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+table.head, table.foot { width: 100%; }
+td.head-rtitle, td.foot-os { text-align: right; }
+td.head-vol { text-align: center; }
+table.foot td { width: 50%; }
+table.head td { width: 33%; }
+div.spacer { margin: 1em 0; }
+</style>
+<link rel="stylesheet" href="man.css" type="text/css" media="all"/>
+<title>
+SFEED_WEB(1)</title>
+</head>
+<body>
+<div class="mandoc">
+<table class="head">
+<tbody>
+<tr>
+<td class="head-ltitle">
+SFEED_WEB(1)</td>
+<td class="head-vol">
+General Commands Manual</td>
+<td class="head-rtitle">
+SFEED_WEB(1)</td>
+</tr>
+</tbody>
+</table>
+<div class="section">
+<h1 id="x4e414d45">NAME</h1> <b class="name">sfeed_web</b> &#8212; <span class="desc">finds urls to feeds from a HTML webpage</span></div>
+<div class="section">
+<h1 id="x53594e4f50534953">SYNOPSIS</h1><table class="synopsis">
+<col style="width: 9.00ex;"/>
+<col/>
+<tbody>
+<tr>
+<td>
+sfeed_web</td>
+<td>
+[<span class="opt"><i class="arg">baseurl</i></span>]</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section">
+<h1 id="x4445534352495054494f4e">DESCRIPTION</h1> <b class="name">sfeed_web</b> reads the HTML website as XML or HTML data from stdin and writes the found urls to stdout.</div>
+<div class="section">
+<h1 id="x4f5054494f4e53">OPTIONS</h1><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">baseurl</i></dt>
+<dd class="list-tag" style="margin-left: 8.00ex;">
+optional base url to use for found feed urls that are relative.</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="x4f555450555420464f524d4154">OUTPUT FORMAT</h1> content-type&lt;space&gt;url&lt;newline&gt;<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">content-type</i></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+Usually application/atom+xml or application/rss+xml.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">url</i></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+Found url to the feed. If the url is relative and the baseurl option is specified then the url is changed accordingly.</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="x4558414d504c4553">EXAMPLES</h1> Get urls from xkcd website:<div class="spacer">
+</div>
+<pre style="margin-left: 0.00ex;" class="lit display">
+wget http://www.xkcd.com -q -O - | sfeed_web &quot;http://www.xkcd.com/&quot;</pre>
+</div>
+<div class="section">
+<h1 id="x53454520414c534f">SEE ALSO</h1> <a class="link-man">sh(1)</a>, <a class="link-man">sfeed_update(1)</a></div>
+<div class="section">
+<h1 id="x415554484f5253">AUTHORS</h1> <span class="author">Hiltjo Posthuma</span> &lt;<a class="link-mail" href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;</div>
+<table class="foot">
+<tbody>
+<tr>
+<td class="foot-date">
+December 25, 2014</td>
+<td class="foot-os">
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</body>
+</html>
+

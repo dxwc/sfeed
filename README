@@ -9,9 +9,6 @@ Dependencies
 
 - C compiler (C99).
 - libc (recommended: C99 and POSIX >= 200809).
-- mandoc for documentation: http://mdocml.bsd.lv/ . If your host
-  system doesn't have mandoc you can convert the pages to the legacy format
-  with mandoc -Tman (make doc-oldman).
 
 
 Optional dependencies
@@ -26,6 +23,10 @@ Optional dependencies
   used by sfeed_update. If the text in your RSS/Atom feeds are already UTF-8
   encoded then you don't need this. For an alternative minimal iconv
   implementation: http://git.etalabs.net/cgit/noxcuse/tree/src/iconv.c
+- mandoc for documentation: http://mdocml.bsd.lv/ . If your host
+  system doesn't have mandoc you can copy the legacy man-pages from doc/man
+  to your $MANPATH. For the most up-to-date documentation you can convert
+  the pages to the legacy format with mandoc -Tman (make doc-oldman).
 
 
 Platforms tested

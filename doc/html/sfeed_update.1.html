@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+table.head, table.foot { width: 100%; }
+td.head-rtitle, td.foot-os { text-align: right; }
+td.head-vol { text-align: center; }
+table.foot td { width: 50%; }
+table.head td { width: 33%; }
+div.spacer { margin: 1em 0; }
+</style>
+<link rel="stylesheet" href="man.css" type="text/css" media="all"/>
+<title>
+SFEED_UPDATE(1)</title>
+</head>
+<body>
+<div class="mandoc">
+<table class="head">
+<tbody>
+<tr>
+<td class="head-ltitle">
+SFEED_UPDATE(1)</td>
+<td class="head-vol">
+General Commands Manual</td>
+<td class="head-rtitle">
+SFEED_UPDATE(1)</td>
+</tr>
+</tbody>
+</table>
+<div class="section">
+<h1 id="x4e414d45">NAME</h1> <b class="name">sfeed_update</b> &#8212; <span class="desc">update feeds and merge with old feeds</span></div>
+<div class="section">
+<h1 id="x53594e4f50534953">SYNOPSIS</h1><table class="synopsis">
+<col style="width: 12.00ex;"/>
+<col/>
+<tbody>
+<tr>
+<td>
+sfeed_update</td>
+<td>
+[<span class="opt"><i class="arg">configfile</i></span>]</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section">
+<h1 id="x4445534352495054494f4e">DESCRIPTION</h1> <b class="name">sfeed_update</b> updates feeds and merges the new data with the previous feeds. This is the file $HOME/.sfeed/feeds by default.</div>
+<div class="section">
+<h1 id="x4f5054494f4e53">OPTIONS</h1><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">configfile</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+config file, if not specified uses the location $HOME/.sfeed/sfeedrc by default see the <i class="link-sec"><a class="link-sec" href="#x46494c45532052454144">FILES READ</a></i> section for more information.</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="x5441421e53455041524154454420464f524d4154204649454c4453">TAB-SEPARATED FORMAT FIELDS</h1> The items are saved in a TSV-like format except newlines, tabs and backslash are escaped with \ (\n, \t and \\). Carriage returns (\r) are removed.<div class="spacer">
+</div>
+The order and format of the fields are:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">item timestamp</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+string, UNIX timestamp in GMT+0</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">item timestamp</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+string, date and time in the format: YYYY-mm-dd HH:MM:SS tzname[+-]HHMM</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">item title</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+string</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">item link</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+string</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">item content</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+string</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">item content-type</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+string, &quot;html&quot; or &quot;plain&quot;</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">item id</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+string</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">item author</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+string</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">feed type</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+string, &quot;rss&quot; or &quot;atom&quot;</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="x4558545241204649454c4453">EXTRA FIELDS</h1> Extra fields added by sfeed_update:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">feed name</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+string</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">feed url</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+string</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">item baseurl site</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+string</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="x46494c45532052454144">FILES READ</h1><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">sfeedrc</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+Config file, see the sfeedrc.example file for an example. This file is evaluated as a shellscript in sfeed_update. You can for example override the fetchfeed() function to use wget, fetch or an other download program or you can override the merge() function to change the merge logic. The function feeds() is called to fetch the feeds. By default the function feed() is executed as a parallel job to speedup updating.</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="x46494c4553205752495454454e">FILES WRITTEN</h1><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">feeds</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+Tab-separated format containing all feeds. The sfeed_update script merges new items with this file.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">feeds.new</i></dt>
+<dd class="list-tag" style="margin-left: 17.00ex;">
+Temporary file used by sfeed_update to merge items.</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="x4558414d504c4553">EXAMPLES</h1> To update feeds and format the feeds file:<div class="spacer">
+</div>
+<pre style="margin-left: 0.00ex;" class="lit display">
+sfeed_update &quot;configfile&quot; 
+sfeed_plain &lt; $HOME/.sfeed/feeds &gt; $HOME/.sfeed/feeds.txt 
+sfeed_html &lt; $HOME/.sfeed/feeds &gt; $HOME/.sfeed/feeds.html</pre>
+</div>
+<div class="section">
+<h1 id="x53454520414c534f">SEE ALSO</h1> <a class="link-man">sh(1)</a>, <a class="link-man">sfeed_plain(1)</a>, <a class="link-man">sfeed_html(1)</a></div>
+<div class="section">
+<h1 id="x415554484f5253">AUTHORS</h1> <span class="author">Hiltjo Posthuma</span> &lt;<a class="link-mail" href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;</div>
+<table class="foot">
+<tbody>
+<tr>
+<td class="foot-date">
+December 25, 2014</td>
+<td class="foot-os">
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</body>
+</html>
+

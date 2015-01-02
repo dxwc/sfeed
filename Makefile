@@ -76,16 +76,18 @@ dist: $(BIN)
 	(cd release/${VERSION}; \
 	tar -czf ../../sfeed-${VERSION}.tar.gz .)
 
+doc: doc-html doc-oldman
+
 # man to HTML: make sure to copy the mandoc example stylesheet to
 # doc/html/man.css .
 doc-html: $(MAN1)
 	mkdir -p doc/html
-	for m in $(MAN1); do mandoc -Thtml -Ostyle=man.css $$m > doc/html/$$m.html; done
+	for m in $(MAN1); do mandoc -Ios="" -Thtml -Ostyle=man.css $$m > doc/html/$$m.html; done
 
 # legacy man pages, if you want semantic mandoc pages just copy them.
 doc-oldman: $(MAN1)
 	mkdir -p doc/man
-	for m in $(MAN1); do mandoc -Tman $$m > doc/man/$$m; done
+	for m in $(MAN1); do mandoc -Ios="" -Tman $$m > doc/man/$$m; done
 
 ${OBJ}: config.mk
 

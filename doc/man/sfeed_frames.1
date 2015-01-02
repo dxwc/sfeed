@@ -1,0 +1,52 @@
+.TH "SFEED_FRAMES" "1" "December 25, 2014" "" "General Commands Manual"
+.nh
+.if n .ad l
+.SH "NAME"
+\fBsfeed_frames\fR
+\- formats a feeds file to HTML with frames
+.SH "SYNOPSIS"
+.HP 13n
+\fBsfeed_frames\fR
+[\fIdirectory\ path\fR]
+.SH "DESCRIPTION"
+\fBsfeed_frames\fR
+formats a feeds file (TSV) from
+sfeed_update(1)
+to HTML. It reads TSV data from stdin and writes HTML to the specified
+directory. For the exact TSV format see
+sfeed_update(1).
+.SH "OPTIONS"
+.TP 16n
+\fIdirectory path\fR
+Path to write files to, default is ".". On success the specified directory will
+contain the files:
+.PP
+.RS 16n
+.PD 0
+.TP 15n
+\fIindex.html:\fR
+this is the main HTML file referencing to the frames (items.html and
+menu.html).
+.PD
+.TP 15n
+\fIitems.html:\fR
+this contains all the items as HTML links to the local content.
+.TP 15n
+\fImenu.html:\fR
+menu frame which contains navigation "anchor" links to the feed names
+(in items.html).
+.PD 0
+.PP
+.RE
+.PD
+.SH "FILE STRUCTURE"
+Directory for each feed category in the format: path/feedname/itemname.html.
+The feedname and item names are normalized, whitespace characters are replaced
+with a \-, multiple whitespaces are replaced by a single \- and trailing
+whitespace will be removed.
+.SH "SEE ALSO"
+sfeed_plain(1),
+sfeed_update(1),
+sfeed(1)
+.SH "AUTHORS"
+Hiltjo Posthuma <\fIhiltjo@codemadness.org\fR>
