@@ -48,7 +48,6 @@ main(void)
 		if(!totalfeeds || (fcur && strcmp(fcur->name, fields[FieldFeedName]))) {
 			if(!(f = calloc(1, sizeof(struct feed))))
 				err(1, "calloc");
-			/*f->next = NULL;*/
 			if(totalfeeds) { /* end previous one. */
 				fputs("</table>\n", stdout);
 				fcur->next = f;
@@ -60,10 +59,10 @@ main(void)
 					/* set nosidebar class on div for styling */
 					fputs("\t\t<div id=\"items\" class=\"nosidebar\">\n", stdout);
 					showsidebar = 0;
-				} else
+				} else {
 					fputs("\t\t<div id=\"items\">\n", stdout);
+				}
 			}
-
 			/* TODO: memcpy and make fcur->name static? */
 			if(!(fcur->name = strdup(fields[FieldFeedName])))
 				err(1, "strdup");

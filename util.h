@@ -27,3 +27,5 @@ void printfeednameid(const char *, FILE *);
 void printhtmlencoded(const char *, FILE *);
 void printlink(const char *, const char *, FILE *);
 void printutf8pad(FILE *, const char *, size_t, int);
+const char *trimstart(const char *);
+const char *trimend(const char *);

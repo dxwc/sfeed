@@ -76,12 +76,35 @@ parseline(char **line, size_t *size, char **fields,
 	return i;
 }
 
+const char *
+trimend(const char *s)
+{
+	size_t len = strlen(s);
+
+	for(; len > 0 && isspace((int)s[len - 1]); len--)
+		;
+	return &s[len];
+}
+
+const char *
+trimstart(const char *s)
+{
+	for(; *s && isspace((int)*s); s++)
+		;
+	return s;
+}
+
 /* print feed name for id; spaces and tabs in string as "-"
  * (spaces in anchors are not valid). */
 void
 printfeednameid(const char *s, FILE *fp)
 {
-	for(; *s; s++)
+	const char *e;
+
+	s = trimstart(s);
+	e = trimend(s);
+
+	for(; *s && s != e; s++)
 		fputc(isspace((int)*s) ? '-' : tolower((int)*s), fp);
 }
 

@@ -313,7 +313,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz)
 		buf[0] = '\0';
 	if(bufsiz < sizeof(tzname) + STRSIZ(" -00:00"))
 		return 0;
-	for(; *p && isspace((int)*p); p++); /* skip whitespace */
+	p = trimstart(p);
 	/* loop until some common timezone delimiters are found */
 	for(; *p && (*p != '+' && *p != '-' && *p != 'Z' && *p != 'z'); p++);
 
@@ -383,11 +383,13 @@ parsetime(const char *s, char *buf, size_t bufsiz)
 static void
 string_print(String *s)
 {
-	const char *p;
+	const char *p, *e;
 
 	/* skip leading whitespace */
-	for(p = s->data; *p && isspace((int)*p); p++);
-	for(; *p; p++) {
+	p = trimstart(s->data);
+	e = trimend(p);
+
+	for(; *p && p != e; p++) {
 		if(ISWSNOSPACE(*p)) {
 			switch(*p) {
 			case '\n': fputs("\\n", stdout); break;
@@ -395,8 +397,9 @@ string_print(String *s)
 			case '\t': fputs("\\t", stdout); break;
 			default: break; /* ignore other whitespace chars */
 			}
-		} else
+		} else {
 			putchar(*p);
+		}
 	}
 }
 
