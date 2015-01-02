@@ -11,7 +11,14 @@
 #include "util.h"
 #include "xml.h"
 
-#define ISWSNOSPACE(c) (((unsigned)c - '\t') < 5) /* isspace(c) && c != ' ' */
+/* fast isspace(c) && c != ' ' check. */
+#define ISWSNOSPACE(c)    (((unsigned)c - '\t') < 5)
+#define ISINCONTENT(ctx)  ((ctx).iscontent && !((ctx).iscontenttag))
+#define ISCONTENTTAG(ctx) (!((ctx).iscontent) && (ctx).iscontenttag)
+/* string and size */
+#define STRP(s)           s,sizeof(s)-1
+/* length of string */
+#define STRSIZ(s)         (sizeof(s)-1)
 
 enum { FeedTypeNone = 0, FeedTypeRSS = 1, FeedTypeAtom = 2 };
 static const char *feedtypes[] = { "", "rss", "atom" };
@@ -106,28 +113,28 @@ gettag(int feedtype, const char *name, size_t namelen)
 {
 	/* RSS, alphabetical order */
 	static FeedTag rsstag[] = {
-		{ "author",           6, RSSTagAuthor },
-		{ "content:encoded", 15, RSSTagContentencoded },
-		{ "dc:creator",      10, RSSTagDccreator },
-		{ "dc:date",          7, RSSTagDcdate },
-		{ "description",     11, RSSTagDescription },
-		{ "guid",             4, RSSTagGuid },
-		{ "link",             4, RSSTagLink },
-		{ "pubdate",          7, RSSTagPubdate },
-		{ "title",            5, RSSTagTitle },
-		{ NULL,               0, -1 }
+		{ STRP("author"),          RSSTagAuthor },
+		{ STRP("content:encoded"), RSSTagContentencoded },
+		{ STRP("dc:creator"),      RSSTagDccreator },
+		{ STRP("dc:date"),         RSSTagDcdate },
+		{ STRP("description"),     RSSTagDescription },
+		{ STRP("guid"),            RSSTagGuid },
+		{ STRP("link"),            RSSTagLink },
+		{ STRP("pubdate"),         RSSTagPubdate },
+		{ STRP("title"),           RSSTagTitle },
+		{ NULL, 0, -1 }
 	};
 	/* Atom, alphabetical order */
 	static FeedTag atomtag[] = {
-		{ "author",    6, AtomTagAuthor },
-		{ "content",   7, AtomTagContent },
-		{ "id",        2, AtomTagId },
-		{ "link",      4, AtomTagLink },
-		{ "published", 9, AtomTagPublished },
-		{ "summary",   7, AtomTagSummary },
-		{ "title",     5, AtomTagTitle },
-		{ "updated",   7, AtomTagUpdated },
-		{ NULL,        0, -1 }
+		{ STRP("author"),    AtomTagAuthor },
+		{ STRP("content"),   AtomTagContent },
+		{ STRP("id"),        AtomTagId },
+		{ STRP("link"),      AtomTagLink },
+		{ STRP("published"), AtomTagPublished },
+		{ STRP("summary"),   AtomTagSummary },
+		{ STRP("title"),     AtomTagTitle },
+		{ STRP("updated"),   AtomTagUpdated },
+		{ NULL, 0, -1 }
 	};
 	int i, n;
 
@@ -303,7 +310,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz)
 	char c;
 
 	buf[0] = '\0';
-	if(bufsiz < sizeof(tzname) + strlen(" -00:00"))
+	if(bufsiz < sizeof(tzname) + STRSIZ(" -00:00"))
 		return 0;
 	for(; *p && isspace((int)*p); p++); /* skip whitespace */
 	/* loop until some common timezone delimiters are found */
@@ -430,14 +437,15 @@ xml_handler_attr_start(XMLParser *p, const char *tag, size_t taglen,
 	(void)tag;
 	(void)taglen;
 
-	if(ctx.iscontent && !ctx.iscontenttag) {
-		if(!ctx.attrcount)
-			xml_handler_data(p, " ", 1);
-		ctx.attrcount++;
-		xml_handler_data(p, name, namelen);
-		xml_handler_data(p, "=\"", 2);
+	if(!ISINCONTENT(ctx))
 		return;
-	}
+
+	/* handles transforming inline XML to data */
+	if(!ctx.attrcount)
+		xml_handler_data(p, " ", 1);
+	ctx.attrcount++;
+	xml_handler_data(p, name, namelen);
+	xml_handler_data(p, "=\"", 2);
 }
 
 static void
@@ -449,10 +457,12 @@ xml_handler_attr_end(struct xmlparser *p, const char *tag, size_t taglen,
 	(void)name;
 	(void)namelen;
 
-	if(ctx.iscontent && !ctx.iscontenttag) {
-		xml_handler_data(p, "\"", 1);
-		ctx.attrcount = 0;
-	}
+	if(!ISINCONTENT(ctx))
+		return;
+
+	/* handles transforming inline XML to data */
+	xml_handler_data(p, "\"", 1);
+	ctx.attrcount = 0;
 }
 
 static void
@@ -462,12 +472,13 @@ xml_handler_start_element_parsed(XMLParser *p, const char *tag, size_t taglen,
 	(void)tag;
 	(void)taglen;
 
-	if(ctx.iscontent && !ctx.iscontenttag) {
-		if(isshort)
-			xml_handler_data(p, "/>", 2);
-		else
-			xml_handler_data(p, ">", 1);
-	}
+	if(!ISINCONTENT(ctx))
+		return;
+
+	if(isshort)
+		xml_handler_data(p, "/>", 2);
+	else
+		xml_handler_data(p, ">", 1);
 }
 
 static void
@@ -478,18 +489,20 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 	(void)tag;
 	(void)taglen;
 
-	if(ctx.iscontent && !ctx.iscontenttag) {
+	/* handles transforming inline XML to data */
+	if(ISINCONTENT(ctx)) {
 		xml_handler_data(p, value, valuelen);
 		return;
 	}
+
 	if(ctx.item.feedtype == FeedTypeAtom) {
 		/*if(ctx.tagid == AtomTagContent || ctx.tagid == AtomTagSummary) {*/
-		if(ctx.iscontenttag) {
-			if(isattr(name, namelen, "type", strlen("type")) &&
-			   (isattr(value, valuelen, "xhtml", strlen("xhtml")) ||
-			   isattr(value, valuelen, "text/xhtml", strlen("text/xhtml")) ||
-			   isattr(value, valuelen, "html", strlen("html")) ||
-			   isattr(value, valuelen, "text/html", strlen("text/html"))))
+		if(ISCONTENTTAG(ctx)) {
+			if(isattr(name, namelen, STRP("type")) &&
+			   (isattr(value, valuelen, STRP("xhtml")) ||
+			   isattr(value, valuelen, STRP("text/xhtml")) ||
+			   isattr(value, valuelen, STRP("html")) ||
+			   isattr(value, valuelen, STRP("text/html"))))
 			{
 				ctx.item.contenttype = ContentTypeHTML;
 				ctx.iscontent = 1;
@@ -499,7 +512,7 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 				p->xmltagstartparsed = xml_handler_start_element_parsed;
 			}
 		} else if(ctx.tagid == AtomTagLink &&
-		          isattr(name, namelen, "href", strlen("href")))
+		          isattr(name, namelen, STRP("href")))
 		{
 			/* link href attribute */
 			string_append(&ctx.item.link, value, valuelen);
@@ -510,15 +523,16 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 static void
 xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 {
-	if(ctx.iscontenttag) {
+	if(ISCONTENTTAG(ctx)) {
 		/* starts with div, handle as XML, don't convert entities (set handle to NULL) */
 		if(ctx.item.feedtype == FeedTypeAtom &&
-		   namelen == strlen("div") &&
-		   !strncmp(name, "div", strlen("div"))) {
+		   namelen == STRSIZ("div") &&
+		   !strncmp(name, STRP("div"))) {
 			p->xmldataentity = NULL;
 		}
 	}
-	if(ctx.iscontent) {
+	/* TODO: changed, iscontenttag can be 0 or 1 ? */
+	if(ISINCONTENT(ctx)) {
 		ctx.attrcount = 0;
 		ctx.iscontenttag = 0;
 		xml_handler_data(p, "<", 1);
@@ -531,11 +545,11 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 
 	/* start of RSS or Atom item / entry */
 	if(ctx.item.feedtype == FeedTypeNone) {
-		if(istag(name, namelen, "entry", strlen("entry"))) { /* Atom */
+		if(istag(name, namelen, STRP("entry"))) { /* Atom */
 			ctx.item.feedtype = FeedTypeAtom;
 			ctx.item.contenttype = ContentTypePlain; /* Default content type */
 			ctx.field = NULL; /* XXX: optimization */
-		} else if(istag(name, namelen, "item", strlen("item"))) { /* RSS */
+		} else if(istag(name, namelen, STRP("item"))) { /* RSS */
 			ctx.item.feedtype = FeedTypeRSS;
 			ctx.item.contenttype = ContentTypeHTML; /* Default content type */
 			ctx.field = NULL; /* XXX: optimization */
@@ -646,9 +660,9 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 	/* end of RSS or Atom entry / item */
 	/* TODO: optimize, use gettag() ? to tagid? */
 	if((ctx.item.feedtype == FeedTypeAtom &&
-	   istag(name, namelen, "entry", strlen("entry"))) || /* Atom */
+	   istag(name, namelen, STRP("entry"))) || /* Atom */
 	   (ctx.item.feedtype == FeedTypeRSS &&
-	   istag(name, namelen, "item", strlen("item")))) /* RSS */
+	   istag(name, namelen, STRP("item")))) /* RSS */
 	{
 		printf("%ld", (long)parsetime((&ctx.item.timestamp)->data,
 		       timebuf, sizeof(timebuf)));
