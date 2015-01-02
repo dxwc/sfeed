@@ -1,6 +1,3 @@
-# sfeed version
-VERSION = 0.9
-
 # customize below to fit your system
 
 # paths
@@ -24,6 +21,10 @@ LDFLAGS = ${LIBS}
 #CC = tcc
 #CFLAGS = -DVERSION=\"${VERSION}\" -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700
 #LDFLAGS = -s ${LIBS}
+
+# uncomment for compat
+CFLAGS += -DCOMPAT
+LDFLAGS += -L. -lcompat
 
 # compiler and linker
 #CC = cc
