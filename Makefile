@@ -1,22 +1,23 @@
 include config.mk
 
 NAME = sfeed
+VERSION = 0.9
 SRC = \
 	sfeed.c\
-	sfeed_plain.c\
+	sfeed_frames.c\
 	sfeed_html.c\
 	sfeed_opml_import.c\
-	sfeed_frames.c\
-	sfeed_xmlenc.c\
+	sfeed_plain.c\
 	sfeed_web.c\
-	xml.c\
-	util.c
+	sfeed_xmlenc.c\
+	util.c\
+	xml.c
 BIN = \
 	sfeed\
-	sfeed_plain\
-	sfeed_html\
 	sfeed_frames\
+	sfeed_html\
 	sfeed_opml_import\
+	sfeed_plain\
 	sfeed_web\
 	sfeed_xmlenc
 SCRIPTS = \
@@ -40,8 +41,8 @@ DOC = \
 	README.xml\
 	TODO
 HDR = \
-	util.h\
 	compat.h\
+	util.h\
 	xml.h
 
 LIBCOMPAT = libcompat.a
@@ -75,11 +76,13 @@ dist: $(BIN)
 	(cd release/${VERSION}; \
 	tar -czf ../../sfeed-${VERSION}.tar.gz .)
 
+# man to HTML: make sure to copy the mandoc example stylesheet to
+# doc/html/man.css .
 doc-html: $(MAN1)
 	mkdir -p doc/html
 	for m in $(MAN1); do mandoc -Thtml -Ostyle=man.css $$m > doc/html/$$m.html; done
 
-# NOTE: legacy man pages, if you want semantic mandoc pages just copy ${MAN1}
+# legacy man pages, if you want semantic mandoc pages just copy them.
 doc-oldman: $(MAN1)
 	mkdir -p doc/man
 	for m in $(MAN1); do mandoc -Tman $$m > doc/man/$$m; done
@@ -112,7 +115,7 @@ sfeed_web: sfeed_web.o xml.o util.o
 	${CC} -o $@ sfeed_web.o xml.o util.o ${LDFLAGS}
 
 clean:
-	rm -f ${BIN} ${OBJ}
+	rm -f ${BIN} ${OBJ} ${LIBCOMPAT}
 
 install: all
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
