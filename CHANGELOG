@@ -4,10 +4,11 @@ v0.9
 Features:
 ---------
 
-* Feeds are now by default updated in parallel for an increase in performance.
-* Auto-detect XML character set encoding (sfeed_xmlenc).
-* Find RSS/Atom feeds from web-pages (sfeed_web).
-* Added sfeed_frames, a formatting program to output feeds as a HTML file with
+* sfeed_update: feeds are now by default updated in parallel for an increase
+  in performance.
+* sfeed_update: Auto-detect XML character set encoding (sfeed_xmlenc).
+* Add sfeed_web: find RSS/Atom feeds from web-pages.
+* Add sfeed_frames, a formatting program to output feeds as a HTML file with
   frames. It's optimized to look good in older browsers that don't necesarily
   support CSS or modern HTML, like links. See the man page for more details.
 * Removed the dependency on libexpat, using a custom XML parser (xml.*),
@@ -18,6 +19,7 @@ Features:
 Bug fixes:
 ----------
 
+* Fix off-by-one in string_append when reallocating buffer.
 * Parsing datetime strings containing timezone suffix to UNIX timestamps
   was wrong. UNIX timestamps are in GMT+0 time. For simplicity sake output
   parsed datetime strings in a formatted manner without converting the
@@ -26,4 +28,10 @@ Bug fixes:
   timestamp) don't take into account timezones, because setenv(TZ,...) is
   just ugly and I don't use it.
 * Lots of small fixes for compatibility with RSS / Atom feeds.
-* Many more improvements, I'll keep a more detailed list in the feature.
+* Many more improvements, I'll keep a more detailed list in the future.
+
+
+v0.8
+====
+
+No history
