@@ -25,7 +25,7 @@ main(void)
 	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
 	fputs(
 		"<!DOCTYPE HTML>\n"
-		"<html dir=\"ltr\" lang=\"en\">\n"
+		"<html>\n"
 		"\t<head>\n"
 		"\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 		"\t\t<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />\n"
