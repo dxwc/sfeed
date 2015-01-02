@@ -727,8 +727,13 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 int
 main(int argc, char *argv[])
 {
-	if(argc > 1)
+	if(argc > 1) {
 		append = argv[1];
+		if(!strcmp(argv[1], "-v")) {
+			printf("%s\n", VERSION);
+			return 0;
+		}
+	}
 
 	/* init strings and initial memory pool size */
 	string_buffer_init(&ctx.item.timestamp, 64);
