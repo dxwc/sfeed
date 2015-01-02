@@ -1,14 +1,12 @@
+[ ] grep -H -n *.c 'TODO:'
+[ ] sfeed_stats: add man page.
+[ ] sfeed_frame: snprintf check truncated, <= 0 and >= size.
+[ ] sfeed.c: document ctx.iscontent and ctx.iscontenttag.
 [ ] use openbsd sys/queue.h for util.c linked-list and sfeed_frames.c
-
-[ ] check read errors:
+[ ] rewrite xml.{c,h}
+[ ] xml: check read errors:
 	ferror, return code of fread, fwrite, fclose...
-
-[x] handle invalid value in strtoul.
-[x] compile with -Wextra and use (void) to ignore unused parameters?
-[x] use uint32_t for codepointtoutf8?
-
 [ ] separate codepointtoutf8 and entity handling from sfeed.c into xml.c?
-
 [ ] test again on:
 	- Linux (glibc+gcc, musl-gcc, clang, tcc).
 	- OpenBSD
@@ -16,12 +14,12 @@
 [ ] test shellscripts with ubase/sbase tools.
 	[ ] sfeed_update
 	[ ] sfeed_opml_export
-[ ] remove sfeed_stats ?
-[ ] dogfood sfeed_frames, html content.
+[ ] dogfood sfeed_frames, HTML content.
 	[ ] in links browsers: items are centered in the table for some reason.
 [ ] feeds file: empty tab (encoding can't be detected?)
 [ ] optimize
 	[ ] gettag() lookup.
 	[ ] namedentitytostr lookup.
 	[ ] xml parser, etc.
-[ ] cleanup code.
+[?] add sfeed_atom ? to aggregate feeds?
+
