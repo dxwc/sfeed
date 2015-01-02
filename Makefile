@@ -138,13 +138,13 @@ install: all
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
-	for f in $(BIN) $(SCRIPTS); do @rm -f ${DESTDIR}${PREFIX}/bin/$$f; done
+	for f in $(BIN) $(SCRIPTS); do rm -f ${DESTDIR}${PREFIX}/bin/$$f; done
 	@echo removing example files from ${DESTDIR}${PREFIX}/share/${NAME}
 	@rm -f \
 		${DESTDIR}${PREFIX}/share/${NAME}/sfeedrc.example \
 		${DESTDIR}${PREFIX}/share/${NAME}/style.css
 	@-rmdir ${DESTDIR}${PREFIX}/share/${NAME}
 	@echo removing manual pages from ${DESTDIR}${MANPREFIX}/man1
-	for m in $(MAN1); do @rm -f ${DESTDIR}${MANPREFIX}/man1/$$m; done
+	for m in $(MAN1); do rm -f ${DESTDIR}${MANPREFIX}/man1/$$m; done
 
 .PHONY: all options clean dist install uninstall
