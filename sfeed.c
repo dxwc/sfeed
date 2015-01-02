@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -58,19 +59,17 @@ typedef struct feedtag {
 } FeedTag;
 
 typedef struct feedcontext {
-	String *field; /* pointer to current FeedItem field String */
-	FeedItem item; /* data for current feed item */
-	char tag[256]; /* current tag _inside_ a feeditem */
-	int tagid;     /* unique number for parsed tag (faster comparison) */
-	size_t taglen;
-	int iscontent;
-	int iscontenttag;
-	int attrcount;
+	String   *field;        /* pointer to current FeedItem field String */
+	FeedItem  item;         /* data for current feed item */
+	char      tag[256];     /* current tag _inside_ a feeditem */
+	int       tagid;        /* unique number for parsed tag (faster comparison) */
+	size_t    taglen;
+	int       iscontent;    /* in content data */
+	int       iscontenttag; /* in content tag */
+	int       attrcount;
 } FeedContext;
 
-static void   cleanup(void);
 static size_t codepointtoutf8(uint32_t, uint32_t *);
-static void   die(const char *);
 static size_t entitytostr(const char *, char *, size_t);
 static int    gettag(int, const char *, size_t);
 static int    gettimetz(const char *, char *, size_t);
@@ -82,7 +81,6 @@ static void   string_append(String *, const char *, size_t);
 static void   string_buffer_init(String *, size_t);
 static int    string_buffer_realloc(String *, size_t);
 static void   string_clear(String *);
-static void   string_free(String *);
 static void   string_print(String *);
 static void   xml_handler_attr(XMLParser *, const char *, size_t,
                                const char *, size_t, const char *, size_t);
@@ -260,18 +258,9 @@ static void
 string_buffer_init(String *s, size_t len)
 {
 	if(!(s->data = malloc(len)))
-		die("can't allocate enough memory");
+		err(1, "malloc");
 	s->bufsiz = len;
 	string_clear(s);
-}
-
-static void
-string_free(String *s)
-{
-	free(s->data);
-	s->data = NULL;
-	s->bufsiz = 0;
-	s->len = 0;
 }
 
 static int
@@ -281,10 +270,8 @@ string_buffer_realloc(String *s, size_t newlen)
 	size_t alloclen;
 
 	for(alloclen = 16; alloclen <= newlen; alloclen *= 2);
-	if(!(p = realloc(s->data, alloclen))) {
-		string_free(s); /* free previous allocation */
-		die("can't allocate enough memory");
-	}
+	if(!(p = realloc(s->data, alloclen)))
+		err(1, "realloc");
 	s->bufsiz = alloclen;
 	s->data = p;
 	return s->bufsiz;
@@ -297,31 +284,11 @@ string_append(String *s, const char *data, size_t len)
 		return;
 	/* check if allocation is necesary, don't shrink buffer
 	   should be more than bufsiz ofcourse */
-	if(s->len + len > s->bufsiz)
-		string_buffer_realloc(s, s->len + len);
+	if(s->len + len >= s->bufsiz)
+		string_buffer_realloc(s, s->len + len + 1);
 	memcpy(s->data + s->len, data, len);
 	s->len += len;
 	s->data[s->len] = '\0';
-}
-
-/* cleanup, free allocated memory, etc */
-static void
-cleanup(void)
-{
-	string_free(&ctx.item.timestamp);
-	string_free(&ctx.item.title);
-	string_free(&ctx.item.link);
-	string_free(&ctx.item.content);
-	string_free(&ctx.item.id);
-	string_free(&ctx.item.author);
-}
-
-/* print error message to stderr */
-static void
-die(const char *s)
-{
-	fprintf(stderr, "sfeed: %s\n", s);
-	exit(EXIT_FAILURE);
 }
 
 /* get timezone from string, return as formatted string and time offset,
@@ -740,8 +707,6 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 int
 main(int argc, char *argv[])
 {
-	atexit(cleanup);
-
 	if(argc > 1)
 		append = argv[1];
 
@@ -764,5 +729,5 @@ main(int argc, char *argv[])
 	parser.xmlcdata = xml_handler_cdata;
 	xmlparser_parse(&parser);
 
-	return EXIT_SUCCESS;
+	return 0;
 }
