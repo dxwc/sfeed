@@ -1,39 +1,35 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-<meta charset="utf-8"/>
-<style>
-table.head, table.foot { width: 100%; }
-td.head-rtitle, td.foot-os { text-align: right; }
-td.head-vol { text-align: center; }
-table.foot td { width: 50%; }
-table.head td { width: 33%; }
-div.spacer { margin: 1em 0; }
-</style>
-<link rel="stylesheet" href="man.css" type="text/css" media="all"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="resource-type" content="document">
+<link rel="stylesheet" href="man.css" type="text/css" media="all">
 <title>
 SFEED_XMLENC(1)</title>
 </head>
 <body>
 <div class="mandoc">
-<table class="head">
+<table summary="Document Header" class="head" width="100%">
+<col width="30%">
+<col width="30%">
+<col width="30%">
 <tbody>
 <tr>
 <td class="head-ltitle">
 SFEED_XMLENC(1)</td>
-<td class="head-vol">
-General Commands Manual</td>
-<td class="head-rtitle">
+<td class="head-vol" align="center">
+OpenBSD Reference Manual</td>
+<td class="head-rtitle" align="right">
 SFEED_XMLENC(1)</td>
 </tr>
 </tbody>
 </table>
 <div class="section">
-<h1 id="x4e414d45">NAME</h1> <b class="name">sfeed_xmlenc</b> &#8212; <span class="desc">get text-encoding from XML</span></div>
+<h1 id="x4e414d45">NAME</h1> <b class="name">sfeed_xmlenc</b> &#8212; <span class="desc">get text&#45;encoding from XML</span></div>
 <div class="section">
 <h1 id="x53594e4f50534953">SYNOPSIS</h1><table class="synopsis">
-<col style="width: 12.00ex;"/>
-<col/>
+<col style="width: 12.00ex;">
+<col>
 <tbody>
 <tr>
 <td>
@@ -45,23 +41,24 @@ sfeed_xmlenc</td>
 </table>
 </div>
 <div class="section">
-<h1 id="x4445534352495054494f4e">DESCRIPTION</h1> <b class="name">sfeed_xmlenc</b> reads XML data from stdin and writes the found text-encoding to stdout.</div>
+<h1 id="x4445534352495054494f4e">DESCRIPTION</h1> <b class="name">sfeed_xmlenc</b> reads XML data from stdin and writes the found text&#45;encoding to stdout.</div>
 <div class="section">
-<h1 id="x4558414d504c4553">EXAMPLES</h1> Get text-encoding from xkcd Atom feed:<div class="spacer">
-</div>
+<h1 id="x4558414d504c4553">EXAMPLES</h1> Get text&#45;encoding from xkcd Atom feed:<p>
 <pre style="margin-left: 0.00ex;" class="lit display">
 wget http://www.xkcd.com/atom.xml -q -O - | sfeed_xmlenc</pre>
 </div>
 <div class="section">
 <h1 id="x53454520414c534f">SEE ALSO</h1> <a class="link-man">sh(1)</a>, <a class="link-man">sfeed_update(1)</a></div>
 <div class="section">
-<h1 id="x415554484f5253">AUTHORS</h1> <span class="author">Hiltjo Posthuma</span> &lt;<a class="link-mail" href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;</div>
-<table class="foot">
+<h1 id="x415554484f5253">AUTHORS</h1> <span class="author">Hiltjo Posthuma</span> &#60;<a class="link-mail" href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&#62;</div>
+<table summary="Document Footer" class="foot" width="100%">
+<col width="50%">
+<col width="50%">
 <tbody>
 <tr>
 <td class="foot-date">
 December 25, 2014</td>
-<td class="foot-os">
+<td class="foot-os" align="right">
 </td>
 </tr>
 </tbody>

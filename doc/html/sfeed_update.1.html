@@ -1,29 +1,25 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-<meta charset="utf-8"/>
-<style>
-table.head, table.foot { width: 100%; }
-td.head-rtitle, td.foot-os { text-align: right; }
-td.head-vol { text-align: center; }
-table.foot td { width: 50%; }
-table.head td { width: 33%; }
-div.spacer { margin: 1em 0; }
-</style>
-<link rel="stylesheet" href="man.css" type="text/css" media="all"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="resource-type" content="document">
+<link rel="stylesheet" href="man.css" type="text/css" media="all">
 <title>
 SFEED_UPDATE(1)</title>
 </head>
 <body>
 <div class="mandoc">
-<table class="head">
+<table summary="Document Header" class="head" width="100%">
+<col width="30%">
+<col width="30%">
+<col width="30%">
 <tbody>
 <tr>
 <td class="head-ltitle">
 SFEED_UPDATE(1)</td>
-<td class="head-vol">
-General Commands Manual</td>
-<td class="head-rtitle">
+<td class="head-vol" align="center">
+OpenBSD Reference Manual</td>
+<td class="head-rtitle" align="right">
 SFEED_UPDATE(1)</td>
 </tr>
 </tbody>
@@ -32,14 +28,14 @@ SFEED_UPDATE(1)</td>
 <h1 id="x4e414d45">NAME</h1> <b class="name">sfeed_update</b> &#8212; <span class="desc">update feeds and merge with old feeds</span></div>
 <div class="section">
 <h1 id="x53594e4f50534953">SYNOPSIS</h1><table class="synopsis">
-<col style="width: 12.00ex;"/>
-<col/>
+<col style="width: 12.00ex;">
+<col>
 <tbody>
 <tr>
 <td>
 sfeed_update</td>
 <td>
-[<span class="opt"><i class="arg">configfile</i></span>]</td>
+&#91;<span class="opt"><i class="arg">configfile</i></span>&#93;</td>
 </tr>
 </tbody>
 </table>
@@ -55,8 +51,7 @@ config file, if not specified uses the location $HOME/.sfeed/sfeedrc by default 
 </dl>
 </div>
 <div class="section">
-<h1 id="x5441421e53455041524154454420464f524d4154204649454c4453">TAB-SEPARATED FORMAT FIELDS</h1> The items are saved in a TSV-like format except newlines, tabs and backslash are escaped with \ (\n, \t and \\). Carriage returns (\r) are removed.<div class="spacer">
-</div>
+<h1 id="x5441421e53455041524154454420464f524d4154204649454c4453">TAB-SEPARATED FORMAT FIELDS</h1> The items are saved in a TSV-like format except newlines, tabs and backslash are escaped with \ (\n, \t and \\). Carriage returns (\r) are removed.<p>
 The order and format of the fields are:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
 <dt class="list-tag" style="margin-top: 1.00em;">
 <i class="arg">item timestamp</i></dt>
@@ -65,7 +60,7 @@ string, UNIX timestamp in GMT+0</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
 <i class="arg">item timestamp</i></dt>
 <dd class="list-tag" style="margin-left: 17.00ex;">
-string, date and time in the format: YYYY-mm-dd HH:MM:SS tzname[+-]HHMM</dd>
+string, date and time in the format: YYYY-mm-dd HH:MM:SS tzname[[+-][HHMM]]</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
 <i class="arg">item title</i></dt>
 <dd class="list-tag" style="margin-left: 17.00ex;">
@@ -79,7 +74,7 @@ string</dd>
 <dd class="list-tag" style="margin-left: 17.00ex;">
 string</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
-<i class="arg">item content-type</i></dt>
+<i class="arg">item content&#45;type</i></dt>
 <dd class="list-tag" style="margin-left: 17.00ex;">
 string, &quot;html&quot; or &quot;plain&quot;</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
@@ -133,8 +128,7 @@ Temporary file used by sfeed_update to merge items.</dd>
 </dl>
 </div>
 <div class="section">
-<h1 id="x4558414d504c4553">EXAMPLES</h1> To update feeds and format the feeds file:<div class="spacer">
-</div>
+<h1 id="x4558414d504c4553">EXAMPLES</h1> To update feeds and format the feeds file:<p>
 <pre style="margin-left: 0.00ex;" class="lit display">
 sfeed_update &quot;configfile&quot; 
 sfeed_plain &lt; $HOME/.sfeed/feeds &gt; $HOME/.sfeed/feeds.txt 
@@ -143,13 +137,15 @@ sfeed_html &lt; $HOME/.sfeed/feeds &gt; $HOME/.sfeed/feeds.html</pre>
 <div class="section">
 <h1 id="x53454520414c534f">SEE ALSO</h1> <a class="link-man">sh(1)</a>, <a class="link-man">sfeed_plain(1)</a>, <a class="link-man">sfeed_html(1)</a></div>
 <div class="section">
-<h1 id="x415554484f5253">AUTHORS</h1> <span class="author">Hiltjo Posthuma</span> &lt;<a class="link-mail" href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;</div>
-<table class="foot">
+<h1 id="x415554484f5253">AUTHORS</h1> <span class="author">Hiltjo Posthuma</span> &#60;<a class="link-mail" href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&#62;</div>
+<table summary="Document Footer" class="foot" width="100%">
+<col width="50%">
+<col width="50%">
 <tbody>
 <tr>
 <td class="foot-date">
 December 25, 2014</td>
-<td class="foot-os">
+<td class="foot-os" align="right">
 </td>
 </tr>
 </tbody>
