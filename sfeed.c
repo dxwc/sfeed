@@ -364,20 +364,21 @@ parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 
 	memset(&tm, 0, sizeof(tm));
 	for(i = 0; formats[i]; i++) {
-		if((p = strptime(s, formats[i], &tm))) {
-			tm.tm_isdst = -1; /* don't use DST */
-			if((t = mktime(&tm)) == -1) /* error */
-				return -1;
-			if(gettimetz(p, tz, sizeof(tz), &tzoffset) != -1)
-				t -= tzoffset;
-			if(buf)
-				snprintf(buf, bufsiz, "%04d-%02d-%02d %02d:%02d:%02d %s",
-				         tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-				         tm.tm_hour, tm.tm_min, tm.tm_sec, tz);
-			if(tp)
-				*tp = t;
-			return 0;
-		}
+		if(!(p = strptime(s, formats[i], &tm)))
+			continue;
+		tm.tm_isdst = -1; /* don't use DST */
+		if((t = mktime(&tm)) == -1) /* error */
+			return -1;
+		if(gettimetz(p, tz, sizeof(tz), &tzoffset) != -1)
+			t -= tzoffset;
+		if(buf)
+			snprintf(buf, bufsiz,
+			         "%04d-%02d-%02d %02d:%02d:%02d %s",
+			         tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+			         tm.tm_hour, tm.tm_min, tm.tm_sec, tz);
+		if(tp)
+			*tp = t;
+		return 0;
 	}
 	return -1;
 }
