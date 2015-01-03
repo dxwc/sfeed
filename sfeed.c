@@ -322,7 +322,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 	if(isalpha((int)*p)) {
 		if(*p == 'Z' || *p == 'z') {
 			strlcpy(buf, "GMT+0000", bufsiz);
-			return 0;
+			goto time_ok;
 		} else {
 			for(i = 0, t = &tzname[0]; i < (sizeof(tzname) - 1) &&
 				(*p && isalpha((int)*p)); i++)
@@ -334,7 +334,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 	}
 	if(!(*p)) {
 		strlcpy(buf, tzname, bufsiz);
-		return 0;
+		goto time_ok;
 	}
 	if((sscanf(p, "%c%02d:%02d", &c, &tzhour, &tzmin)) > 0)
 		;
@@ -343,6 +343,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 	else if(sscanf(p, "%c%d", &c, &tzhour) > 0)
 		tzmin = 0;
 	snprintf(buf, bufsiz, "%s%c%02d%02d", tzname, c, tzhour, tzmin);
+time_ok:
 	/* TODO: test + or - offset */
 	if(tzoffset)
 		*tzoffset = (tzhour * 3600) + (tzmin * 60) * (c == '-' ? -1 : 1);
