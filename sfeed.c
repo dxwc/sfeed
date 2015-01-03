@@ -304,31 +304,16 @@ static int
 gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 {
 	const char *p;
-	char tzname[16] = "", *t = NULL;
+	char tzname[16] = "";
 	int tzhour = 0, tzmin = 0, r;
-	unsigned int i;
 	char c = '+';
 
-	if(!buf || !bufsiz)
-		return -1;
-
-	buf[0] = '\0';
 	s = trimstart(s);
 	/* look until some common timezone delimiters are found */
 	if(!(p = strpbrk(s, "+-Zz")))
 		goto time_ok;
-
-	if(*p == 'Z' || *p == 'z') {
-		if(strlcpy(buf, "GMT+0000", bufsiz) >= bufsiz)
-			return -1;
+	if(*p == 'Z' || *p == 'z')
 		goto time_ok;
-	} else {
-		/* copy until !isalpha */
-		for(i = 0, t = &tzname[0]; i < (sizeof(tzname) - 1) &&
-			(*p && isalpha((int)*p)); i++)
-			*(t++) = *(p++);
-		*t = '\0';
-	}
 
 	if((sscanf(p, "%c%02d:%02d", &c, &tzhour, &tzmin)) > 0)
 		;
@@ -336,10 +321,14 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 		;
 	else if(sscanf(p, "%c%d", &c, &tzhour) > 0)
 		tzmin = 0;
+time_ok:
+	/* timezone not defined, assume GMT */
+	if(!tzname[0])
+		strlcpy(tzname, "GMT", sizeof(tzname));
+
 	r = snprintf(buf, bufsiz, "%s%c%02d%02d", tzname, c, tzhour, tzmin);
 	if(r < 0 || (size_t)r >= bufsiz)
 		return -1; /* truncation or error */
-time_ok:
 	if(tzoffset)
 		*tzoffset = (tzhour * 3600) + (tzmin * 60) * (c == '-' ? -1 : 1);
 	return 0;
