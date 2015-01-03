@@ -1,6 +1,5 @@
 #include <ctype.h>
 #include <err.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,6 +20,7 @@ main(void)
 	struct feed *f, *fcur = NULL;
 	time_t parsedtime, comparetime;
 	size_t size = 0;
+	int r;
 
 	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
 	fputs(
@@ -38,11 +38,8 @@ main(void)
 	feeds = fcur;
 
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
-		errno = 0;
-		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
-		if(errno != 0)
-			parsedtime = 0;
-		isnew = (parsedtime >= comparetime) ? 1 : 0;
+		r = strtotime(fields[FieldUnixTimestamp], &parsedtime);
+		isnew = (r != -1 && parsedtime >= comparetime) ? 1 : 0;
 		islink = (fields[FieldLink][0] != '\0') ? 1 : 0;
 		/* first of feed section or new feed section. */
 		if(!totalfeeds || (fcur && strcmp(fcur->name, fields[FieldFeedName]))) {

@@ -37,6 +37,7 @@ cleanup(void)
 	fpcontent = NULL;
 }
 
+/* same as err() but first call cleanup() function */
 static void
 xerr(int eval, const char *fmt, ...)
 {
@@ -113,6 +114,7 @@ main(int argc, char *argv[])
 	size_t linesize = 0, namelen, basepathlen;
 	struct stat st;
 	struct utimbuf contenttime;
+	int r;
 
 	memset(&contenttime, 0, sizeof(contenttime));
 
@@ -221,16 +223,16 @@ main(int argc, char *argv[])
 		}
 
 		/* write item. */
-		errno = 0;
-		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
-		if(errno != 0)
-			parsedtime = 0;
-		/* set modified and access time of file to time of item. */
-		contenttime.actime = parsedtime;
-		contenttime.modtime = parsedtime;
-		utime(filepath, &contenttime);
+		r = strtotime(fields[FieldUnixTimestamp], &parsedtime);
 
-		isnew = (parsedtime >= comparetime) ? 1 : 0;
+		/* set modified and access time of file to time of item. */
+		if(r != -1) {
+			contenttime.actime = parsedtime;
+			contenttime.modtime = parsedtime;
+			utime(filepath, &contenttime);
+		}
+
+		isnew = (r != -1 && parsedtime >= comparetime) ? 1 : 0;
 		totalnew += isnew;
 		fcur->totalnew += isnew;
 		fcur->total++;

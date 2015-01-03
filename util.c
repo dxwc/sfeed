@@ -1,4 +1,6 @@
 #include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -140,4 +142,18 @@ printutf8pad(FILE *fp, const char *s, size_t len, int pad)
 	}
 	for(; n < len; n++)
 		putc(pad, fp);
+}
+
+int
+strtotime(const char *s, time_t *t)
+{
+	long l;
+
+	errno = 0;
+	l = strtol(s, NULL, 10);
+	if(errno != 0)
+		return -1;
+	*t = (time_t)l;
+
+	return 0;
 }

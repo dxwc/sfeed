@@ -83,7 +83,7 @@ static int    gettimetz(const char *, char *, size_t);
 static int    isattr(const char *, size_t, const char *, size_t);
 static int    istag(const char *, size_t, const char *, size_t);
 static size_t namedentitytostr(const char *, char *, size_t);
-static time_t parsetime(const char *, char *, size_t);
+static int    parsetime(const char *, char *, size_t, time_t *);
 static void   string_append(String *, const char *, size_t);
 static void   string_buffer_init(String *, size_t);
 static int    string_buffer_realloc(String *, size_t);
@@ -345,10 +345,10 @@ gettimetz(const char *s, char *buf, size_t bufsiz)
 	return (tzhour * 3600) + (tzmin * 60) * (c == '-' ? -1 : 1);
 }
 
-static time_t
-parsetime(const char *s, char *buf, size_t bufsiz)
+static int
+parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 {
-	time_t t = -1; /* can't parse */
+	time_t t;
 	char tz[64] = "";
 	struct tm tm;
 	const char *formats[] = {
@@ -360,23 +360,23 @@ parsetime(const char *s, char *buf, size_t bufsiz)
 	char *p;
 	unsigned int i;
 
-	if(buf && bufsiz > 0)
-		buf[0] = '\0';
 	memset(&tm, 0, sizeof(tm));
 	for(i = 0; formats[i]; i++) {
 		if((p = strptime(s, formats[i], &tm))) {
 			tm.tm_isdst = -1; /* don't use DST */
 			if((t = mktime(&tm)) == -1) /* error */
-				return t;
+				return -1;
 			t -= gettimetz(p, tz, sizeof(tz));
 			if(buf)
-				snprintf(buf, bufsiz, "%04d-%02d-%02d %02d:%02d:%02d %-.16s",
+				snprintf(buf, bufsiz, "%04d-%02d-%02d %02d:%02d:%02d %s",
 				         tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 				         tm.tm_hour, tm.tm_min, tm.tm_sec, tz);
-			break;
+			if(tp)
+				*tp = t;
+			return 0;
 		}
 	}
-	return t;
+	return -1;
 }
 
 /* print text, escape tabs, newline and carriage return etc */
@@ -633,6 +633,7 @@ static void
 xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int isshort)
 {
 	char timebuf[64];
+	time_t t;
 	int tagid;
 
 	if(ctx.iscontent) {
@@ -670,8 +671,13 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 	   (ctx.item.feedtype == FeedTypeRSS &&
 	   istag(name, namelen, STRP("item")))) /* RSS */
 	{
-		printf("%ld", (long)parsetime((&ctx.item.timestamp)->data,
-		       timebuf, sizeof(timebuf)));
+		/* parse time, timestamp and formatted timestamp field is empty
+                 * if the parsed time is invalid */
+		timebuf[0] = '\0';
+		if(parsetime((&ctx.item.timestamp)->data, timebuf,
+		             sizeof(timebuf), &t) != -1)
+			printf("%ld", (long)t);
+
 		putchar(FieldSeparator);
 		fputs(timebuf, stdout);
 		putchar(FieldSeparator);

@@ -1,6 +1,5 @@
 #include <ctype.h>
 #include <err.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +19,7 @@ main(void)
 	struct feed *f, *fcur = NULL;
 	time_t parsedtime, comparetime, timenewest = 0;
 	size_t size = 0;
+	int r;
 
 	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
 
@@ -28,11 +28,8 @@ main(void)
 	feeds = fcur;
 
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
-		errno = 0;
-		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
-		if(errno != 0)
-			parsedtime = 0;
-		isnew = (parsedtime >= comparetime) ? 1 : 0;
+		r = strtotime(fields[FieldUnixTimestamp], &parsedtime);
+		isnew = (r != -1 && parsedtime >= comparetime) ? 1 : 0;
 		/* first of feed section or new feed section. */
 		if(!totalfeeds || (fcur && strcmp(fcur->name, fields[FieldFeedName]))) {
 			if(!(f = calloc(1, sizeof(struct feed))))
@@ -44,12 +41,12 @@ main(void)
 				fcur = f;
 				feeds = fcur; /* first item. */
 			}
-			if(parsedtime > timenewest) {
+			if(r != -1 && parsedtime > timenewest) {
 				timenewest = parsedtime;
 				strlcpy(timenewestformat, fields[FieldTimeFormatted],
 				        sizeof(timenewestformat));
 			}
-			if(parsedtime > fcur->timenewest) {
+			if(r != -1 && parsedtime > fcur->timenewest) {
 				fcur->timenewest = parsedtime;
 				strlcpy(fcur->timenewestformat, fields[FieldTimeFormatted],
 				        sizeof(fcur->timenewestformat));

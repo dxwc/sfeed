@@ -1,4 +1,3 @@
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,14 +11,12 @@ main(void)
 	char *line = NULL, *fields[FieldLast];
 	time_t parsedtime, comparetime;
 	size_t size = 0;
+	int r;
 
 	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
-		errno = 0;
-		parsedtime = (time_t)strtol(fields[FieldUnixTimestamp], NULL, 10);
-		if(errno != 0)
-			parsedtime = 0;
-		if(parsedtime >= comparetime)
+		r = strtotime(fields[FieldUnixTimestamp], &parsedtime);
+		if(r != -1 && parsedtime >= comparetime)
 			fputs(" N  ", stdout);
 		else
 			fputs("    ", stdout);
