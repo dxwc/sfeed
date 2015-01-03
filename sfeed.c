@@ -79,7 +79,7 @@ typedef struct feedcontext {
 static size_t codepointtoutf8(uint32_t, uint32_t *);
 static size_t entitytostr(const char *, char *, size_t);
 static int    gettag(int, const char *, size_t);
-static int    gettimetz(const char *, char *, size_t);
+static int    gettimetz(const char *, char *, size_t, int *);
 static int    isattr(const char *, size_t, const char *, size_t);
 static int    istag(const char *, size_t, const char *, size_t);
 static size_t namedentitytostr(const char *, char *, size_t);
@@ -301,7 +301,7 @@ string_append(String *s, const char *data, size_t len)
 /* get timezone from string, return as formatted string and time offset,
  * for the offset it assumes GMT */
 static int
-gettimetz(const char *s, char *buf, size_t bufsiz)
+gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 {
 	const char *p = s;
 	char tzname[16] = "", *t = NULL;
@@ -309,18 +309,19 @@ gettimetz(const char *s, char *buf, size_t bufsiz)
 	unsigned int i;
 	char c;
 
-	if(buf && bufsiz > 0)
-		buf[0] = '\0';
-	if(bufsiz < sizeof(tzname) + STRSIZ(" -00:00"))
-		return 0;
+	if(bufsiz < sizeof(tzname) + STRSIZ(" -0000"))
+		return -1;
+
+	buf[0] = '\0';
 	p = trimstart(p);
 	/* loop until some common timezone delimiters are found */
-	for(; *p && (*p != '+' && *p != '-' && *p != 'Z' && *p != 'z'); p++);
+	for(; *p && (*p != '+' && *p != '-' && *p != 'Z' && *p != 'z'); p++)
+		;
 
 	/* TODO: cleanup / simplify */
 	if(isalpha((int)*p)) {
 		if(*p == 'Z' || *p == 'z') {
-			strlcpy(buf, "GMT+00:00", bufsiz);
+			strlcpy(buf, "GMT+0000", bufsiz);
 			return 0;
 		} else {
 			for(i = 0, t = &tzname[0]; i < (sizeof(tzname) - 1) &&
@@ -328,8 +329,9 @@ gettimetz(const char *s, char *buf, size_t bufsiz)
 				*(t++) = *(p++);
 			*t = '\0';
 		}
-	} else
+	} else {
 		strlcpy(tzname, "GMT", sizeof(tzname));
+	}
 	if(!(*p)) {
 		strlcpy(buf, tzname, bufsiz);
 		return 0;
@@ -342,7 +344,9 @@ gettimetz(const char *s, char *buf, size_t bufsiz)
 		tzmin = 0;
 	snprintf(buf, bufsiz, "%s%c%02d%02d", tzname, c, tzhour, tzmin);
 	/* TODO: test + or - offset */
-	return (tzhour * 3600) + (tzmin * 60) * (c == '-' ? -1 : 1);
+	if(tzoffset)
+		*tzoffset = (tzhour * 3600) + (tzmin * 60) * (c == '-' ? -1 : 1);
+	return 0;
 }
 
 static int
@@ -359,6 +363,7 @@ parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 	};
 	char *p;
 	unsigned int i;
+	int tzoffset;
 
 	memset(&tm, 0, sizeof(tm));
 	for(i = 0; formats[i]; i++) {
@@ -366,7 +371,8 @@ parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 			tm.tm_isdst = -1; /* don't use DST */
 			if((t = mktime(&tm)) == -1) /* error */
 				return -1;
-			t -= gettimetz(p, tz, sizeof(tz));
+			if(gettimetz(p, tz, sizeof(tz), &tzoffset) != -1)
+				t -= tzoffset;
 			if(buf)
 				snprintf(buf, bufsiz, "%04d-%02d-%02d %02d:%02d:%02d %s",
 				         tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
