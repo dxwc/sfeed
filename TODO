@@ -1,5 +1,4 @@
 [ ] grep -H -n *.c 'TODO:'
-[x] sfeed_stats: add man page.
 [ ] sfeed_frame: snprintf check truncated, <= 0 and >= size.
 [ ] sfeed.c: document ctx.iscontent and ctx.iscontenttag.
 [ ] use openbsd sys/queue.h for util.c linked-list and sfeed_frames.c
@@ -14,8 +13,6 @@
 [ ] test shellscripts with ubase/sbase tools.
 	[ ] sfeed_update
 	[ ] sfeed_opml_export
-[ ] dogfood sfeed_frames, HTML content.
-	[ ] in links browsers: items are centered in the table for some reason.
 [ ] feeds file: empty tab (encoding can't be detected?)
 [ ] optimize
 	[ ] gettag() lookup.
