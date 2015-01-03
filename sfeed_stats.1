@@ -1,0 +1,21 @@
+.Dd January 3, 2015
+.Dt SFEED_STATS 1
+.Os
+.Sh NAME
+.Nm sfeed_stats
+.Nd formats a feeds file to show a plain text summary
+.Sh SYNOPSIS
+.Nm sfeed_stats
+.Sh DESCRIPTION
+.Nm
+formats a feeds file (TSV) from
+.Xr sfeed_update 1
+to a plain text summary with: the total amount of items, amount of new items,
+the timestamp of the last item. It reads TSV data from stdin and writes
+formatted plain text to stdout. For the exact TSV format see
+.Xr sfeed_update 1 .
+.Sh SEE ALSO
+.Xr sfeed_update 1 ,
+.Xr sfeed 1
+.Sh AUTHORS
+.An Hiltjo Posthuma Aq Mt hiltjo@codemadness.org

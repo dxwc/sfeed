@@ -34,6 +34,7 @@ MAN1 = \
 	sfeed_opml_export.1\
 	sfeed_opml_import.1\
 	sfeed_plain.1\
+	sfeed_stats.1\
 	sfeed_update.1\
 	sfeed_web.1\
 	sfeed_xmlenc.1

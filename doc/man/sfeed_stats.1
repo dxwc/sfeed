@@ -1,0 +1,22 @@
+.TH "SFEED_STATS" "1" "January 3, 2015" "" "OpenBSD Reference Manual"
+.nh
+.if n .ad l
+.SH "NAME"
+\fBsfeed_stats\fR
+\- formats a feeds file to show a plain text summary
+.SH "SYNOPSIS"
+.HP 12n
+\fBsfeed_stats\fR
+.SH "DESCRIPTION"
+\fBsfeed_stats\fR
+formats a feeds file (TSV) from
+sfeed_update(1)
+to a plain text summary with: the total amount of items, amount of new items,
+the timestamp of the last item. It reads TSV data from stdin and writes
+formatted plain text to stdout. For the exact TSV format see
+sfeed_update(1).
+.SH "SEE ALSO"
+sfeed_update(1),
+sfeed(1)
+.SH "AUTHORS"
+Hiltjo Posthuma <\fIhiltjo@codemadness.org\fR>
