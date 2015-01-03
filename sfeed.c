@@ -303,39 +303,36 @@ string_append(String *s, const char *data, size_t len)
 static int
 gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 {
-	const char *p = s;
+	const char *p;
 	char tzname[16] = "", *t = NULL;
 	int tzhour = 0, tzmin = 0;
 	unsigned int i;
-	char c;
+	char c = '+';
 
 	if(bufsiz < sizeof(tzname) + STRSIZ(" -0000"))
 		return -1;
 
 	buf[0] = '\0';
-	p = trimstart(p);
-	/* loop until some common timezone delimiters are found */
-	for(; *p && (*p != '+' && *p != '-' && *p != 'Z' && *p != 'z'); p++)
-		;
 
-	/* TODO: cleanup / simplify */
-	if(isalpha((int)*p)) {
-		if(*p == 'Z' || *p == 'z') {
-			strlcpy(buf, "GMT+0000", bufsiz);
-			goto time_ok;
-		} else {
-			for(i = 0, t = &tzname[0]; i < (sizeof(tzname) - 1) &&
-				(*p && isalpha((int)*p)); i++)
-				*(t++) = *(p++);
-			*t = '\0';
-		}
-	} else {
+	s = trimstart(s);
+	/* look until some common timezone delimiters are found */
+	if(!(p = strpbrk(s, "+-Zz")) || !isalpha(*p)) {
+		/* GMT without tz defined */
 		strlcpy(tzname, "GMT", sizeof(tzname));
-	}
-	if(!(*p)) {
-		strlcpy(buf, tzname, bufsiz);
 		goto time_ok;
 	}
+
+	if(*p == 'Z' || *p == 'z') {
+		strlcpy(buf, "GMT+0000", bufsiz);
+		goto time_ok;
+	} else {
+		/* copy until !isalpha */
+		for(i = 0, t = &tzname[0]; i < (sizeof(tzname) - 1) &&
+			(*p && isalpha((int)*p)); i++)
+			*(t++) = *(p++);
+		*t = '\0';
+	}
+
 	if((sscanf(p, "%c%02d:%02d", &c, &tzhour, &tzmin)) > 0)
 		;
 	else if(sscanf(p, "%c%02d%02d", &c, &tzhour, &tzmin) > 0)
@@ -344,7 +341,6 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 		tzmin = 0;
 	snprintf(buf, bufsiz, "%s%c%02d%02d", tzname, c, tzhour, tzmin);
 time_ok:
-	/* TODO: test + or - offset */
 	if(tzoffset)
 		*tzoffset = (tzhour * 3600) + (tzmin * 60) * (c == '-' ? -1 : 1);
 	return 0;
