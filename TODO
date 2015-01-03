@@ -1,3 +1,8 @@
+[ ] remove typedef for FeedItem, FeedTag etc.
+[ ] fix timezone in slashdot.xml
+    [ ] string_append: make sure some fields can only be set once (first field counts?).
+    [ ] test new parsetime and gettimetz code.
+
 [ ] grep -H -n *.c 'TODO:'
 [ ] sfeed_frame: snprintf check truncated, <= 0 and >= size.
 [ ] sfeed.c: document ctx.iscontent and ctx.iscontenttag.

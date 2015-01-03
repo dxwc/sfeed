@@ -305,25 +305,22 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 {
 	const char *p;
 	char tzname[16] = "", *t = NULL;
-	int tzhour = 0, tzmin = 0;
+	int tzhour = 0, tzmin = 0, r;
 	unsigned int i;
 	char c = '+';
 
-	if(bufsiz < sizeof(tzname) + STRSIZ(" -0000"))
+	if(!buf || !bufsiz)
 		return -1;
 
 	buf[0] = '\0';
-
 	s = trimstart(s);
 	/* look until some common timezone delimiters are found */
-	if(!(p = strpbrk(s, "+-Zz")) || !isalpha(*p)) {
-		/* GMT without tz defined */
-		strlcpy(tzname, "GMT", sizeof(tzname));
+	if(!(p = strpbrk(s, "+-Zz")))
 		goto time_ok;
-	}
 
 	if(*p == 'Z' || *p == 'z') {
-		strlcpy(buf, "GMT+0000", bufsiz);
+		if(strlcpy(buf, "GMT+0000", bufsiz) >= bufsiz)
+			return -1;
 		goto time_ok;
 	} else {
 		/* copy until !isalpha */
@@ -339,7 +336,9 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 		;
 	else if(sscanf(p, "%c%d", &c, &tzhour) > 0)
 		tzmin = 0;
-	snprintf(buf, bufsiz, "%s%c%02d%02d", tzname, c, tzhour, tzmin);
+	r = snprintf(buf, bufsiz, "%s%c%02d%02d", tzname, c, tzhour, tzmin);
+	if(r < 0 || (size_t)r >= bufsiz)
+		return -1; /* truncation or error */
 time_ok:
 	if(tzoffset)
 		*tzoffset = (tzhour * 3600) + (tzmin * 60) * (c == '-' ? -1 : 1);
@@ -638,7 +637,7 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 {
 	char timebuf[64];
 	time_t t;
-	int tagid;
+	int tagid, r;
 
 	if(ctx.iscontent) {
 		ctx.attrcount = 0;
@@ -677,13 +676,14 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 	{
 		/* parse time, timestamp and formatted timestamp field is empty
                  * if the parsed time is invalid */
-		timebuf[0] = '\0';
-		if(parsetime((&ctx.item.timestamp)->data, timebuf,
-		             sizeof(timebuf), &t) != -1)
+		r = parsetime((&ctx.item.timestamp)->data, timebuf,
+		              sizeof(timebuf), &t);
+		if(r != -1)
 			printf("%ld", (long)t);
 
 		putchar(FieldSeparator);
-		fputs(timebuf, stdout);
+		if(r != -1)
+			fputs(timebuf, stdout);
 		putchar(FieldSeparator);
 		string_print(&ctx.item.title);
 		putchar(FieldSeparator);
