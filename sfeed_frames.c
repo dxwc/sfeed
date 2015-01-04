@@ -147,7 +147,7 @@ main(int argc, char *argv[])
 		xerr(1, "fopen");
 	esnprintf(dirpath, sizeof(dirpath), "%s/menu.html", basepath);
 	if(!(fpmenu = fopen(dirpath, "w+b")))
-		xerr(1, "fopen: can't write menu.html");
+		xerr(1, "fopen");
 	esnprintf(dirpath, sizeof(dirpath), "%s/items.html", basepath);
 	if(!(fpitems = fopen(dirpath, "w+b")))
 		xerr(1, "fopen");
@@ -213,7 +213,9 @@ main(int argc, char *argv[])
 		esnprintf(relfilepath, sizeof(relfilepath), "%s/%s.html", reldirpath, name);
 
 		/* file doesn't exist yet and has write access */
-		if(access(filepath, F_OK) != 0 && (fpcontent = fopen(filepath, "w+b"))) {
+		if(access(filepath, F_OK) != 0) {
+			if(!(fpcontent = fopen(filepath, "w+b")))
+				xerr(1, "fopen");
 			fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
 			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>\n"
 			      "<body class=\"frame\"><div class=\"content\">"
