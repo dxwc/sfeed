@@ -1,16 +1,24 @@
-.TH SFEED 1 sfeed\-0.9
-.SH NAME
-sfeed_opml_export \- generate an OPML file based on a sfeedrc config file
-.SH SYNOPSIS
-.B sfeed_opml_export
-.RB [configfile]
-.SH OPTIONS
-.TP
-.B [configfile]
-config file, if not specified uses the location $HOME/.sfeed/sfeedrc by default (see FILES READ section for more information).
-.SH DESCRIPTION
-Parse the specified config file and output OPML XML data to stdout.
-.SH SEE ALSO
-.BR sfeed_update(1)
-.SH BUGS
-Please report them!
+.TH "SFEED_OPML_EXPORT" "1" "December 25, 2014" "" "OpenBSD Reference Manual"
+.nh
+.if n .ad l
+.SH "NAME"
+\fBsfeed_opml_export\fR
+\- generate an OPML file based on a sfeedrc config file
+.SH "SYNOPSIS"
+.HP 18n
+\fBsfeed_opml_export\fR
+[\fIconfig\ file\fR]
+.SH "DESCRIPTION"
+\fBsfeed_opml_export\fR
+parses the specified config file and output OPML XML data to stdout.
+.SH "OPTIONS"
+.TP 19n
+[config file]
+default: "$HOME/.sfeed/sfeedrc", see the
+sfeed_update(1)
+\fIFILES READ\fR
+section for more information.
+.SH "SEE ALSO"
+sfeed_update(1)
+.SH "AUTHORS"
+Hiltjo Posthuma <\fIhiltjo@codemadness.org\fR>
