@@ -15,14 +15,13 @@ tab-separated format to stdout.
 .Bl -tag -width 17n
 .It Fl v
 show program version
+.El
 .Sh TAB-SEPARATED FORMAT FIELDS
-.Pp
 The items are saved in a TSV-like format except newlines, tabs and
 backslash are escaped with \\ (\\n, \\t and \\\\). Carriage returns (\\r) are
 removed.
 .Pp
 The order and format of the fields are:
-.Pp
 .Bl -tag -width 17n
 .It Ar item timestamp
 string, UNIX timestamp in GMT+0
@@ -42,6 +41,7 @@ string
 string
 .It Ar feed type
 string, "rss" or "atom"
+.El
 .Sh SEE ALSO
 .Xr sh 1 ,
 .Xr sfeed_update 1

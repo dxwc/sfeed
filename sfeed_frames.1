@@ -19,6 +19,7 @@ directory. For the exact TSV format see
 .It Ar directory path
 Path to write files to, default is ".". On success the specified directory will
 contain the files:
+.El
 .Bl -tag -width 13n
 .It Ar index.html:
 this is the main HTML file referencing to the frames (items.html and
@@ -28,8 +29,8 @@ this contains all the items as HTML links to the local content.
 .It Ar menu.html:
 menu frame which contains navigation "anchor" links to the feed names
 (in items.html).
+.El
 .Sh FILE STRUCTURE
-.Pp
 Directory for each feed category in the format: path/feedname/itemname.html.
 The feedname and item names are normalized, whitespace characters are replaced
 with a \-, multiple whitespaces are replaced by a single \- and trailing

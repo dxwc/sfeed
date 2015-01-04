@@ -15,8 +15,8 @@ urls to stdout.
 .Bl -tag -width 8n
 .It Ar baseurl
 optional base url to use for found feed urls that are relative.
+.El
 .Sh OUTPUT FORMAT
-.Pp
 content\-type<space>url<newline>
 .Bl -tag -width 13n
 .It Ar content\-type
@@ -24,11 +24,12 @@ Usually application/atom+xml or application/rss+xml.
 .It Ar url
 Found url to the feed. If the url is relative and the baseurl option is
 specified then the url is changed accordingly.
+.El
 .Sh EXAMPLES
-.Pp
 Get urls from xkcd website:
 .Bd -literal
 wget http://www.xkcd.com -q -O - | sfeed_web "http://www.xkcd.com/"
+.Ed
 .Sh SEE ALSO
 .Xr sh 1 ,
 .Xr sfeed_update 1

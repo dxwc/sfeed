@@ -71,7 +71,7 @@ dist: $(BIN) doc
 	(cd release/${VERSION}; \
 	tar -czf ../../sfeed-${VERSION}.tar.gz .)
 
-doc: doc-html doc-oldman
+doc: doc-oldman
 
 # man to HTML: make sure to copy the mandoc example stylesheet to
 # doc/html/man.css .
@@ -138,4 +138,4 @@ uninstall:
 	# removing manual pages.
 	for m in $(MAN1); do rm -f ${DESTDIR}${MANPREFIX}/man1/$$m; done
 
-.PHONY: all clean dist install uninstall doc-html doc-oldman doc
+.PHONY: all clean dist doc doc-html doc-oldman install uninstall
