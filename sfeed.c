@@ -84,6 +84,7 @@ static int    isattr(const char *, size_t, const char *, size_t);
 static int    istag(const char *, size_t, const char *, size_t);
 static size_t namedentitytostr(const char *, char *, size_t);
 static int    parsetime(const char *, char *, size_t, time_t *);
+static void   printfields(void);
 static void   string_append(String *, const char *, size_t);
 static void   string_buffer_init(String *, size_t);
 static int    string_buffer_realloc(String *, size_t);
@@ -215,8 +216,10 @@ entitytostr(const char *e, char *buffer, size_t bufsiz)
 	size_t len = 0, b;
 	int c;
 
-	if(*e != '&' || bufsiz < 5) /* doesn't start with & */
+	/* doesn't start with & */
+	if(*e != '&' || bufsiz < 5)
 		return 0;
+	/* numeric / hexadecimal entity */
 	if(e[1] == '#') {
 		e += 2; /* skip &# */
 		errno = 0;
@@ -247,8 +250,9 @@ entitytostr(const char *e, char *buffer, size_t bufsiz)
 				len = 2;
 			}
 		}
-	} else /* named entity */
+	} else {
 		len = namedentitytostr(e, buffer, bufsiz);
+	}
 	return len;
 }
 
@@ -303,7 +307,7 @@ string_append(String *s, const char *data, size_t len)
 static int
 gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 {
-	char tzname[16] = "";
+	char tzname[16] = "GMT";
 	int tzhour = 0, tzmin = 0, r;
 	char c = '+';
 	size_t i;
@@ -333,13 +337,10 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 		tzhour = 0;
 		tzmin = 0;
 	}
-
 time_ok:
-	/* timezone not defined, assume GMT */
-	if(!tzname[0])
-		strlcpy(tzname, "GMT", sizeof(tzname));
-
-	r = snprintf(buf, bufsiz, "%s%c%02d%02d", tzname, c, tzhour, tzmin);
+	r = snprintf(buf, bufsiz, "%s%c%02d%02d",
+	             tzname[0] ? tzname : "GMT",
+	             c, tzhour, tzmin);
 	if(r < 0 || (size_t)r >= bufsiz)
 		return -1; /* truncation or error */
 	if(tzoffset)
@@ -409,6 +410,43 @@ string_print(String *s)
 			putchar(*p);
 		}
 	}
+}
+
+static void
+printfields(void)
+{
+	char timebuf[64];
+	time_t t;
+	int r;
+
+	/* parse time, timestamp and formatted timestamp field is empty
+	 * if the parsed time is invalid */
+	r = parsetime((&ctx.item.timestamp)->data, timebuf,
+	              sizeof(timebuf), &t);
+	if(r != -1)
+		printf("%ld", (long)t);
+	putchar(FieldSeparator);
+	if(r != -1)
+		fputs(timebuf, stdout);
+	putchar(FieldSeparator);
+	string_print(&ctx.item.title);
+	putchar(FieldSeparator);
+	string_print(&ctx.item.link);
+	putchar(FieldSeparator);
+	string_print(&ctx.item.content);
+	putchar(FieldSeparator);
+	fputs(contenttypes[ctx.item.contenttype], stdout);
+	putchar(FieldSeparator);
+	string_print(&ctx.item.id);
+	putchar(FieldSeparator);
+	string_print(&ctx.item.author);
+	putchar(FieldSeparator);
+	fputs(feedtypes[ctx.item.feedtype], stdout);
+	if(append) {
+		putchar(FieldSeparator);
+		fputs(append, stdout);
+	}
+	putchar('\n');
 }
 
 static int
@@ -647,9 +685,7 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
 static void
 xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int isshort)
 {
-	char timebuf[64];
-	time_t t;
-	int tagid, r;
+	int tagid;
 
 	if(ctx.iscontent) {
 		ctx.attrcount = 0;
@@ -686,35 +722,7 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 	   (ctx.item.feedtype == FeedTypeRSS &&
 	   istag(name, namelen, STRP("item")))) /* RSS */
 	{
-		/* parse time, timestamp and formatted timestamp field is empty
-                 * if the parsed time is invalid */
-		r = parsetime((&ctx.item.timestamp)->data, timebuf,
-		              sizeof(timebuf), &t);
-		if(r != -1)
-			printf("%ld", (long)t);
-
-		putchar(FieldSeparator);
-		if(r != -1)
-			fputs(timebuf, stdout);
-		putchar(FieldSeparator);
-		string_print(&ctx.item.title);
-		putchar(FieldSeparator);
-		string_print(&ctx.item.link);
-		putchar(FieldSeparator);
-		string_print(&ctx.item.content);
-		putchar(FieldSeparator);
-		fputs(contenttypes[ctx.item.contenttype], stdout);
-		putchar(FieldSeparator);
-		string_print(&ctx.item.id);
-		putchar(FieldSeparator);
-		string_print(&ctx.item.author);
-		putchar(FieldSeparator);
-		fputs(feedtypes[ctx.item.feedtype], stdout);
-		if(append) {
-			putchar(FieldSeparator);
-			fputs(append, stdout);
-		}
-		putchar('\n');
+		printfields();
 
 		/* clear strings */
 		string_clear(&ctx.item.timestamp);
