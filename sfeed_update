@@ -54,10 +54,12 @@ fetchfeed() {
 # convert encoding from one encoding to another.
 # convertencoding(from, to)
 convertencoding() {
-	if [ ! "$1" = "" ] && [ ! "$2" = "" ] && [ ! "$1" = "$2" ]; then # from != to
+	# if from != to
+	if [ ! "$1" = "" ] && [ ! "$2" = "" ] && [ ! "$1" = "$2" ]; then
 		iconv -cs -f "$1" -t "$2" 2> /dev/null
 	else
-		cat # no convert, just output
+		# else no convert, just output
+		cat
 	fi
 }
 
@@ -68,7 +70,8 @@ feed() {
 	tmpencfile=""
 	encoding="$4"
 	if [ ! "$encoding" = "" ]; then
-		fetchfeed "$2" "$1" "$lastupdated" | convertencoding "$encoding" "utf-8"
+		fetchfeed "$2" "$1" "$lastupdated" | \
+			convertencoding "$encoding" "utf-8"
 	else # detect encoding.
 		tmpencfile=$(mktemp -p "$TMPDIR")
 		fetchfeed "$2" "$1" "$lastupdated" > "$tmpencfile"
