@@ -101,7 +101,8 @@ loadconfig "$1"
 TMPDIR=$(mktemp -d "/tmp/sfeed_XXXXXX")
 # get date of last modified feedfile in format:
 # YYYYmmdd HH:MM:SS [+-][0-9]*
-lastupdated=$(stat -c "%y" "$sfeedfile" 2> /dev/null | cut -c 1-4,6-7,9-10,11-19,30-)
+lastupdated=$(stat -c "%y" "$sfeedfile" 2> /dev/null | \
+	cut -c 1-4,6-7,9-10,11-19,30-)
 # kill whole current process group on ^C.
 isrunning="1"
 # SIGTERM: signal to terminate parent.
