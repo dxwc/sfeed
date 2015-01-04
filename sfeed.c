@@ -360,8 +360,8 @@ parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 		NULL
 	};
 	char *p;
-	unsigned int i;
-	int tzoffset;
+	size_t i;
+	int tzoffset, r;
 
 	memset(&tm, 0, sizeof(tm));
 	for(i = 0; formats[i]; i++) {
@@ -372,11 +372,14 @@ parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 			return -1;
 		if(gettimetz(p, tz, sizeof(tz), &tzoffset) != -1)
 			t -= tzoffset;
-		if(buf)
-			snprintf(buf, bufsiz,
+		if(buf) {
+			r = snprintf(buf, bufsiz,
 			         "%04d-%02d-%02d %02d:%02d:%02d %s",
 			         tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 			         tm.tm_hour, tm.tm_min, tm.tm_sec, tz);
+			if(r == -1 || (size_t)r >= bufsiz)
+				return -1; /* truncation */
+		}
 		if(tp)
 			*tp = t;
 		return 0;

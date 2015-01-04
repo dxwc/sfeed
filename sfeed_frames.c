@@ -52,6 +52,22 @@ xerr(int eval, const char *fmt, ...)
 	va_end(ap);
 }
 
+static int
+esnprintf(char *str, size_t size, const char *fmt, ...)
+{
+	va_list ap;
+	int r;
+
+	va_start(ap, fmt);
+	r = vsnprintf(str, size, fmt, ap);
+	va_end(ap);
+
+	if(r == -1 || (size_t)r >= size)
+		xerr(1, "snprintf");
+
+	return r;
+}
+
 /* print text, ignore tabs, newline and carriage return etc
  * print some HTML 2.0 / XML 1.0 as normal text */
 static void
@@ -125,18 +141,14 @@ main(int argc, char *argv[])
 	basepathlen = strlen(basepath);
 	if(basepathlen > 0)
 		mkdir(basepath, S_IRWXU);
-
 	/* write main index page */
-	if(snprintf(dirpath, sizeof(dirpath), "%s/index.html", basepath) <= 0)
-		xerr(1, "snprintf");
+	esnprintf(dirpath, sizeof(dirpath), "%s/index.html", basepath);
 	if(!(fpindex = fopen(dirpath, "w+b")))
 		xerr(1, "fopen");
-	if(snprintf(dirpath, sizeof(dirpath), "%s/menu.html", basepath) <= 0)
-		xerr(1, "snprintf");
+	esnprintf(dirpath, sizeof(dirpath), "%s/menu.html", basepath);
 	if(!(fpmenu = fopen(dirpath, "w+b")))
 		xerr(1, "fopen: can't write menu.html");
-	if(snprintf(dirpath, sizeof(dirpath), "%s/items.html", basepath) <= 0)
-		xerr(1, "snprintf");
+	esnprintf(dirpath, sizeof(dirpath), "%s/items.html", basepath);
 	if(!(fpitems = fopen(dirpath, "w+b")))
 		xerr(1, "fopen");
 	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
@@ -160,8 +172,7 @@ main(int argc, char *argv[])
 			if(!(namelen = makepathname(feedname, name, sizeof(name))))
 				continue;
 
-			if(snprintf(dirpath, sizeof(dirpath), "%s/%s", basepath, name) <= 0)
-				xerr(1, "snprintf");
+			esnprintf(dirpath, sizeof(dirpath), "%s/%s", basepath, name);
 
 			/* directory doesn't exist: try to create it. */
 			if(stat(dirpath, &st) == -1 && mkdir(dirpath, S_IRWXU) == -1)
@@ -198,10 +209,8 @@ main(int argc, char *argv[])
 		/* write content */
 		if(!(namelen = makepathname(fields[FieldTitle], name, sizeof(name))))
 			continue;
-		if(snprintf(filepath, sizeof(filepath), "%s/%s.html", dirpath, name) <= 0)
-			xerr(1, "snprintf");
-		if(snprintf(relfilepath, sizeof(relfilepath), "%s/%s.html", reldirpath, name) <= 0)
-			xerr(1, "snprintf");
+		esnprintf(filepath, sizeof(filepath), "%s/%s.html", dirpath, name);
+		esnprintf(relfilepath, sizeof(relfilepath), "%s/%s.html", reldirpath, name);
 
 		/* file doesn't exist yet and has write access */
 		if(access(filepath, F_OK) != 0 && (fpcontent = fopen(filepath, "w+b"))) {
