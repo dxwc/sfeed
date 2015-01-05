@@ -39,6 +39,19 @@ cleanup(void)
 	fpcontent = NULL;
 }
 
+/* same as errx() but first call cleanup() function */
+static void
+xerrx(int eval, const char *fmt, ...)
+{
+	va_list ap;
+
+	cleanup();
+
+	va_start(ap, fmt);
+	verrx(eval, fmt, ap);
+	va_end(ap);
+}
+
 /* same as err() but first call cleanup() function */
 static void
 xerr(int eval, const char *fmt, ...)
@@ -65,7 +78,7 @@ esnprintf(char *str, size_t size, const char *fmt, ...)
 	va_end(ap);
 
 	if(r == -1 || (size_t)r >= size)
-		xerr(1, "snprintf");
+		xerrx(1, "snprintf");
 
 	return r;
 }
@@ -148,13 +161,13 @@ main(int argc, char *argv[])
 	/* write main index page */
 	esnprintf(dirpath, sizeof(dirpath), "%s/index.html", basepath);
 	if(!(fpindex = fopen(dirpath, "w+b")))
-		xerr(1, "fopen");
+		xerr(1, "fopen: %s", dirpath);
 	esnprintf(dirpath, sizeof(dirpath), "%s/menu.html", basepath);
 	if(!(fpmenu = fopen(dirpath, "w+b")))
-		xerr(1, "fopen");
+		xerr(1, "fopen: %s", dirpath);
 	esnprintf(dirpath, sizeof(dirpath), "%s/items.html", basepath);
 	if(!(fpitems = fopen(dirpath, "w+b")))
-		xerr(1, "fopen");
+		xerr(1, "fopen: %s", dirpath);
 	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
 	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>"
 	      "<body class=\"frame\"><div id=\"items\">", fpitems);
@@ -181,9 +194,9 @@ main(int argc, char *argv[])
 
 			/* directory doesn't exist: try to create it. */
 			if(stat(dirpath, &st) == -1 && mkdir(dirpath, S_IRWXU) == -1)
-				xerr(1, "can't make directory '%s'", dirpath);
+				xerr(1, "mkdir: %s", dirpath);
 			if(strlcpy(reldirpath, name, sizeof(reldirpath)) >= sizeof(reldirpath))
-				xerr(1, "strlcpy: truncation");
+				xerrx(1, "strlcpy: truncation");
 
 			if(!(f = calloc(1, sizeof(struct feed))))
 				xerr(1, "calloc");
@@ -218,7 +231,7 @@ main(int argc, char *argv[])
 		/* file doesn't exist yet and has write access */
 		if(access(filepath, F_OK) != 0) {
 			if(!(fpcontent = fopen(filepath, "w+b")))
-				xerr(1, "fopen");
+				xerr(1, "fopen: %s", filepath);
 			fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
 			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>\n"
 			      "<body class=\"frame\"><div class=\"content\">"
