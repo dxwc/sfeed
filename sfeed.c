@@ -552,9 +552,9 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 		if(ISCONTENTTAG(ctx)) {
 			if(isattr(name, namelen, STRP("type")) &&
 			   (isattr(value, valuelen, STRP("xhtml")) ||
-			   isattr(value, valuelen, STRP("text/xhtml")) ||
-			   isattr(value, valuelen, STRP("html")) ||
-			   isattr(value, valuelen, STRP("text/html"))))
+			    isattr(value, valuelen, STRP("text/xhtml")) ||
+			    isattr(value, valuelen, STRP("html")) ||
+			    isattr(value, valuelen, STRP("text/html"))))
 			{
 				ctx.item.contenttype = ContentTypeHTML;
 				ctx.iscontent = 1;
@@ -575,16 +575,13 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 static void
 xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 {
-	if(ISCONTENTTAG(ctx)) {
-		/* starts with div, handle as XML, don't convert entities (set handle to NULL) */
-		if(ctx.item.feedtype == FeedTypeAtom &&
-		   namelen == STRSIZ("div") &&
-		   !strncmp(name, STRP("div"))) {
-			p->xmldataentity = NULL;
-		}
+	/* starts with div, handle as XML, don't convert entities
+	 * (set handler to NULL) */
+	if(ISCONTENTTAG(ctx) && ctx.item.feedtype == FeedTypeAtom &&
+	   namelen == STRSIZ("div") && !strncmp(name, STRP("div"))) {
+		p->xmldataentity = NULL;
 	}
-	/* TODO: changed, iscontenttag can be 0 or 1 ? */
-	if(ISINCONTENT(ctx)) {
+	if(ctx.iscontent) {
 		ctx.attrcount = 0;
 		ctx.iscontenttag = 0;
 		xml_handler_data(p, "<", 1);
