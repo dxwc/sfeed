@@ -60,21 +60,21 @@ style.css         - Example stylesheet to use with sfeed_html and sfeed_frames.
 Files read at runtime by sfeed_update
 -------------------------------------
 
-sfeedrc        - Config file. This file is evaluated as a shellscript in
-                 sfeed_update. You can for example override the fetchfeed()
-                 function to use wget, fetch or an other download program or
-                 you can override the merge() function to change the merge
-                 logic. The function feeds() is called to fetch the feeds.
-                 The function feed() can safely be executed as a parallel
-                 job in your sfeedrc config file to speedup updating.
+sfeedrc   - Config file. This file is evaluated as a shellscript in
+            sfeed_update. You can for example override the fetchfeed() function
+            to use wget, fetch or an other download program or you can override
+            the merge() function to change the merge logic. The function
+            feeds() is called to fetch the feeds. The function feed() can
+            safely be executed as a parallel job in your sfeedrc config file to
+            speed up updating.
 
 
 Files written at runtime by sfeed_update
 ----------------------------------------
 
-feeds          - Tab-separated format containing all feeds.
-                 The sfeed_update script merges new items with this file.
-feeds.new      - Temporary file used by sfeed_update to merge items.
+feeds     - Tab-separated format containing all feeds. The sfeed_update script
+            merges new items with this file.
+feeds.new - Temporary file used by sfeed_update to merge items.
 
 
 TAB-SEPARATED format
@@ -160,18 +160,23 @@ argument is optional):
 sfeed_opml_export configfile > myfeeds.opml
 
 
-tip to remove feeds older than a date (change time="YYYY mm dd HH mm ss")
+tip to remove feeds older than a date, change mktime("YYYY mm dd HH mm ss"):
 
-gawk -F '\t' 'BEGIN {
-	time = mktime("2012 01 01 12 34 56");
-}
-{
-	if(int($1) >= int(time)) {
-		print $0;
+	#!/bin/sh
+	set -x -e
+	gawk -F '\t' 'BEGIN {
+		time = mktime("2012 01 01 12 34 56");
 	}
-}' < feeds > feeds.clean
+	{
+		if(int($1) >= int(time)) {
+			print $0;
+		}
+	}' < feeds > feeds.clean
 
-mv feeds.clean feeds
+	# compress old feeds file as archive.
+	gzip -c feeds > feeds_archive_`date +'%Y-%m-%d'`.gz
+	# move new file over old.
+	mv feeds.clean feeds
 
 
 License
