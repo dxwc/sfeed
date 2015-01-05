@@ -46,6 +46,7 @@ DOC = \
 	TODO
 HDR = \
 	compat.h\
+	queue.h\
 	util.h\
 	xml.h
 

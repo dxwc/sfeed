@@ -12,13 +12,15 @@
 #include <unistd.h>
 #include <utime.h>
 
+#include "queue.h"
 #include "util.h"
 
 static int showsidebar = 1; /* show sidebar ? */
 static FILE *fpindex = NULL, *fpitems = NULL, *fpmenu = NULL;
 static FILE *fpcontent = NULL;
 static char *line = NULL;
-static struct feed *feeds = NULL;
+static SLIST_HEAD(fhead, feed) fhead = SLIST_HEAD_INITIALIZER(fhead);
+static struct utimbuf contenttime;
 
 static void
 cleanup(void)
@@ -155,6 +157,10 @@ main(int argc, char *argv[])
 	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>"
 	      "<body class=\"frame\"><div id=\"items\">", fpitems);
 
+	if(!(fcur = calloc(1, sizeof(struct feed))))
+		xerr(1, "calloc");
+	SLIST_INSERT_HEAD(&fhead, fcur, entry);
+
 	while(parseline(&line, &linesize, fields, FieldLast, '\t', stdin) > 0) {
 		feedname = fields[FieldFeedName];
 		if(feedname[0] == '\0') {
@@ -164,9 +170,12 @@ main(int argc, char *argv[])
 				showsidebar = 0;
 		}
 		/* first of feed section or new feed section (differ from previous). */
-		if(!totalfeeds || (fcur && strcmp(fcur->name, feedname))) {
-			/* TODO: makepathname isn't necesary if fields[FieldFeedName] is the same as the previous line */
-			/* TODO: move this part below where FieldFeedName is checked if it's different ? */
+		if(!totalfeeds || strcmp(fcur->name, feedname)) {
+			/* TODO:
+			 * - makepathname isn't necesary if fields[FieldFeedName]
+			 *   is the same as the previous line.
+			 * - move this part below where FieldFeedName is
+			 * checked if it's different ? */
 
 			/* make directory for feedname */
 			if(!(namelen = makepathname(feedname, name, sizeof(name))))
@@ -181,19 +190,16 @@ main(int argc, char *argv[])
 
 			if(!(f = calloc(1, sizeof(struct feed))))
 				xerr(1, "calloc");
+			if(!(f->name = strdup(feedname)))
+				xerr(1, "strdup");
+			SLIST_INSERT_AFTER(fcur, f, entry);
+			fcur = f;
 
-			if(totalfeeds) { /* end previous one. */
+			/* end previous one. */
+			if(totalfeeds) {
 				fputs("</table>\n", fpitems);
-				fcur->next = f;
-				fcur = fcur->next;
-			} else {
-				/* first item. */
-				fcur = f;
-				feeds = fcur;
 			}
 			/* write menu link if new. */
-			if(!(fcur->name = strdup(feedname)))
-				xerr(1, "strdup");
 			if(fields[FieldFeedName][0] != '\0') {
 				fputs("<h2 id=\"", fpitems);
 				printfeednameid(fcur->name, fpitems);
@@ -274,20 +280,20 @@ main(int argc, char *argv[])
 		      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />\n"
 		      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 		      "</head><body class=\"frame\"><div id=\"sidebar\">", fpmenu);
-		for(fcur = feeds; fcur; fcur = fcur->next) {
-			if(!fcur->name || fcur->name[0] == '\0')
+
+		SLIST_FOREACH(f, &fhead, entry) {
+			if(!f->name || f->name[0] == '\0')
 				continue;
-			if(fcur->totalnew)
+			if(f->totalnew)
 				fputs("<a class=\"n\" href=\"items.html#", fpmenu);
 			else
 				fputs("<a href=\"items.html#", fpmenu);
-			printfeednameid(fcur->name, fpmenu);
+			printfeednameid(f->name, fpmenu);
 			fputs("\" target=\"items\">", fpmenu);
-			if(fcur->totalnew > 0)
+			if(f->totalnew > 0)
 				fputs("<b><u>", fpmenu);
-			fputs(fcur->name, fpmenu);
-			fprintf(fpmenu, " (%lu)", fcur->totalnew);
-			if(fcur->totalnew > 0)
+			fprintf(fpmenu, "%s (%lu)", f->name, f->totalnew);
+			if(f->totalnew > 0)
 				fputs("</u></b>", fpmenu);
 			fputs("</a><br/>\n", fpmenu);
 		}

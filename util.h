@@ -1,9 +1,11 @@
+#include <stdio.h>
+#include <time.h>
+
 #ifdef COMPAT
 #include "compat.h"
 #endif
 
-#include <stdio.h>
-#include <time.h>
+#include "queue.h"
 
 #define ISUTF8(c) (((c) & 0xc0) != 0x80)
 
@@ -14,7 +16,7 @@ struct feed {
 	unsigned long  total;    /* total items */
 	time_t         timenewest;
 	char           timenewestformat[64];
-	struct feed *  next;     /* linked list */
+	SLIST_ENTRY(feed) entry;
 };
 
 enum { FieldUnixTimestamp = 0, FieldTimeFormatted, FieldTitle, FieldLink,

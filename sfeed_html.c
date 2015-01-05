@@ -5,10 +5,11 @@
 #include <string.h>
 #include <time.h>
 
+#include "queue.h"
 #include "util.h"
 
 static int showsidebar = 1; /* show sidebar ? */
-static struct feed *feeds = NULL; /* start of feeds linked-list. */
+static SLIST_HEAD(feedshead, feed) fhead = SLIST_HEAD_INITIALIZER(fhead);
 static char *line = NULL;
 
 int
@@ -22,36 +23,39 @@ main(void)
 	size_t size = 0;
 	int r;
 
-	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
-	fputs(
-		"<!DOCTYPE HTML>\n"
-		"<html>\n"
-		"\t<head>\n"
-		"\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
-		"\t\t<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />\n"
-		"\t</head>\n"
-		"\t<body class=\"noframe\">\n",
-	stdout);
+	/* 1 day old is old news */
+	comparetime = time(NULL) - 86400;
+
+	fputs("<!DOCTYPE HTML>\n"
+	      "<html>\n"
+	      "\t<head>\n"
+	      "\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
+	      "\t\t<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />\n"
+	      "\t</head>\n"
+	      "\t<body class=\"noframe\">\n", stdout);
 
 	if(!(fcur = calloc(1, sizeof(struct feed))))
 		err(1, "calloc");
-	feeds = fcur;
+	SLIST_INSERT_HEAD(&fhead, fcur, entry);
 
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
 		r = strtotime(fields[FieldUnixTimestamp], &parsedtime);
 		isnew = (r != -1 && parsedtime >= comparetime) ? 1 : 0;
 		islink = (fields[FieldLink][0] != '\0') ? 1 : 0;
-		/* first of feed section or new feed section. */
-		if(!totalfeeds || (fcur && strcmp(fcur->name, fields[FieldFeedName]))) {
+		/* first of feed section or new feed section (differs from
+		 * previous one). */
+		if(!totalfeeds || strcmp(fcur->name, fields[FieldFeedName])) {
 			if(!(f = calloc(1, sizeof(struct feed))))
 				err(1, "calloc");
+			if(!(f->name = strdup(fields[FieldFeedName])))
+				err(1, "strdup");
+
+			SLIST_INSERT_AFTER(fcur, f, entry);
+			fcur = f;
+
 			if(totalfeeds) { /* end previous one. */
 				fputs("</table>\n", stdout);
-				fcur->next = f;
-				fcur = f;
 			} else {
-				fcur = f;
-				feeds = fcur; /* first item. */
 				if(fields[FieldFeedName][0] == '\0' || !showsidebar) {
 					/* set nosidebar class on div for styling */
 					fputs("\t\t<div id=\"items\" class=\"nosidebar\">\n", stdout);
@@ -60,10 +64,6 @@ main(void)
 					fputs("\t\t<div id=\"items\">\n", stdout);
 				}
 			}
-			/* TODO: memcpy and make fcur->name static? */
-			if(!(fcur->name = strdup(fields[FieldFeedName])))
-				err(1, "strdup");
-
 			if(fields[FieldFeedName][0] != '\0') {
 				fputs("<h2 id=\"", stdout);
 				printfeednameid(fcur->name, stdout);
@@ -79,6 +79,7 @@ main(void)
 		totalnew += isnew;
 		fcur->totalnew += isnew;
 		fcur->total++;
+
 		if(isnew)
 			fputs("<tr class=\"n\">", stdout);
 		else
@@ -91,9 +92,11 @@ main(void)
 		if(islink) {
 			fputs("<a href=\"", stdout);
 			if(fields[FieldBaseSiteUrl][0] != '\0')
-				printlink(fields[FieldLink], fields[FieldBaseSiteUrl], stdout);
+				printlink(fields[FieldLink],
+				          fields[FieldBaseSiteUrl], stdout);
 			else
-				printlink(fields[FieldLink], fields[FieldFeedUrl], stdout);
+				printlink(fields[FieldLink],
+				          fields[FieldFeedUrl], stdout);
 			fputs("\">", stdout);
 		}
 		printhtmlencoded(fields[FieldTitle], stdout);
@@ -107,31 +110,27 @@ main(void)
 		fputs("</table>\n\t\t</div>\n", stdout); /* div items */
 	if(showsidebar) {
 		fputs("\t<div id=\"sidebar\">\n\t\t<ul>\n", stdout);
-		for(fcur = feeds; fcur; fcur = fcur->next) {
-			if(!fcur->name || fcur->name[0] == '\0')
+
+		SLIST_FOREACH(f, &fhead, entry) {
+			if(!f->name || f->name[0] == '\0')
 				continue;
-			if(fcur->totalnew)
+			if(f->totalnew > 0)
 				fputs("<li class=\"n\"><a href=\"#", stdout);
 			else
 				fputs("<li><a href=\"#", stdout);
-			printfeednameid(fcur->name, stdout);
+			printfeednameid(f->name, stdout);
 			fputs("\">", stdout);
-			if(fcur->totalnew > 0)
+			if(f->totalnew > 0)
 				fputs("<b><u>", stdout);
-			fputs(fcur->name, stdout);
-			fprintf(stdout, " (%lu)", fcur->totalnew);
-			if(fcur->totalnew > 0)
+			fprintf(stdout, "%s (%lu)", f->name, f->totalnew);
+			if(f->totalnew > 0)
 				fputs("</u></b>", stdout);
 			fputs("</a></li>\n", stdout);
 		}
 		fputs("\t\t</ul>\n\t</div>\n", stdout);
 	}
-	fputs(
-		"\t</body>\n"
-		"\t<title>Newsfeed (",
-	stdout);
-	fprintf(stdout, "%lu", totalnew);
-	fputs(")</title>\n</html>", stdout);
+	fprintf(stdout, "\t</body>\n\t<title>Newsfeed (%lu)</title>\n</html>",
+	        totalnew);
 
 	return 0;
 }

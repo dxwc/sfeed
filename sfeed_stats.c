@@ -5,9 +5,10 @@
 #include <string.h>
 #include <time.h>
 
+#include "queue.h"
 #include "util.h"
 
-static struct feed *feeds = NULL; /* start of feeds linked-list. */
+static SLIST_HEAD(fhead, feed) fhead = SLIST_HEAD_INITIALIZER(fhead);
 static char *line = NULL;
 
 int
@@ -21,26 +22,26 @@ main(void)
 	size_t size = 0;
 	int r;
 
-	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
+	/* 1 day is old news */
+	comparetime = time(NULL) - 86400;
 
 	if(!(fcur = calloc(1, sizeof(struct feed))))
 		err(1, "calloc");
-	feeds = fcur;
+	SLIST_INSERT_HEAD(&fhead, fcur, entry);
 
 	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
 		r = strtotime(fields[FieldUnixTimestamp], &parsedtime);
 		isnew = (r != -1 && parsedtime >= comparetime) ? 1 : 0;
 		/* first of feed section or new feed section. */
-		if(!totalfeeds || (fcur && strcmp(fcur->name, fields[FieldFeedName]))) {
+		if(!totalfeeds || strcmp(fcur->name, fields[FieldFeedName])) {
 			if(!(f = calloc(1, sizeof(struct feed))))
 				err(1, "calloc");
-			if(totalfeeds) { /* end previous one. */
-				fcur->next = f;
-				fcur = f;
-			} else {
-				fcur = f;
-				feeds = fcur; /* first item. */
-			}
+			if(!(f->name = strdup(fields[FieldFeedName])))
+				err(1, "strdup");
+
+			SLIST_INSERT_AFTER(fcur, f, entry);
+			fcur = f;
+
 			if(r != -1 && parsedtime > timenewest) {
 				timenewest = parsedtime;
 				strlcpy(timenewestformat, fields[FieldTimeFormatted],
@@ -51,11 +52,6 @@ main(void)
 				strlcpy(fcur->timenewestformat, fields[FieldTimeFormatted],
 				        sizeof(fcur->timenewestformat));
 			}
-
-			/* TODO: memcpy and make fcur->name static? */
-			if(!(fcur->name = strdup(fields[FieldFeedName])))
-				err(1, "strdup");
-
 			totalfeeds++;
 		}
 		totalnew += isnew;
@@ -63,14 +59,14 @@ main(void)
 		fcur->total++;
 		totalitems++;
 	}
-	for(fcur = feeds; fcur; fcur = fcur->next) {
-		if(!fcur->name || fcur->name[0] == '\0')
+	SLIST_FOREACH(f, &fhead, entry) {
+		if(!f->name || f->name[0] == '\0')
 			continue;
 		fprintf(stdout, "%c %-20.20s [%4lu/%-4lu]",
-		        fcur->totalnew > 0 ? 'N' : ' ',
-		        fcur->name, fcur->totalnew, fcur->total);
-		if(fcur->timenewestformat && fcur->timenewestformat[0])
-			fprintf(stdout, " %s", fcur->timenewestformat);
+		        f->totalnew > 0 ? 'N' : ' ',
+		        f->name, f->totalnew, f->total);
+		if(f->timenewestformat && f->timenewestformat[0])
+			fprintf(stdout, " %s", f->timenewestformat);
 		putchar('\n');
 	}
 	printf("  ================================\n");
