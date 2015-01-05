@@ -58,6 +58,7 @@ all: $(BIN)
 	${CC} -c ${CFLAGS} $<
 
 dist: $(BIN) doc
+	rm -rf release/${VERSION}
 	mkdir -p release/${VERSION}
 	# legacy man-pages (add doc-oldman as dependency rule).
 	#for m in $(MAN1); do cp -f doc/man/$$m release/${VERSION}/; done
