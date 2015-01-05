@@ -94,26 +94,29 @@ printcontent(const char *s, FILE *fp)
 	}
 }
 
-/* TODO: bufsiz - 1 ? */
 static size_t
-makepathname(const char *path, char *buffer, size_t bufsiz)
+makepathname(const char *path, char *buf, size_t bufsiz)
 {
 	size_t i = 0, r = 0;
 
-	for(; *path && i < bufsiz - 1; path++) {
+	for(; *path && i < bufsiz; path++) {
 		if(isalpha((int)*path) || isdigit((int)*path)) {
-			buffer[i++] = tolower((int)*path);
+			buf[i++] = tolower((int)*path);
 			r = 0;
 		} else {
-			if(!r) /* don't repeat '-'. */
-				buffer[i++] = '-';
+			/* don't repeat '-'. */
+			if(!r)
+				buf[i++] = '-';
 			r++;
 		}
 	}
-	buffer[i] = '\0';
-	/* remove trailing - */
-	for(; i > 0 && (buffer[i] == '-' || buffer[i] == '\0'); i--)
-		buffer[i] = '\0';
+	/* remove trailing '-' */
+	for(; i > 0 && (buf[i - 1] == '-'); i--)
+		;
+
+	if(bufsiz > 0)
+		buf[i] = '\0';
+
 	return i;
 }
 
@@ -131,15 +134,14 @@ main(int argc, char *argv[])
 	time_t parsedtime, comparetime;
 	size_t linesize = 0, namelen, basepathlen;
 	struct stat st;
-	struct utimbuf contenttime;
 	int r;
-
-	memset(&contenttime, 0, sizeof(contenttime));
 
 	if(argc > 1 && argv[1][0] != '\0')
 		basepath = argv[1];
 
-	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
+	/* 1 day is old news */
+	comparetime = time(NULL) - 86400;
+
 	basepathlen = strlen(basepath);
 	if(basepathlen > 0)
 		mkdir(basepath, S_IRWXU);
