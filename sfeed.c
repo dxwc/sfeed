@@ -312,7 +312,8 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 	char c = '+';
 	size_t i;
 
-	s = trimstart(s);
+	for(; *s && !isalpha(*s) && *s != '-' && *s != '+'; s++)
+		;
 	if(!*s || *s == 'Z' || *s == 'z')
 		goto time_ok;
 
