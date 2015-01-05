@@ -140,7 +140,7 @@ main(int argc, char *argv[])
 {
 	struct feed *f, *fcur = NULL;
 	char *fields[FieldLast];
-	char name[64]; /* TODO: bigger size? */
+	char name[256]; /* buffer for feedname */
 	char dirpath[PATH_MAX], filepath[PATH_MAX];
 	char reldirpath[PATH_MAX], relfilepath[PATH_MAX];
 	char *feedname = "", *basepath = ".";

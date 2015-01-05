@@ -674,7 +674,8 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
 	char buffer[16];
 	size_t len;
 
-	/* try to translate entity, else just pass as data */
+	/* try to translate entity, else just pass as data to
+         * xml_data_handler */
 	if((len = entitytostr(data, buffer, sizeof(buffer))) > 0)
 		xml_handler_data(p, buffer, len);
 	else
@@ -688,22 +689,21 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 
 	if(ctx.iscontent) {
 		ctx.attrcount = 0;
-		/* TODO: optimize */
 		tagid = gettag(ctx.item.feedtype, name, namelen);
-		if(ctx.tagid == tagid) { /* close content */
+		/* close content */
+		if(ctx.tagid == tagid) {
 			ctx.iscontent = 0;
 			ctx.iscontenttag = 0;
+			ctx.tag[0] = '\0';
+			ctx.taglen = 0;
+			ctx.tagid = TagUnknown;
 
 			p->xmldataentity = xml_handler_data_entity;
 			p->xmlattrstart = NULL;
 			p->xmlattrend = NULL;
 			p->xmltagstartparsed = NULL;
 
-			ctx.tag[0] = '\0'; /* unset tag */
-			ctx.taglen = 0;
-			ctx.tagid = TagUnknown;
-
-			return; /* TODO: not sure if !isshort check below should be skipped */
+			return;
 		}
 		if(!isshort) {
 			xml_handler_data(p, "</", 2);
@@ -715,7 +715,6 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 	if(ctx.item.feedtype == FeedTypeNone)
 		return;
 	/* end of RSS or Atom entry / item */
-	/* TODO: optimize, use gettag() ? to tagid? */
 	if((ctx.item.feedtype == FeedTypeAtom &&
 	   istag(name, namelen, STRP("entry"))) || /* Atom */
 	   (ctx.item.feedtype == FeedTypeRSS &&
