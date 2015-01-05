@@ -5,24 +5,20 @@ PREFIX = /usr/local
 MANPREFIX = ${PREFIX}/share/man
 
 # includes and libs
-INCS = -I.
 LIBS = -lc
 
 # debug
 CFLAGS = -fstack-protector-all -O0 -g -std=c99 -Wall -Wextra -pedantic \
-	${INCS} \
 	-DVERSION=\"${VERSION}\" -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -D_BSD_SOURCE
 LDFLAGS = ${LIBS}
 
 # optimized
 #CFLAGS = -O2 -std=c99 \
-#	${INCS} \
 #	-DVERSION=\"${VERSION}\" -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -D_BSD_SOURCE
 #LDFLAGS = -s ${LIBS}
 
 # optimized static
 #CFLAGS = -static -O2 -std=c99 \
-#	${INCS} \
 #	-DVERSION=\"${VERSION}\" -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -D_BSD_SOURCE
 #LDFLAGS = -static -s ${LIBS}
 
