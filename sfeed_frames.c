@@ -107,8 +107,10 @@ printcontent(const char *s, FILE *fp)
 	}
 }
 
+/* normalize path names, transform to lower-case and replace non-alpha and
+ * non-digit with '-' */
 static size_t
-makepathname(const char *path, char *buf, size_t bufsiz)
+normalizepathname(const char *path, char *buf, size_t bufsiz)
 {
 	size_t i = 0, r = 0;
 
@@ -187,7 +189,7 @@ main(int argc, char *argv[])
 		/* first of feed section or new feed section (differ from previous). */
 		if(!totalfeeds || strcmp(fcur->name, feedname)) {
 			/* make directory for feedname */
-			if(!(namelen = makepathname(feedname, name, sizeof(name))))
+			if(!(namelen = normalizepathname(feedname, name, sizeof(name))))
 				continue;
 
 			esnprintf(dirpath, sizeof(dirpath), "%s/%s", basepath, name);
@@ -223,7 +225,7 @@ main(int argc, char *argv[])
 			totalfeeds++;
 		}
 		/* write content */
-		if(!(namelen = makepathname(fields[FieldTitle], name, sizeof(name))))
+		if(!(namelen = normalizepathname(fields[FieldTitle], name, sizeof(name))))
 			continue;
 		esnprintf(filepath, sizeof(filepath), "%s/%s.html", dirpath, name);
 		esnprintf(relfilepath, sizeof(relfilepath), "%s/%s.html", reldirpath, name);
