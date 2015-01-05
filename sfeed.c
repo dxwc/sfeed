@@ -641,12 +641,16 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 			string_clear(ctx.field);
 	} else if(ctx.item.feedtype == FeedTypeAtom) {
 		if(ctx.tagid == AtomTagPublished || ctx.tagid == AtomTagUpdated) {
-			ctx.field = &ctx.item.timestamp;
+			/* ignore, prefer updated over published */
+			if(ctx.tagid != AtomTagPublished || !ctx.item.timestamp.len) {
+				ctx.field = &ctx.item.timestamp;
+				return;
+			}
 		} else if(ctx.tagid == AtomTagTitle) {
 			ctx.field = &ctx.item.title;
 		} else if(ctx.tagid == AtomTagSummary || ctx.tagid == AtomTagContent) {
 			/* ignore, prefer content:encoded over description */
-			if(!(ctx.tagid == AtomTagSummary && ctx.item.content.len)) {
+			if(ctx.tagid != AtomTagSummary || !ctx.item.content.len) {
 				ctx.iscontenttag = 1;
 				ctx.field = &ctx.item.content;
 				return;
