@@ -181,8 +181,9 @@ main(int argc, char *argv[])
 
 			/* directory doesn't exist: try to create it. */
 			if(stat(dirpath, &st) == -1 && mkdir(dirpath, S_IRWXU) == -1)
-				xerr(1, "sfeed_frames: can't make directory '%s'", dirpath);
-			strlcpy(reldirpath, name, sizeof(reldirpath)); /* TODO: check truncation */
+				xerr(1, "can't make directory '%s'", dirpath);
+			if(strlcpy(reldirpath, name, sizeof(reldirpath)) >= sizeof(reldirpath))
+				xerr(1, "strlcpy: truncation");
 
 			if(!(f = calloc(1, sizeof(struct feed))))
 				xerr(1, "calloc");
