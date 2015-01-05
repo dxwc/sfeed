@@ -1,9 +1,9 @@
+[ ] check truncation (strlcpy, snprintf etc), especially for paths.
 [x] fix timezone in slashdot.xml
     [x] string_append: make sure some fields can only be set once (first field counts?).
     [ ] test new parsetime and gettimetz code.
 [ ] grep -H -n *.c 'TODO:'
 [ ] sfeed.c: document ctx.iscontent and ctx.iscontenttag.
-[ ] use openbsd sys/queue.h for util.c linked-list and sfeed_frames.c
 [ ] rewrite xml.{c,h}
 [ ] xml: check read errors:
 	ferror, return code of fread, fwrite, fclose...
