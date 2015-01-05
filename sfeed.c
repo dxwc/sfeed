@@ -612,7 +612,7 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 	if(ctx.tag[0] != '\0')
 		return;
 	/* in item */
-	strlcpy(ctx.tag, name, sizeof(ctx.tag));
+	strlcpy(ctx.tag, name, sizeof(ctx.tag)); /* NOTE: truncation ignored */
 	ctx.taglen = namelen;
 	ctx.tagid = gettag(ctx.item.feedtype, ctx.tag, ctx.taglen);
 	if(ctx.tagid == TagUnknown)
