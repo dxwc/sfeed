@@ -117,7 +117,7 @@ Usage
 
 Find RSS/Atom feed urls from a webpage:
 
-$ url="codemadness.org"; wget -L -q -O - "$url" | sfeed_web "$url"
+	url="codemadness.org"; wget -L -q -O - "$url" | sfeed_web "$url"
 
 output:
 	application/rss+xml http://codemadness.org/blog/rss.xml
@@ -126,41 +126,44 @@ output:
 
 To update feeds and format the feeds file (configfile argument is optional):
 
-sfeed_update "configfile"
-sfeed_plain < $HOME/.sfeed/feeds > $HOME/.sfeed/feeds.txt
-sfeed_html < $HOME/.sfeed/feeds > $HOME/.sfeed/feeds.html
+	sfeed_update "configfile"
+	sfeed_html < $HOME/.sfeed/feeds > $HOME/.sfeed/feeds.html
+	sfeed_plain < $HOME/.sfeed/feeds > $HOME/.sfeed/feeds.txt
 
 
 Example script to view feeds with dmenu, opens selected url in $BROWSER:
 
-url=$(sfeed_plain < "$HOME/.sfeed/feeds" | dmenu -l 35 -i |
-	sed 's@^.* \([a-zA-Z]*://\)\(.*\)$@\1\2@')
-[ ! "$url" = "" ] && $BROWSER "$url"
+	#!/bin/sh
+	url=$(sfeed_plain < "$HOME/.sfeed/feeds" | dmenu -l 35 -i |
+		sed 's@^.* \([a-zA-Z]*://\)\(.*\)$@\1\2@')
+	[ ! "$url" = "" ] && $BROWSER "$url"
 
 
 or to view in your browser:
 
-$BROWSER "$HOME/.sfeed/feeds.html"
+	$BROWSER "$HOME/.sfeed/feeds.html"
 
 
 or to view in your editor:
 
-$EDITOR "$HOME/.sfeed/feeds.txt"
+	$EDITOR "$HOME/.sfeed/feeds.txt"
 
 
 Generate a sfeedrc config file from your exported list of feeds in opml
 format:
 
-sfeed_opml_import < opmlfile.xml > $HOME/.sfeed/sfeedrc
+	sfeed_opml_import < opmlfile.xml > $HOME/.sfeed/sfeedrc
 
 
 Export an opml file of your feeds from a sfeedrc config file (configfile
 argument is optional):
 
-sfeed_opml_export configfile > myfeeds.opml
+	sfeed_opml_export configfile > myfeeds.opml
 
 
-tip to remove feeds older than a date, change mktime("YYYY mm dd HH mm ss"):
+Over time your feeds file might become quite big. You can archive items from a
+specific date by doing for example: (make sure to change
+mktime("YYYY mm dd HH mm ss")):
 
 	#!/bin/sh
 	set -x -e
