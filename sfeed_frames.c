@@ -173,12 +173,6 @@ main(int argc, char *argv[])
 		}
 		/* first of feed section or new feed section (differ from previous). */
 		if(!totalfeeds || strcmp(fcur->name, feedname)) {
-			/* TODO:
-			 * - makepathname isn't necesary if fields[FieldFeedName]
-			 *   is the same as the previous line.
-			 * - move this part below where FieldFeedName is
-			 * checked if it's different ? */
-
 			/* make directory for feedname */
 			if(!(namelen = makepathname(feedname, name, sizeof(name))))
 				continue;
@@ -197,10 +191,10 @@ main(int argc, char *argv[])
 			SLIST_INSERT_AFTER(fcur, f, entry);
 			fcur = f;
 
-			/* end previous one. */
-			if(totalfeeds) {
+			/* end previous feed section. */
+			if(totalfeeds)
 				fputs("</table>\n", fpitems);
-			}
+
 			/* write menu link if new. */
 			if(fields[FieldFeedName][0] != '\0') {
 				fputs("<h2 id=\"", fpitems);
