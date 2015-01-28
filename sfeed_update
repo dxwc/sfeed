@@ -42,9 +42,9 @@ merge() {
 }
 
 # fetch a feed via HTTP/HTTPS etc.
-# fetchfeed(url, name, lastupdated)
+# fetchfeed(url, name)
 fetchfeed() {
-	if curl -f -s -S -L --max-time 15 -z "$3" "$1"; then
+	if curl -f -s -S -L --max-time 15 -z "$sfeedfile" "$1"; then
 		printf "  OK %s %s\n" "`date +'%H:%M:%S'`" "$2" >&2
 	else
 		printf "FAIL %s %s\n" "`date +'%H:%M:%S'`" "$2" >&2
@@ -70,11 +70,10 @@ feed() {
 	tmpencfile=""
 	encoding="$4"
 	if [ ! "$encoding" = "" ]; then
-		fetchfeed "$2" "$1" "$lastupdated" | \
-			convertencoding "$encoding" "utf-8"
+		fetchfeed "$2" "$1" | convertencoding "$encoding" "utf-8"
 	else # detect encoding.
 		tmpencfile=$(mktemp -p "$TMPDIR")
-		fetchfeed "$2" "$1" "$lastupdated" > "$tmpencfile"
+		fetchfeed "$2" "$1" > "$tmpencfile"
 		detectenc=$(sfeed_xmlenc < "$tmpencfile")
 		convertencoding "$detectenc" "utf-8" < "$tmpencfile"
 		rm -f "$tmpencfile"
@@ -99,10 +98,6 @@ feeds() {
 loadconfig "$1"
 # fetch feeds and store in temporary file.
 TMPDIR=$(mktemp -d "/tmp/sfeed_XXXXXX")
-# get date of last modified feedfile in format:
-# YYYYmmdd HH:MM:SS [+-][0-9]*
-lastupdated=$(stat -c "%y" "$sfeedfile" 2> /dev/null | \
-	cut -c 1-4,6-7,9-10,11-19,30-)
 # kill whole current process group on ^C.
 isrunning="1"
 # SIGTERM: signal to terminate parent.
