@@ -362,6 +362,7 @@ xmlparser_parse_string(XMLParser *x, const char *s)
 {
 	x->str = s;
 	x->getnext = xmlparser_string_getnext;
+	xmlparser_parse(x);
 }
 
 void
@@ -369,4 +370,5 @@ xmlparser_parse_fd(XMLParser *x, int fd)
 {
 	x->fd = fd;
 	x->getnext = xmlparser_fd_getnext;
+	xmlparser_parse(x);
 }
