@@ -86,7 +86,7 @@ doc-oldman: $(MAN1)
 	mkdir -p doc/man
 	for m in $(MAN1); do mandoc -Ios="" -Tman $$m > doc/man/$$m; done
 
-${OBJ}: config.mk
+${OBJ}: config.mk ${HDR}
 
 sfeed: sfeed.o xml.o util.o ${EXTRAOBJ}
 	${CC} -o $@ sfeed.o xml.o util.o ${EXTRAOBJ} ${LDFLAGS}
