@@ -82,7 +82,7 @@ xmlparser_parseattrs(XMLParser *x)
 			if(x->xmlattrstart)
 				x->xmlattrstart(x, x->tag, x->taglen, x->name, namelen);
 			for(valuelen = 0; (c = xmlparser_getnext(x)) != EOF;) {
-				if(c == '&' && x->xmlattrentity) { /* entities */
+				if(c == '&') { /* entities */
 					x->data[valuelen] = '\0';
 					/* call data function with data before entity if there is data */
 					if(valuelen && x->xmlattr)
@@ -104,7 +104,8 @@ xmlparser_parseattrs(XMLParser *x)
 						}
 						if(c == ';') {
 							x->data[valuelen] = '\0';
-							x->xmlattrentity(x, x->tag, x->taglen, x->name, namelen, x->data, valuelen);
+							if(x->xmlattrentity)
+								x->xmlattrentity(x, x->tag, x->taglen, x->name, namelen, x->data, valuelen);
 							valuelen = 0;
 							break;
 						}
@@ -310,7 +311,7 @@ xmlparser_parse(XMLParser *x)
 			if(x->xmldatastart)
 				x->xmldatastart(x);
 			while((c = xmlparser_getnext(x)) != EOF) {
-				if(c == '&' && x->xmldataentity) {
+				if(c == '&') {
 					if(datalen) {
 						x->data[datalen] = '\0';
 						x->xmldata(x, x->data, datalen);
@@ -326,7 +327,8 @@ xmlparser_parse(XMLParser *x)
 							break;
 						else if(c == ';') {
 							x->data[datalen] = '\0';
-							x->xmldataentity(x, x->data, datalen);
+							if(x->xmldataentity)
+								x->xmldataentity(x, x->data, datalen);
 							datalen = 0;
 							break;
 						}
