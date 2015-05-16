@@ -73,7 +73,7 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 int
 main(void)
 {
-	xmlparser_init(&parser, stdin);
+	memset(&parser, 0, sizeof(parser));
 	parser.xmltagstart = xml_handler_start_element;
 	parser.xmltagend = xml_handler_end_element;
 	parser.xmlattr = xml_handler_attr;
@@ -88,7 +88,7 @@ main(void)
 	    "# list of feeds to fetch:\n"
 	    "feeds() {\n"
 	    "	# feed <name> <feedurl> <basesiteurl> [encoding]\n", stdout);
-	xmlparser_parse(&parser);
+	xmlparser_parse_fd(&parser, 0);
 	fputs("}\n", stdout);
 
 	return 0;

@@ -73,18 +73,18 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 int
 main(int argc, char *argv[])
 {
-	XMLParser x;
+	XMLParser parser;
 
 	/* base href */
 	if(argc > 1)
 		strlcpy(basehref, argv[1], sizeof(basehref));
 
-	xmlparser_init(&x, stdin);
-	x.xmltagstart = xmltagstart;
-	x.xmlattr = xmlattr;
-	x.xmltagstartparsed = xmltagstartparsed;
+	memset(&parser, 0, sizeof(parser));
+	parser.xmltagstart = xmltagstart;
+	parser.xmlattr = xmlattr;
+	parser.xmltagstartparsed = xmltagstartparsed;
 
-	xmlparser_parse(&x);
+	xmlparser_parse_fd(&parser, 0);
 
 	return found > 0 ? 0: 1;
 }

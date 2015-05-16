@@ -54,14 +54,14 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 int
 main(void)
 {
-	XMLParser x;
+	XMLParser parser;
 
-	xmlparser_init(&x, stdin);
-	x.xmltagstart = xmltagstart;
-	x.xmltagend = xmltagend;
-	x.xmlattr = xmlattr;
+	memset(&parser, 0, sizeof(parser));
+	parser.xmltagstart = xmltagstart;
+	parser.xmltagend = xmltagend;
+	parser.xmlattr = xmlattr;
 
-	xmlparser_parse(&x);
+	xmlparser_parse_fd(&parser, 0);
 
 	return 1;
 }
