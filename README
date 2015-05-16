@@ -117,7 +117,7 @@ Usage
 
 Find RSS/Atom feed urls from a webpage:
 
-	url="codemadness.org"; wget -L -q -O - "$url" | sfeed_web "$url"
+	url="codemadness.org"; curl -L -s "$url" | sfeed_web "$url"
 
 output:
 	application/rss+xml http://codemadness.org/blog/rss.xml

@@ -34,23 +34,22 @@ Caveats
   called multiple times for the same tag if the data size is bigger than the
   internal buffer size (sizeof(XMLParser.data)). To differentiate between new
   calls for data you can use the xml*start and xml*end handlers.
-- If the xmlattrentity or xmldataentity handler is NULL it will pass the data
-  to the xmlattr and xmldata handler.
 - There is no table of (HTML / XML) named entities you should handle this with
   the XMLParser.xmldataentity handler yourself.
-- The XML is not checked for errors so it will happily continue parsing invalid
-  XML data, this is by design.
+- The XML is not checked for errors so it will continue parsing invalid XML
+  data, this is by design.
 
 
 Files used
 ----------
+
 xml.c and xml.h
 
 
 Interface / API
 ---------------
 
-Should be straightforward, see xml.{c,h} and the examples below.
+Should be trivial, see xml.c and xml.h and the examples below.
 
 
 Examples
@@ -61,5 +60,5 @@ sfeed_opml_import.c or sfeed_web.c or sfeed_xmlenc.c
 
 License
 -------
-Same as sfeed, see LICENSE file.
+See LICENSE file.
 
