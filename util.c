@@ -56,26 +56,30 @@ printlink(const char *link, const char *baseurl, FILE *fp)
  * 'fields' is a list of pointer with a maximum size of 'maxfields'.
  * 'line' buffer is allocated using malloc, 'size' will contain the
  * allocated buffer size.
- * returns: amount of fields read. */
-unsigned int
+ * returns: amount of fields read or -1 on error. */
+int
 parseline(char **line, size_t *size, char **fields,
           unsigned int maxfields, int separator, FILE *fp)
 {
-	unsigned int i = 0;
 	char *prev, *s;
+	unsigned int i;
 
-	if(getline(line, size, fp) > 0) {
-		for(prev = *line; (s = strchr(prev, separator)) && i <= maxfields; i++) {
-			*s = '\0';
-			fields[i] = prev;
-			prev = s + 1;
-		}
+	if(getline(line, size, fp) <= 0)
+		return -1;
+
+	for(prev = *line, i = 0;
+	    (s = strchr(prev, separator)) && i <= maxfields;
+	    i++) {
+		*s = '\0';
 		fields[i] = prev;
-		/* make non-parsed fields empty. */
-		for(i++; i < maxfields; i++)
-			fields[i] = "";
+		prev = s + 1;
 	}
-	return i;
+	fields[i++] = prev;
+	/* make non-parsed fields empty. */
+	for(; i < maxfields; i++)
+		fields[i] = "";
+
+	return (int)i;
 }
 
 const char *
