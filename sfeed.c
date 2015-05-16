@@ -114,32 +114,33 @@ gettag(int feedtype, const char *name, size_t namelen)
 {
 	/* RSS, alphabetical order */
 	static FeedTag rsstag[] = {
-		{ STRP("author"),          RSSTagAuthor },
+		{ STRP("author"),          RSSTagAuthor         },
 		{ STRP("content:encoded"), RSSTagContentencoded },
-		{ STRP("dc:creator"),      RSSTagDccreator },
-		{ STRP("dc:date"),         RSSTagDcdate },
-		{ STRP("description"),     RSSTagDescription },
-		{ STRP("guid"),            RSSTagGuid },
-		{ STRP("link"),            RSSTagLink },
-		{ STRP("pubdate"),         RSSTagPubdate },
-		{ STRP("title"),           RSSTagTitle },
+		{ STRP("dc:creator"),      RSSTagDccreator      },
+		{ STRP("dc:date"),         RSSTagDcdate         },
+		{ STRP("description"),     RSSTagDescription    },
+		{ STRP("guid"),            RSSTagGuid           },
+		{ STRP("link"),            RSSTagLink           },
+		{ STRP("pubdate"),         RSSTagPubdate        },
+		{ STRP("title"),           RSSTagTitle          },
 		{ NULL, 0, -1 }
 	};
 	/* Atom, alphabetical order */
 	static FeedTag atomtag[] = {
-		{ STRP("author"),    AtomTagAuthor },
-		{ STRP("content"),   AtomTagContent },
-		{ STRP("id"),        AtomTagId },
-		{ STRP("link"),      AtomTagLink },
+		{ STRP("author"),    AtomTagAuthor    },
+		{ STRP("content"),   AtomTagContent   },
+		{ STRP("id"),        AtomTagId        },
+		{ STRP("link"),      AtomTagLink      },
 		{ STRP("published"), AtomTagPublished },
-		{ STRP("summary"),   AtomTagSummary },
-		{ STRP("title"),     AtomTagTitle },
-		{ STRP("updated"),   AtomTagUpdated },
+		{ STRP("summary"),   AtomTagSummary   },
+		{ STRP("title"),     AtomTagTitle     },
+		{ STRP("updated"),   AtomTagUpdated   },
 		{ NULL, 0, -1 }
 	};
 	int i, n;
 
-	if(namelen < 2 || namelen > 15) /* optimization */
+	/* optimization: these are always non-matching */
+	if(namelen < 2 || namelen > 15)
 		return TagUnknown;
 
 	if(feedtype == FeedTypeRSS) {
@@ -165,16 +166,22 @@ gettag(int feedtype, const char *name, size_t namelen)
 static size_t
 codepointtoutf8(uint32_t cp, uint32_t *utf)
 {
-	if(cp >= 0x10000) { /* 4 bytes */
-		*utf = 0xf0808080 | ((cp & 0xfc0000) << 6) | ((cp & 0x3f000) << 4) |
-		       ((cp & 0xfc0) << 2) | (cp & 0x3f);
+	if(cp >= 0x10000) {
+		/* 4 bytes */
+		*utf = 0xf0808080 | ((cp & 0xfc0000) << 6) |
+		       ((cp & 0x3f000) << 4) | ((cp & 0xfc0) << 2) |
+		       (cp & 0x3f);
 		return 4;
-	} else if(cp >= 0x00800) { /* 3 bytes */
-		*utf = 0xe08080 | ((cp & 0x3f000) << 4) | ((cp & 0xfc0) << 2) |
+	} else if(cp >= 0x00800) {
+		/* 3 bytes */
+		*utf = 0xe08080 |
+		       ((cp & 0x3f000) << 4) | ((cp & 0xfc0) << 2) |
 		       (cp & 0x3f);
 		return 3;
-	} else if(cp >= 0x80) { /* 2 bytes */
-		*utf = 0xc080 | ((cp & 0xfc0) << 2) | (cp & 0x3f);
+	} else if(cp >= 0x80) {
+		/* 2 bytes */
+		*utf = 0xc080 |
+		       ((cp & 0xfc0) << 2) | (cp & 0x3f);
 		return 2;
 	}
 	*utf = cp & 0xff;
@@ -185,12 +192,12 @@ static size_t
 namedentitytostr(const char *e, char *buffer, size_t bufsiz)
 {
 	char *entities[6][2] = {
-		{ "&lt;", "<" },
-		{ "&gt;", ">" },
-		{ "&apos;", "'" },
-		{ "&amp;", "&" },
+		{ "&lt;",   "<"  },
+		{ "&gt;",   ">"  },
+		{ "&apos;", "'"  },
+		{ "&amp;",  "&"  },
 		{ "&quot;", "\"" },
-		{ NULL, NULL }
+		{ NULL,     NULL }
 	};
 	size_t i;
 
@@ -223,10 +230,11 @@ entitytostr(const char *e, char *buffer, size_t bufsiz)
 	if(e[1] == '#') {
 		e += 2; /* skip &# */
 		errno = 0;
+		/* hex (16) or decimal (10) */
 		if(*e == 'x')
-			l = strtoul(e + 1, NULL, 16); /* hex */
+			l = strtoul(e + 1, NULL, 16);
 		else
-			l = strtoul(e, NULL, 10); /* decimal */
+			l = strtoul(e, NULL, 10);
 		if(errno != 0)
 			return 0; /* invalid value */
 		if(!(len = codepointtoutf8(l, &cp)))
@@ -280,7 +288,8 @@ string_buffer_realloc(String *s, size_t newlen)
 	char *p;
 	size_t alloclen;
 
-	for(alloclen = 16; alloclen <= newlen; alloclen *= 2);
+	for(alloclen = 16; alloclen <= newlen; alloclen *= 2)
+		;
 	if(!(p = realloc(s->data, alloclen)))
 		err(1, "realloc");
 	s->bufsiz = alloclen;
@@ -323,8 +332,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 	/* copy tz name */
 	if(i >= sizeof(tzname))
 		i = sizeof(tzname) - 1;
-	if(i > 0)
-		memcpy(tzname, s, i);
+	memcpy(tzname, s, i);
 	tzname[i] = '\0';
 
 	if((sscanf(s, "%c%02d:%02d", &c, &tzhour, &tzmin)) == 3) {
@@ -626,10 +634,9 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 		else if(ctx.tagid == RSSTagDescription ||
 		        ctx.tagid == RSSTagContentencoded) {
 			/* ignore, prefer content:encoded over description */
-			if(!(ctx.tagid == RSSTagDescription && ctx.item.content.len)) {
+			if(ctx.tagid != RSSTagDescription || !ctx.item.content.len) {
 				ctx.iscontenttag = 1;
 				ctx.field = &ctx.item.content;
-				return;
 			}
 		} else if(ctx.tagid == RSSTagGuid) {
 			ctx.field = &ctx.item.id;
@@ -644,7 +651,6 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 			/* ignore, prefer updated over published */
 			if(ctx.tagid != AtomTagPublished || !ctx.item.timestamp.len) {
 				ctx.field = &ctx.item.timestamp;
-				return;
 			}
 		} else if(ctx.tagid == AtomTagTitle) {
 			ctx.field = &ctx.item.title;
@@ -653,7 +659,6 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 			if(ctx.tagid != AtomTagSummary || !ctx.item.content.len) {
 				ctx.iscontenttag = 1;
 				ctx.field = &ctx.item.content;
-				return;
 			}
 		} else if(ctx.tagid == AtomTagId) {
 			ctx.field = &ctx.item.id;
@@ -662,7 +667,7 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 		} else if(ctx.tagid == AtomTagAuthor) {
 			ctx.field = &ctx.item.author;
 		}
-		/* clear field: don't append string for non-content fields. */
+		/* clear field */
 		if(ctx.field)
 			string_clear(ctx.field);
 	}
