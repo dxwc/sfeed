@@ -1,28 +1,51 @@
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "xml.h"
 
-static __inline__ int /* like getc(), but do some smart buffering */
-xmlparser_getnext(XMLParser *x)
+static int
+xmlparser_string_getnext(XMLParser *x)
 {
-	int c;
-	if(ferror(x->fp))
+	if (!*(x->str))
 		return EOF;
-	if(feof(x->fp))
+	return (int)*(x->str++);
+}
+
+static int /* like getc(), but do some smart buffering */
+xmlparser_fd_getnext(XMLParser *x)
+{
+	ssize_t r;
+
+	/* previous read error was set */
+	if(x->readerrno)
 		return EOF;
-	c = fgetc(x->fp);
-	return c;
-#if 0
+
 	if(x->readoffset >= x->readlastbytes) {
 		x->readoffset = 0;
-		if(!(x->readlastbytes = fread(x->readbuf, 1, sizeof(x->readbuf), x->fp)))
-			return EOF; /* 0 bytes read, assume EOF */
+again:
+		r = read(x->fd, x->readbuf, sizeof(x->readbuf));
+		if(r == -1) {
+			if(errno == EINTR)
+				goto again;
+			x->readerrno = errno;
+			x->readlastbytes = 0;
+			return EOF;
+		} else if(!r) {
+			return EOF;
+		}
+		x->readlastbytes = r;
 	}
 	return (int)x->readbuf[x->readoffset++];
-#endif
+}
+
+static int
+xmlparser_getnext(XMLParser *x)
+{
+	return x->getnext(x);
 }
 
 static __inline__ void
@@ -108,8 +131,9 @@ xmlparser_parseattrs(XMLParser *x)
 			}
 			namelen = 0;
 			endname = 0;
-		} else if(namelen < sizeof(x->name) - 1)
+		} else if(namelen < sizeof(x->name) - 1) {
 			x->name[namelen++] = c;
+		}
 		if(c == '>') {
 			break;
 		} else if(c == '/') {
@@ -204,14 +228,7 @@ xmlparser_parsecdata(XMLParser *x)
 	}
 }
 
-void
-xmlparser_init(XMLParser *x, FILE *fp)
-{
-	memset(x, 0, sizeof(XMLParser));
-	x->fp = fp;
-}
-
-void
+static void
 xmlparser_parse(XMLParser *x)
 {
 	int c, ispi;
@@ -239,7 +256,7 @@ xmlparser_parse(XMLParser *x)
 						if(tagdatalen == strlen("[CDATA[") &&
 							x->data[1] == 'C' && x->data[2] == 'D' &&
 							x->data[3] == 'A' && x->data[4] == 'T' &&
-							x->data[5] == 'A' && x->data[6] == '[') { /* cdata */
+							x->data[5] == 'A' && x->data[6] == '[') { /* CDATA */
 							xmlparser_parsecdata(x);
 							break;
 						#if 0
@@ -336,4 +353,18 @@ xmlparser_parse(XMLParser *x)
 			}
 		}
 	}
+}
+
+void
+xmlparser_parse_string(XMLParser *x, const char *s)
+{
+	x->str = s;
+	x->getnext = xmlparser_string_getnext;
+}
+
+void
+xmlparser_parse_fd(XMLParser *x, int fd)
+{
+	x->fd = fd;
+	x->getnext = xmlparser_fd_getnext;
 }

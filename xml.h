@@ -27,7 +27,12 @@ typedef struct xmlparser {
 	void (*xmlcomment)(struct xmlparser *, const char *, size_t);
 	void (*xmlcommentend)(struct xmlparser *);
 
-	FILE *fp; /* file stream to read from */
+	int (*getnext)(struct xmlparser *);
+
+	int readerrno; /* errno set from read(). */
+	int fd; /* fd to read from */
+
+	const char *str; /* "read" from string */
 
 	/* private; internal state */
 	char tag[1024]; /* current tag */
@@ -41,5 +46,5 @@ typedef struct xmlparser {
 	unsigned char readbuf[BUFSIZ];
 } XMLParser;
 
-void xmlparser_init(XMLParser *, FILE *);
-void xmlparser_parse(XMLParser *);
+void xmlparser_parse_fd(XMLParser *, int);
+void xmlparser_parse_string(XMLParser *, const char *);
