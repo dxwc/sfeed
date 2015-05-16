@@ -314,7 +314,8 @@ xmlparser_parse(XMLParser *x)
 				if(c == '&') {
 					if(datalen) {
 						x->data[datalen] = '\0';
-						x->xmldata(x, x->data, datalen);
+						if(x->xmldata)
+							x->xmldata(x, x->data, datalen);
 					}
 					x->data[0] = c;
 					datalen = 1;
