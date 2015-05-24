@@ -1,8 +1,10 @@
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
@@ -160,4 +162,44 @@ strtotime(const char *s, time_t *t)
 	*t = (time_t)l;
 
 	return 0;
+}
+
+int
+esnprintf(char *str, size_t size, const char *fmt, ...)
+{
+	va_list ap;
+	int r;
+
+	va_start(ap, fmt);
+	r = vsnprintf(str, size, fmt, ap);
+	va_end(ap);
+
+	if(r == -1 || (size_t)r >= size)
+		errx(1, "snprintf truncation");
+
+	return r;
+}
+
+/* print text, ignore tabs, newline and carriage return etc
+ * print some HTML 2.0 / XML 1.0 as normal text */
+void
+printcontent(const char *s, FILE *fp)
+{
+	const char *p;
+
+	for(p = s; *p; p++) {
+		if(*p == '\\') {
+			p++;
+			if(*p == '\\')
+				fputc('\\', fp);
+			else if(*p == 't')
+				fputc('\t', fp);
+			else if(*p == 'n')
+				fputc('\n', fp);
+			else
+				fputc(*p, fp); /* unknown */
+		} else {
+			fputc(*p, fp);
+		}
+	}
 }

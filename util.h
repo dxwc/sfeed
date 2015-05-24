@@ -23,7 +23,9 @@ enum { FieldUnixTimestamp = 0, FieldTimeFormatted, FieldTitle, FieldLink,
        FieldContent, FieldContentType, FieldId, FieldAuthor, FieldFeedType,
        FieldFeedName, FieldFeedUrl, FieldBaseSiteUrl, FieldLast };
 
+int          esnprintf(char *, size_t, const char *, ...);
 int          parseline(char **, size_t *, char **, unsigned int, int, FILE *);
+void         printcontent(const char *, FILE *);
 void         printfeednameid(const char *, FILE *);
 void         printhtmlencoded(const char *, FILE *);
 void         printlink(const char *, const char *, FILE *);

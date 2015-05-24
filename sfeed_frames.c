@@ -22,91 +22,6 @@ static char *line = NULL;
 static SLIST_HEAD(fhead, feed) fhead = SLIST_HEAD_INITIALIZER(fhead);
 static struct utimbuf contenttime;
 
-static void
-cleanup(void)
-{
-	if(fpmenu)
-		fclose(fpmenu);
-	if(fpitems)
-		fclose(fpitems);
-	if(fpindex)
-		fclose(fpindex);
-	if(fpcontent)
-		fclose(fpcontent);
-	fpmenu = NULL;
-	fpitems = NULL;
-	fpindex = NULL;
-	fpcontent = NULL;
-}
-
-/* same as errx() but first call cleanup() function */
-static void
-xerrx(int eval, const char *fmt, ...)
-{
-	va_list ap;
-
-	cleanup();
-
-	va_start(ap, fmt);
-	verrx(eval, fmt, ap);
-	va_end(ap);
-}
-
-/* same as err() but first call cleanup() function */
-static void
-xerr(int eval, const char *fmt, ...)
-{
-	int saved_errno = errno;
-	va_list ap;
-
-	cleanup();
-
-	errno = saved_errno;
-	va_start(ap, fmt);
-	verr(eval, fmt, ap);
-	va_end(ap);
-}
-
-static int
-esnprintf(char *str, size_t size, const char *fmt, ...)
-{
-	va_list ap;
-	int r;
-
-	va_start(ap, fmt);
-	r = vsnprintf(str, size, fmt, ap);
-	va_end(ap);
-
-	if(r == -1 || (size_t)r >= size)
-		xerrx(1, "snprintf");
-
-	return r;
-}
-
-/* print text, ignore tabs, newline and carriage return etc
- * print some HTML 2.0 / XML 1.0 as normal text */
-static void
-printcontent(const char *s, FILE *fp)
-{
-	const char *p;
-
-	for(p = s; *p; p++) {
-		if(*p == '\\') {
-			p++;
-			if(*p == '\\')
-				fputc('\\', fp);
-			else if(*p == 't')
-				fputc('\t', fp);
-			else if(*p == 'n')
-				fputc('\n', fp);
-			else
-				fputc(*p, fp); /* unknown */
-		} else {
-			fputc(*p, fp);
-		}
-	}
-}
-
 /* normalize path names, transform to lower-case and replace non-alpha and
  * non-digit with '-' */
 static size_t
@@ -160,24 +75,24 @@ main(int argc, char *argv[])
 	basepathlen = strlen(basepath);
 	if(basepathlen > 0) {
 		mkdir(basepath, S_IRWXU);
-		xerr(1, "mkdir: %s", basepath);
+		err(1, "mkdir: %s", basepath);
 	}
 	/* write main index page */
 	esnprintf(dirpath, sizeof(dirpath), "%s/index.html", basepath);
 	if(!(fpindex = fopen(dirpath, "w+b")))
-		xerr(1, "fopen: %s", dirpath);
+		err(1, "fopen: %s", dirpath);
 	esnprintf(dirpath, sizeof(dirpath), "%s/menu.html", basepath);
 	if(!(fpmenu = fopen(dirpath, "w+b")))
-		xerr(1, "fopen: %s", dirpath);
+		err(1, "fopen: %s", dirpath);
 	esnprintf(dirpath, sizeof(dirpath), "%s/items.html", basepath);
 	if(!(fpitems = fopen(dirpath, "w+b")))
-		xerr(1, "fopen: %s", dirpath);
+		err(1, "fopen: %s", dirpath);
 	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
 	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>"
 	      "<body class=\"frame\"><div id=\"items\">", fpitems);
 
 	if(!(fcur = calloc(1, sizeof(struct feed))))
-		xerr(1, "calloc");
+		err(1, "calloc");
 	SLIST_INSERT_HEAD(&fhead, fcur, entry);
 
 	while(parseline(&line, &linesize, fields, FieldLast, '\t', stdin) > 0) {
@@ -198,14 +113,14 @@ main(int argc, char *argv[])
 
 			/* directory doesn't exist: try to create it. */
 			if(stat(dirpath, &st) == -1 && mkdir(dirpath, S_IRWXU) == -1)
-				xerr(1, "mkdir: %s", dirpath);
+				err(1, "mkdir: %s", dirpath);
 			if(strlcpy(reldirpath, name, sizeof(reldirpath)) >= sizeof(reldirpath))
-				xerrx(1, "strlcpy: truncation");
+				errx(1, "strlcpy: truncation");
 
 			if(!(f = calloc(1, sizeof(struct feed))))
-				xerr(1, "calloc");
+				err(1, "calloc");
 			if(!(f->name = strdup(feedname)))
-				xerr(1, "strdup");
+				err(1, "strdup");
 			SLIST_INSERT_AFTER(fcur, f, entry);
 			fcur = f;
 
@@ -235,7 +150,7 @@ main(int argc, char *argv[])
 		/* file doesn't exist yet and has write access */
 		if(access(filepath, F_OK) != 0) {
 			if(!(fpcontent = fopen(filepath, "w+b")))
-				xerr(1, "fopen: %s", filepath);
+				err(1, "fopen: %s", filepath);
 			fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
 			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>\n"
 			      "<body class=\"frame\"><div class=\"content\">"
@@ -250,7 +165,6 @@ main(int argc, char *argv[])
 			printcontent(fields[FieldContent], fpcontent);
 			fputs("</div></body></html>", fpcontent);
 			fclose(fpcontent);
-			fpcontent = NULL;
 		}
 
 		/* write item. */
@@ -331,7 +245,13 @@ main(int argc, char *argv[])
 	      "</frameset>\n"
 	      "</html>", fpindex);
 
-	cleanup();
+	/* cleanup */
+	if(fpmenu)
+		fclose(fpmenu);
+	if(fpitems)
+		fclose(fpitems);
+	if(fpindex)
+		fclose(fpindex);
 
 	return 0;
 }
