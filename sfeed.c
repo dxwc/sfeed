@@ -317,7 +317,22 @@ string_append(String *s, const char *data, size_t len)
 static int
 gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 {
-	char tzname[16] = "GMT";
+	static struct tzone {
+		char *name;
+		int offhour;
+		int offmin;
+	} tzones[] = {
+		{ "cdt", 5, 0 },
+		{ "cst", 6, 0 },
+		{ "edt", 4, 0 },
+		{ "est", 5, 0 },
+		{ "mdt", 6, 0 },
+		{ "mst", 7, 0 },
+		{ "pdt", 7, 0 },
+		{ "pst", 8, 0 }
+	};
+
+	char tzbuf[16], *tz = "GMT";
 	int tzhour = 0, tzmin = 0, r;
 	char c = '+';
 	size_t i;
@@ -331,10 +346,10 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 	for(i = 0; s[i] && isalpha((int)s[i]); i++)
 		;
 	/* copy tz name */
-	if(i >= sizeof(tzname))
-		i = sizeof(tzname) - 1;
-	memcpy(tzname, s, i);
-	tzname[i] = '\0';
+	if(i >= sizeof(tzbuf))
+		i = sizeof(tzbuf) - 1;
+	memcpy(tzbuf, s, i);
+	tzbuf[i] = '\0';
 
 	if((sscanf(s, "%c%02d:%02d", &c, &tzhour, &tzmin)) == 3) {
 		;
@@ -347,10 +362,22 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 		tzhour = 0;
 		tzmin = 0;
 	}
+
+	/* compare tz and adjust offset relative to GMT */
+	if (tzbuf[0])
+		tz = tzbuf;
+	for (i = 0; i < LEN(tzones); i++) {
+		if (!(strcasecmp(tzbuf, tzones[i].name))) {
+			tz = "GMT";
+			tzhour += tzones[i].offhour;
+			tzmin += tzones[i].offmin;
+			break;
+		}
+	}
+
 time_ok:
 	r = snprintf(buf, bufsiz, "%s%c%02d%02d",
-	             tzname[0] ? tzname : "GMT",
-	             c, tzhour, tzmin);
+	             tz, c, tzhour, tzmin);
 	if(r < 0 || (size_t)r >= bufsiz)
 		return -1; /* truncation or error */
 	if(tzoffset)
@@ -379,7 +406,7 @@ parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 		if(!(p = strptime(s, formats[i], &tm)))
 			continue;
 		tm.tm_isdst = -1; /* don't use DST */
-		if((t = mktime(&tm)) == -1) /* error */
+		if((t = timegm(&tm)) == -1) /* error */
 			return -1;
 		if(gettimetz(p, tz, sizeof(tz), &tzoffset) != -1)
 			t -= tzoffset;
