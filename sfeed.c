@@ -222,44 +222,46 @@ entitytostr(const char *e, char *buffer, size_t bufsiz)
 	uint32_t l = 0, cp = 0;
 	size_t len = 0, b;
 	int c;
+	char *end;
 
-	/* doesn't start with & */
-	if(*e != '&' || bufsiz < 5)
+	/* doesn't start with & or insufficient buffer size */
+	if(e[0] != '&' || bufsiz < 5)
 		return 0;
-	/* numeric / hexadecimal entity */
-	if(e[1] == '#') {
-		e += 2; /* skip &# */
-		errno = 0;
-		/* hex (16) or decimal (10) */
-		if(*e == 'x')
-			l = strtoul(e + 1, NULL, 16);
-		else
-			l = strtoul(e, NULL, 10);
-		if(errno != 0)
-			return 0; /* invalid value */
-		if(!(len = codepointtoutf8(l, &cp)))
-			return 0;
-		/* make string */
-		for(b = 0; b < len; b++)
-			buffer[b] = (cp >> (8 * (len - 1 - b))) & 0xff;
-		buffer[len] = '\0';
-		/* escape whitespace */
-		if(ISWSNOSPACE(buffer[0])) {
-			switch(buffer[0]) {
-			case '\n': c = 'n';  break;
-			case '\\': c = '\\'; break;
-			case '\t': c = 't';  break;
-			default:   c = '\0'; break;
-			}
-			if(c != '\0') {
-				buffer[0] = '\\';
-				buffer[1] = c;
-				buffer[2] = '\0';
-				len = 2;
-			}
+	/* named entity */
+	if(e[1] != '#')
+		return namedentitytostr(e, buffer, bufsiz);
+
+	/* e[1] == '#', numeric / hexadecimal entity */
+	e += 2; /* skip "&#" */
+	errno = 0;
+	/* hex (16) or decimal (10) */
+	if(*e == 'x')
+		l = strtoul(e + 1, &end, 16);
+	else
+		l = strtoul(e, &end, 10);
+	/* invalid value or not a well-formed entity */
+	if(errno != 0 || (*end != '\0' && *end != ';'))
+		return 0;
+	if(!(len = codepointtoutf8(l, &cp)))
+		return 0;
+	/* make string */
+	for(b = 0; b < len; b++)
+		buffer[b] = (cp >> (8 * (len - 1 - b))) & 0xff;
+	buffer[len] = '\0';
+	/* escape whitespace */
+	if(ISWSNOSPACE(buffer[0])) {
+		switch(buffer[0]) {
+		case '\n': c = 'n';  break;
+		case '\\': c = '\\'; break;
+		case '\t': c = 't';  break;
+		default:   c = '\0'; break;
 		}
-	} else {
-		len = namedentitytostr(e, buffer, bufsiz);
+		if(c != '\0') {
+			buffer[0] = '\\';
+			buffer[1] = c;
+			buffer[2] = '\0';
+			len = 2;
+		}
 	}
 	return len;
 }
