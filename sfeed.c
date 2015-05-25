@@ -87,7 +87,7 @@ static int    parsetime(const char *, char *, size_t, time_t *);
 static void   printfields(void);
 static void   string_append(String *, const char *, size_t);
 static void   string_buffer_init(String *, size_t);
-static int    string_buffer_realloc(String *, size_t);
+static void   string_buffer_realloc(String *, size_t);
 static void   string_clear(String *);
 static void   string_print(String *);
 static void   xml_handler_attr(XMLParser *, const char *, size_t,
@@ -282,7 +282,7 @@ string_buffer_init(String *s, size_t len)
 	string_clear(s);
 }
 
-static int
+static void
 string_buffer_realloc(String *s, size_t newlen)
 {
 	char *p;
@@ -294,7 +294,6 @@ string_buffer_realloc(String *s, size_t newlen)
 		err(1, "realloc");
 	s->bufsiz = alloclen;
 	s->data = p;
-	return s->bufsiz;
 }
 
 static void
@@ -624,6 +623,7 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 	ctx.tagid = gettag(ctx.item.feedtype, ctx.tag, ctx.taglen);
 	if(ctx.tagid == TagUnknown)
 		ctx.field = NULL;
+
 	if(ctx.item.feedtype == FeedTypeRSS) {
 		if(ctx.tagid == RSSTagPubdate || ctx.tagid == RSSTagDcdate)
 			ctx.field = &ctx.item.timestamp;
@@ -643,9 +643,6 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 		} else if(ctx.tagid == RSSTagAuthor || ctx.tagid == RSSTagDccreator) {
 			ctx.field = &ctx.item.author;
 		}
-		/* clear field */
-		if(ctx.field)
-			string_clear(ctx.field);
 	} else if(ctx.item.feedtype == FeedTypeAtom) {
 		if(ctx.tagid == AtomTagPublished || ctx.tagid == AtomTagUpdated) {
 			/* ignore, prefer updated over published */
@@ -667,10 +664,10 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 		} else if(ctx.tagid == AtomTagAuthor) {
 			ctx.field = &ctx.item.author;
 		}
-		/* clear field */
-		if(ctx.field)
-			string_clear(ctx.field);
 	}
+	/* clear field */
+	if(ctx.field)
+		string_clear(ctx.field);
 }
 
 static void
