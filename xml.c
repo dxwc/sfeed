@@ -207,7 +207,7 @@ xmlparser_parsecdata(XMLParser *x)
 				if(datalen >= 2) {
 					datalen -= 2;
 					x->data[datalen] = '\0';
-					if(x->xmlcdata && datalen)
+					if(x->xmlcdata)
 						x->xmlcdata(x, x->data, datalen);
 				}
 				if(x->xmlcdataend)
