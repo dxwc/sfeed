@@ -72,6 +72,7 @@ printlink(const char *link, const char *baseurl, FILE *fp)
 /* read a field-separated line from 'fp',
  * separated by a character 'separator',
  * 'fields' is a list of pointer with a maximum size of 'maxfields'.
+ * 'maxfields' must be > 0.
  * 'line' buffer is allocated using malloc, 'size' will contain the
  * allocated buffer size.
  * returns: amount of fields read or -1 on error. */
@@ -86,7 +87,7 @@ parseline(char **line, size_t *size, char **fields,
 		return -1;
 
 	for(prev = *line, i = 0;
-	    (s = strchr(prev, separator)) && i <= maxfields;
+	    (s = strchr(prev, separator)) && i < maxfields - 1;
 	    i++) {
 		*s = '\0';
 		fields[i] = prev;
