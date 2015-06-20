@@ -101,47 +101,36 @@ parseline(char **line, size_t *size, char **fields,
 	return (int)i;
 }
 
-const char *
+char *
 trimend(const char *s)
 {
 	size_t len = strlen(s);
 
 	for(; len > 0 && isspace((int)s[len - 1]); len--)
 		;
-	return &s[len];
+	return (char*)&s[len];
 }
 
-const char *
+char *
 trimstart(const char *s)
 {
 	for(; *s && isspace((int)*s); s++)
 		;
-	return s;
+	return (char *)s;
 }
 
-/* print feed name for id; spaces and tabs in string as "-"
- * (spaces in anchors are not valid). */
 void
-printfeednameid(const char *s, FILE *fp)
+printxmlencoded(const char *s, FILE *fp)
 {
-	const char *e;
-
-	s = trimstart(s);
-	e = trimend(s);
-
-	for(; *s && s != e; s++)
-		fputc(isspace((int)*s) ? '-' : tolower((int)*s), fp);
-}
-
-void
-printhtmlencoded(const char *s, FILE *fp) {
 	for(; *s; s++) {
 		switch(*s) {
-		case '<': fputs("&lt;", fp); break;
-		case '>': fputs("&gt;", fp); break;
-/*		case '&': fputs("&amp;", fp); break;*/
+		case '<':  fputs("&lt;", fp);   break;
+		case '>':  fputs("&gt;", fp);   break;
+		case '\'': fputs("&apos;", fp); break;
+		case '&':  fputs("&amp;", fp);  break;
+		case '"':  fputs("&quot;", fp); break;
 		default:
-			fputc(*s, fp);
+			fputc((int)*s, fp);
 		}
 	}
 }
@@ -179,22 +168,6 @@ strtotime(const char *s, time_t *t)
 	*t = (time_t)l;
 
 	return 0;
-}
-
-int
-esnprintf(char *str, size_t size, const char *fmt, ...)
-{
-	va_list ap;
-	int r;
-
-	va_start(ap, fmt);
-	r = vsnprintf(str, size, fmt, ap);
-	va_end(ap);
-
-	if(r == -1 || (size_t)r >= size)
-		errx(1, "snprintf truncation");
-
-	return r;
 }
 
 /* print text, ignore tabs, newline and carriage return etc
