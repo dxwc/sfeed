@@ -328,14 +328,15 @@ string_print(String *s)
 	e = trimend(p);
 
 	for(; *p && p != e; p++) {
-		if(ISWSNOSPACE(*p)) {
+		/* isspace(c) && c != ' '. */
+		if(((unsigned)*p - '\t') < 5) {
 			switch(*p) {
 			case '\n': fputs("\\n", stdout); break;
 			case '\\': fputs("\\\\", stdout); break;
 			case '\t': fputs("\\t", stdout); break;
 			default: break; /* ignore other whitespace chars */
 			}
-		} else {
+		} else if(!iscntrl((int)*p)) { /* ignore control chars */
 			putchar(*p);
 		}
 	}
