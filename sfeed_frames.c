@@ -211,7 +211,8 @@ main(int argc, char *argv[])
 			fputs("\" target=\"items\">", fpmenu);
 			if(f->totalnew > 0)
 				fputs("<b><u>", fpmenu);
-			fprintf(fpmenu, "%s (%lu)", f->name, f->totalnew);
+			printxmlencoded(f->name, fpmenu);
+			fprintf(fpmenu, "(%lu)", f->totalnew);
 			if(f->totalnew > 0)
 				fputs("</u></b>", fpmenu);
 			fputs("</a><br/>\n", fpmenu);

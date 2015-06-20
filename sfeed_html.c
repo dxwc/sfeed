@@ -129,7 +129,8 @@ main(int argc, char *argv[])
 			fputs("\">", stdout);
 			if(f->totalnew > 0)
 				fputs("<b><u>", stdout);
-			fprintf(stdout, "%s (%lu)", f->name, f->totalnew);
+			printxmlencoded(f->name, stdout);
+			fprintf(stdout, "(%lu)", f->totalnew);
 			if(f->totalnew > 0)
 				fputs("</u></b>", stdout);
 			fputs("</a></li>\n", stdout);
