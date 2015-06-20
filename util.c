@@ -14,7 +14,7 @@
 #include "util.h"
 
 void
-printurlencode(const char *s, size_t len, FILE *fp)
+printurlencoded(const char *s, size_t len, FILE *fp)
 {
 	size_t i;
 
@@ -43,7 +43,7 @@ printlink(const char *link, const char *baseurl, FILE *fp)
 	if(isrelative) {
 		if((ebaseproto = strstr(baseurl, "://"))) {
 			ebaseproto += strlen("://");
-			printurlencode(baseurl, ebaseproto - baseurl, fp);
+			printurlencoded(baseurl, ebaseproto - baseurl, fp);
 		} else {
 			ebaseproto = baseurl;
 			if(*baseurl || (link[0] == '/' && link[1] == '/'))
@@ -54,19 +54,19 @@ printlink(const char *link, const char *baseurl, FILE *fp)
 				link += 2;
 			else if((ebasedomain = strchr(ebaseproto, '/')))
 				/* relative to baseurl and baseurl path. */
-				printurlencode(ebaseproto, ebasedomain - ebaseproto, fp);
+				printurlencoded(ebaseproto, ebasedomain - ebaseproto, fp);
 			else
-				printurlencode(ebaseproto, strlen(ebaseproto), fp);
+				printurlencoded(ebaseproto, strlen(ebaseproto), fp);
 		} else if((ebasedomain = strrchr(ebaseproto, '/'))) {
 			/* relative to baseurl and baseurl path. */
-			printurlencode(ebaseproto, ebasedomain - ebaseproto + 1, fp);
+			printurlencoded(ebaseproto, ebasedomain - ebaseproto + 1, fp);
 		} else {
-			printurlencode(ebaseproto, strlen(ebaseproto), fp);
+			printurlencoded(ebaseproto, strlen(ebaseproto), fp);
 			if(*baseurl && *link)
 				fputc('/', fp);
 		}
 	}
-	printurlencode(link, strlen(link), fp);
+	printurlencoded(link, strlen(link), fp);
 }
 
 /* read a field-separated line from 'fp',

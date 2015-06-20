@@ -1,3 +1,4 @@
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,31 +6,54 @@
 
 #include "util.h"
 
-int
-main(void)
+static time_t comparetime;
+static char *line = NULL;
+static size_t size = 0;
+
+static void
+printfeed(FILE *fp, const char *feedname)
 {
-	char *line = NULL, *fields[FieldLast];
-	time_t parsedtime, comparetime;
-	size_t size = 0;
+	char *fields[FieldLast];
+	time_t parsedtime;
 	int r;
 
-	comparetime = time(NULL) - (3600 * 24); /* 1 day is old news */
-	while(parseline(&line, &size, fields, FieldLast, '\t', stdin) > 0) {
+	while(parseline(&line, &size, fields, FieldLast, '\t', fp) > 0) {
 		r = strtotime(fields[FieldUnixTimestamp], &parsedtime);
 		if(r != -1 && parsedtime >= comparetime)
-			fputs(" N  ", stdout);
+			fputs(" N ", stdout);
 		else
-			fputs("    ", stdout);
-		if(fields[FieldFeedName][0] != '\0')
-			printf("%-15.15s  ", fields[FieldFeedName]);
-		printf("%-30.30s  ", fields[FieldTimeFormatted]);
+			fputs("   ", stdout);
+
+		if(feedname[0])
+			printf("%-15.15s ", feedname);
+		printf(" %-30.30s  ", fields[FieldTimeFormatted]);
 		printutf8pad(stdout, fields[FieldTitle], 70, ' ');
 		fputs("  ", stdout);
-		if(fields[FieldBaseSiteUrl][0] != '\0')
-			printlink(fields[FieldLink], fields[FieldBaseSiteUrl], stdout);
-		else
-			printlink(fields[FieldLink], fields[FieldFeedUrl], stdout);
+		fputs(fields[FieldLink], stdout);
 		putchar('\n');
+	}
+}
+
+int
+main(int argc, char *argv[])
+{
+	FILE *fp;
+	int i;
+
+	/* 1 day is old news */
+	comparetime = time(NULL) - (3600 * 24);
+
+	if(argc == 1) {
+		printfeed(stdin, "");
+	} else {
+		for(i = 1; i < argc; i++) {
+			if(!(fp = fopen(argv[i], "r")))
+				err(1, "fopen: %s", argv[i]);
+			printfeed(fp, xbasename(argv[i]));
+			if(ferror(fp))
+				err(1, "ferror: %s", argv[i]);
+			fclose(fp);
+		}
 	}
 	return 0;
 }
