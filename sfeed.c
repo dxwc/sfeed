@@ -360,7 +360,8 @@ printfields(void)
 	putchar(FieldSeparator);
 	string_print(&ctx.item.title);
 	putchar(FieldSeparator);
-	string_print(&ctx.item.link);
+	/* always print absolute urls */
+	printlink(ctx.item.link.data, baseurl, stdout);
 	putchar(FieldSeparator);
 	string_print(&ctx.item.content);
 	putchar(FieldSeparator);
