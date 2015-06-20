@@ -11,6 +11,15 @@ static unsigned int isbase = 0, islink = 0, isfeedlink = 0, found = 0;
 static char feedlink[4096] = "", basehref[4096] = "", feedtype[256] = "";
 
 static void
+printfeedtype(const char *s, FILE *fp)
+{
+	for(; *s; s++) {
+		if(!isspace((int)*s))
+			fputc(*s, fp);
+	}
+}
+
+static void
 xmltagstart(XMLParser *p, const char *tag, size_t taglen)
 {
 	(void)p;
@@ -34,7 +43,7 @@ xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort)
 
 	if(isfeedlink) {
 		if(*feedtype) {
-			printfeednameid(feedtype, stdout);
+			printfeedtype(feedtype, stdout);
 			putchar(' ');
 		}
 		printlink(feedlink, basehref, stdout);
@@ -75,7 +84,6 @@ main(int argc, char *argv[])
 {
 	XMLParser parser;
 
-	/* base href */
 	if(argc > 1)
 		strlcpy(basehref, argv[1], sizeof(basehref));
 

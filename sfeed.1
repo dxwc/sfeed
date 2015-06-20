@@ -6,16 +6,15 @@
 .Nd simple RSS and Atom parser
 .Sh SYNOPSIS
 .Nm
-.Op Ar suffix string | Fl Ar v
+.Op Ar baseurl
 .Sh DESCRIPTION
 .Nm
 reads RSS or Atom feed data (XML) from stdin. It writes the feed data in a
-tab-separated format to stdout.
-.Sh OPTIONS
-.Bl -tag -width 17n
-.It Fl v
-show program version
-.El
+tab-separated format to stdout. A
+.Ar baseurl
+can be specified if the links in the feed are relative urls and the baseurl of
+the content differs from the feed. It is generally recommended to always have
+absolute urls in your feeds, but the web sucks.
 .Sh TAB-SEPARATED FORMAT FIELDS
 The items are saved in a TSV-like format except newlines, tabs and
 backslash are escaped with \\ (\\n, \\t and \\\\). Carriage returns (\\r) are
@@ -30,7 +29,7 @@ string, date and time in the format: YYYY-mm-dd HH:MM:SS tzname[[+-][HHMM]]
 .It Ar item title
 string
 .It Ar item link
-string
+string, made to absolute url, unsafe characters are encoded
 .It Ar item content
 string
 .It Ar item content\-type
@@ -43,6 +42,7 @@ string
 string, "rss" or "atom"
 .El
 .Sh SEE ALSO
+.Xr sfeed_plain 1 ,
 .Xr sfeed_update 1 ,
 .Xr sh 1
 .Sh AUTHORS
