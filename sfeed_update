@@ -4,9 +4,7 @@
 
 # defaults
 sfeedpath="$HOME/.sfeed"
-sfeedfile="$sfeedpath/feeds"
-# temporary file for new feeds (for merging).
-sfeedfilenew="$sfeedfile.new"
+sfeeddir="${sfeedpath}/feeds"
 
 # load config (evaluate shellscript).
 # loadconfig(configfile)
@@ -22,10 +20,10 @@ loadconfig() {
 
 	# load config: config is loaded here to be able to override above variables
 	# (sfeedpath, sfeedfile, etc).
-	if [ -r "$config" ]; then
-		. "$config"
+	if [ -r "${config}" ]; then
+		. "${config}"
 	else
-		echo "Configuration file \"$config\" does not exist or is not readable." >&2
+		echo "Configuration file \"${config}\" does not exist or is not readable." >&2
 		echo "See sfeedrc.example for an example." >&2
 		exit 1
 	fi
@@ -36,15 +34,14 @@ loadconfig() {
 merge() {
 	# unique sort by id, link, title.
 	# order by feedname (asc), timestamp (desc).
-	(cat "$1" "$2" 2> /dev/null) |
-		sort -t '	' -u -k7,7 -k4,4 -k3,3 |
-		sort -t '	' -k10,10 -k1r,1
+	(sort -t '	' -u -k7,7 -k4,4 -k3,3 "$1" "$2" 2>/dev/null) |
+	sort -t '	' -k10,10 -k1r,1
 }
 
 # fetch a feed via HTTP/HTTPS etc.
-# fetchfeed(url, name)
+# fetchfeed(url, name, feedfile)
 fetchfeed() {
-	if curl -f -s -S -L --max-time 15 -z "$sfeedfile" "$1"; then
+	if curl -f -s -S -L --max-time 15 -z "$3" "$1"; then
 		printf "  OK %s %s\n" "`date +'%H:%M:%S'`" "$2" >&2
 	else
 		printf "FAIL %s %s\n" "`date +'%H:%M:%S'`" "$2" >&2
@@ -66,18 +63,27 @@ convertencoding() {
 # fetch and parse feed.
 # feed(name, feedurl, [basesiteurl], [encoding])
 feed() {
-	(tmpfeedfile=$(mktemp -p "$TMPDIR")
+	(tmpfeedfile=$(mktemp -p "${sfeedtmpdir}")
+	name="$1"
 	tmpencfile=""
 	encoding="$4"
-	if [ ! "$encoding" = "" ]; then
-		fetchfeed "$2" "$1" | convertencoding "$encoding" "utf-8"
+	sfeedfile="${sfeeddir}/$1"
+	if [ ! "${encoding}" = "" ]; then
+		fetchfeed "$2" "$1" "${sfeedfile}" | convertencoding "${encoding}" "utf-8"
 	else # detect encoding.
-		tmpencfile=$(mktemp -p "$TMPDIR")
-		fetchfeed "$2" "$1" > "$tmpencfile"
-		detectenc=$(sfeed_xmlenc < "$tmpencfile")
-		convertencoding "$detectenc" "utf-8" < "$tmpencfile"
-		rm -f "$tmpencfile"
-	fi | sfeed "$1	$2	$3" > "$tmpfeedfile") &
+		tmpencfile=$(mktemp -p "${sfeedtmpdir}")
+		fetchfeed "$2" "$1" "${sfeedfile}" > "${tmpencfile}"
+		detectenc=$(sfeed_xmlenc < "${tmpencfile}")
+		convertencoding "${detectenc}" "utf-8" < "${tmpencfile}"
+		rm -f "${tmpencfile}"
+	fi | sfeed "$3" > "${tmpfeedfile}"
+
+	# get new data and merge with old.
+	sfeedfilenew="${sfeeddir}/${name}.new"
+	touch "${sfeedfile}"
+	merge "${sfeedfile}" "${tmpfeedfile}" > "${sfeedfilenew}"
+	# overwrite old file with updated file
+	mv "${sfeedfilenew}" "${sfeedfile}") &
 }
 
 terminated() {
@@ -86,39 +92,31 @@ terminated() {
 
 cleanup() {
 	# remove temporary files
-	rm -rf "$tmpfile" "$TMPDIR"
+	rm -rf "${sfeedtmpdir}"
 }
 
 feeds() {
-	echo "Configuration file \"$config\" is invalid or does not contain a \"feeds\" function." >&2
+	echo "Configuration file \"${config}\" is invalid or does not contain a \"feeds\" function." >&2
 	echo "See sfeedrc.example for an example." >&2
 }
 
 # load config file.
 loadconfig "$1"
 # fetch feeds and store in temporary file.
-TMPDIR=$(mktemp -d "/tmp/sfeed_XXXXXX")
+sfeedtmpdir="$(mktemp -d '/tmp/sfeed_XXXXXX')"
 # kill whole current process group on ^C.
 isrunning="1"
 # SIGTERM: signal to terminate parent.
 trap -- "terminated" "15"
 # SIGINT: kill all running childs >:D
 trap -- "kill -TERM -$$" "2"
+# make sure path exists.
+mkdir -p "${sfeeddir}"
 # fetch feeds specified in config file.
 feeds
-# make sure path exists.
-mkdir -p "$sfeedpath"
 # wait till all feeds are fetched (allows running in parallel).
 wait
-# if terminated cleanup.
-[ "$isrunning" = "0" ] && cleanup && exit 1
-# concat all individual feed files to a single file.
-# NOTE: mktemp uses $TMPDIR for temporary directory.
-tmpfile=$(mktemp "sfeed_XXXXXX")
-find "$TMPDIR" -type f -exec cat {} \; > "$tmpfile"
-# get new data and merge with old.
-merge "$sfeedfile" "$tmpfile" > "$sfeedfilenew"
-# overwrite old file with updated file
-mv "$sfeedfilenew" "$sfeedfile"
 # cleanup temporary files etc.
 cleanup
+# if terminated.
+[ "${isrunning}" = "0" ] && exit 1

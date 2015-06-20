@@ -93,15 +93,12 @@ The order and format of the fields are:
 item unix timestamp      - string unix timestamp (GMT+0)
 item formatted timestamp - string timestamp (YYYY-mm-dd HH:MM:SS tz[+-]HHMM)
 item title               - string
-item link                - string
+item link                - string, absolute url, unsafe characters are encoded
 item content             - string
 item contenttype         - string ("html" or "plain")
 item id                  - string
 item author              - string
 feed type                - string ("rss" or "atom")
-feed name                - string (extra field added by sfeed_update)
-feed url                 - string (extra field added by sfeed_update)
-item baseurl site        - string (extra field added by sfeed_update)
 
 
 Build and install
