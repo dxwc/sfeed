@@ -8,7 +8,6 @@ SRC = \
 	sfeed_html.c\
 	sfeed_opml_import.c\
 	sfeed_plain.c\
-	sfeed_stats.c\
 	sfeed_web.c\
 	sfeed_xmlenc.c\
 	util.c\
@@ -21,7 +20,6 @@ BIN = \
 	sfeed_html\
 	sfeed_opml_import\
 	sfeed_plain\
-	sfeed_stats\
 	sfeed_web\
 	sfeed_xmlenc
 SCRIPTS = \
@@ -34,7 +32,6 @@ MAN1 = \
 	sfeed_opml_export.1\
 	sfeed_opml_import.1\
 	sfeed_plain.1\
-	sfeed_stats.1\
 	sfeed_update.1\
 	sfeed_web.1\
 	sfeed_xmlenc.1
@@ -46,7 +43,6 @@ DOC = \
 	TODO
 HDR = \
 	compat.h\
-	queue.h\
 	util.h\
 	xml.h
 
@@ -60,31 +56,14 @@ all: $(BIN)
 dist: $(BIN) doc
 	rm -rf release/${VERSION}
 	mkdir -p release/${VERSION}
-	# legacy man-pages (add doc-oldman as dependency rule).
-	#for m in $(MAN1); do cp -f doc/man/$$m release/${VERSION}/; done
 	cp -f ${MAN1} ${HDR} ${SCRIPTS} ${SRC} ${COMPATSRC} ${DOC} \
 		Makefile config.mk \
 		sfeedrc.example style.css \
 		release/${VERSION}/
-	# copy doc.
-	cp -rf doc/ release/${VERSION}/
 	# make tarball
 	rm -f sfeed-${VERSION}.tar.gz
 	(cd release/${VERSION}; \
 	tar -czf ../../sfeed-${VERSION}.tar.gz .)
-
-doc: doc-oldman
-
-# man to HTML: make sure to copy the mandoc example stylesheet to
-# doc/html/man.css .
-doc-html: $(MAN1)
-	mkdir -p doc/html
-	for m in $(MAN1); do mandoc -Ios="" -Thtml -Ostyle=man.css $$m > doc/html/$$m.html; done
-
-# legacy man pages, if you want semantic mandoc pages just copy them.
-doc-oldman: $(MAN1)
-	mkdir -p doc/man
-	for m in $(MAN1); do mandoc -Ios="" -Tman $$m > doc/man/$$m; done
 
 ${OBJ}: config.mk ${HDR}
 
@@ -102,9 +81,6 @@ sfeed_opml_import: sfeed_opml_import.o xml.o util.o ${EXTRAOBJ}
 
 sfeed_plain: sfeed_plain.o util.o
 	${CC} -o $@ sfeed_plain.o util.o ${LDFLAGS}
-
-sfeed_stats: sfeed_stats.o util.o ${EXTRAOBJ}
-	${CC} -o $@ sfeed_stats.o util.o ${EXTRAOBJ} ${LDFLAGS}
 
 sfeed_web: sfeed_web.o xml.o util.o ${EXTRAOBJ}
 	${CC} -o $@ sfeed_web.o xml.o util.o ${EXTRAOBJ} ${LDFLAGS}
