@@ -11,8 +11,6 @@
 #include "util.h"
 #include "xml.h"
 
-/* fast isspace(c) && c != ' ' check. */
-#define ISWSNOSPACE(c)    (((unsigned)c - '\t') < 5)
 #define ISINCONTENT(ctx)  ((ctx).iscontent && !((ctx).iscontenttag))
 #define ISCONTENTTAG(ctx) (!((ctx).iscontent) && (ctx).iscontenttag)
 /* string and size */
@@ -27,6 +25,7 @@ enum { ContentTypeNone = 0, ContentTypePlain = 1, ContentTypeHTML = 2 };
 static const char *contenttypes[] = { "", "plain", "html" };
 
 static const int FieldSeparator = '\t'; /* output field seperator character */
+static const char *baseurl = "";
 
 enum {
 	TagUnknown = 0,
@@ -60,8 +59,8 @@ typedef struct feeditem {
 } FeedItem;
 
 typedef struct feedtag {
-	char *name;
-	size_t namelen;
+	char   *name;
+	size_t  namelen;
 	int id;
 } FeedTag;
 
@@ -76,13 +75,10 @@ typedef struct feedcontext {
 	int       attrcount;
 } FeedContext;
 
-static size_t codepointtoutf8(uint32_t, uint32_t *);
-static size_t entitytostr(const char *, char *, size_t);
 static int    gettag(int, const char *, size_t);
 static int    gettimetz(const char *, char *, size_t, int *);
 static int    isattr(const char *, size_t, const char *, size_t);
 static int    istag(const char *, size_t, const char *, size_t);
-static size_t namedentitytostr(const char *, char *, size_t);
 static int    parsetime(const char *, char *, size_t, time_t *);
 static void   printfields(void);
 static void   string_append(String *, const char *, size_t);
@@ -106,7 +102,6 @@ static void   xml_handler_start_element_parsed(XMLParser *, const char *,
 
 static FeedContext ctx;
 static XMLParser parser; /* XML parser state */
-static char *append = NULL; /* append string after each output line */
 
 /* unique number for parsed tag (faster comparison) */
 static int
@@ -161,109 +156,6 @@ gettag(int feedtype, const char *name, size_t namelen)
 		}
 	}
 	return TagUnknown;
-}
-
-static size_t
-codepointtoutf8(uint32_t cp, uint32_t *utf)
-{
-	if(cp >= 0x10000) {
-		/* 4 bytes */
-		*utf = 0xf0808080 | ((cp & 0xfc0000) << 6) |
-		       ((cp & 0x3f000) << 4) | ((cp & 0xfc0) << 2) |
-		       (cp & 0x3f);
-		return 4;
-	} else if(cp >= 0x00800) {
-		/* 3 bytes */
-		*utf = 0xe08080 |
-		       ((cp & 0x3f000) << 4) | ((cp & 0xfc0) << 2) |
-		       (cp & 0x3f);
-		return 3;
-	} else if(cp >= 0x80) {
-		/* 2 bytes */
-		*utf = 0xc080 |
-		       ((cp & 0xfc0) << 2) | (cp & 0x3f);
-		return 2;
-	}
-	*utf = cp & 0xff;
-	return *utf ? 1 : 0; /* 1 byte */
-}
-
-static size_t
-namedentitytostr(const char *e, char *buffer, size_t bufsiz)
-{
-	char *entities[6][2] = {
-		{ "&lt;",   "<"  },
-		{ "&gt;",   ">"  },
-		{ "&apos;", "'"  },
-		{ "&amp;",  "&"  },
-		{ "&quot;", "\"" },
-		{ NULL,     NULL }
-	};
-	size_t i;
-
-	if(*e != '&' || bufsiz < 2) /* doesn't start with & */
-		return 0;
-	for(i = 0; entities[i][0]; i++) {
-		/* NOTE: compares max 7 chars */
-		if(!strncasecmp(e, entities[i][0], 6)) {
-			buffer[0] = *(entities[i][1]);
-			buffer[1] = '\0';
-			return 1;
-		}
-	}
-	return 0;
-}
-
-/* convert named- or numeric entity string to buffer string
- * returns byte-length of string. */
-static size_t
-entitytostr(const char *e, char *buffer, size_t bufsiz)
-{
-	uint32_t l = 0, cp = 0;
-	size_t len = 0, b;
-	int c;
-	char *end;
-
-	/* doesn't start with & or insufficient buffer size */
-	if(e[0] != '&' || bufsiz < 5)
-		return 0;
-	/* named entity */
-	if(e[1] != '#')
-		return namedentitytostr(e, buffer, bufsiz);
-
-	/* e[1] == '#', numeric / hexadecimal entity */
-	e += 2; /* skip "&#" */
-	errno = 0;
-	/* hex (16) or decimal (10) */
-	if(*e == 'x')
-		l = strtoul(e + 1, &end, 16);
-	else
-		l = strtoul(e, &end, 10);
-	/* invalid value or not a well-formed entity */
-	if(errno != 0 || (*end != '\0' && *end != ';'))
-		return 0;
-	if(!(len = codepointtoutf8(l, &cp)))
-		return 0;
-	/* make string */
-	for(b = 0; b < len; b++)
-		buffer[b] = (cp >> (8 * (len - 1 - b))) & 0xff;
-	buffer[len] = '\0';
-	/* escape whitespace */
-	if(ISWSNOSPACE(buffer[0])) {
-		switch(buffer[0]) {
-		case '\n': c = 'n';  break;
-		case '\\': c = '\\'; break;
-		case '\t': c = 't';  break;
-		default:   c = '\0'; break;
-		}
-		if(c != '\0') {
-			buffer[0] = '\\';
-			buffer[1] = c;
-			buffer[2] = '\0';
-			len = 2;
-		}
-	}
-	return len;
 }
 
 /* clear string only; don't free, prevents unnecessary reallocation */
@@ -479,10 +371,6 @@ printfields(void)
 	string_print(&ctx.item.author);
 	putchar(FieldSeparator);
 	fputs(feedtypes[ctx.item.feedtype], stdout);
-	if(append) {
-		putchar(FieldSeparator);
-		fputs(append, stdout);
-	}
 	putchar('\n');
 }
 
@@ -703,12 +591,17 @@ static void
 xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
 {
 	char buffer[16];
-	size_t len;
+	int len;
 
 	/* try to translate entity, else just pass as data to
-         * xml_data_handler */
-	if((len = entitytostr(data, buffer, sizeof(buffer))) > 0)
-		xml_handler_data(p, buffer, len);
+	 * xml_data_handler */
+	len = xml_entitytostr(data, buffer, sizeof(buffer));
+	/* this should never happen (buffer too small) */
+	if(len < 0)
+		return;
+
+	if(len > 0)
+		xml_handler_data(p, buffer, (size_t)len);
 	else
 		xml_handler_data(p, data, datalen);
 }
@@ -786,13 +679,8 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 int
 main(int argc, char *argv[])
 {
-	if(argc > 1) {
-		append = argv[1];
-		if(!strcmp(argv[1], "-v")) {
-			printf("%s\n", VERSION);
-			return 0;
-		}
-	}
+	if(argc > 1)
+		baseurl = argv[1];
 
 	/* init strings and initial memory pool size */
 	string_buffer_init(&ctx.item.timestamp, 64);

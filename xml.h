@@ -29,22 +29,35 @@ typedef struct xmlparser {
 
 	int (*getnext)(struct xmlparser *);
 
-	int readerrno; /* errno set from read(). */
-	int fd; /* fd to read from */
+	/* for use with xmlparser_parse_fd */
+	/* errno set from read(). */
+	int readerrno;
+	int fd;
 
-	const char *str; /* "read" from string */
+	/* for use with "read" from string: xmlparser_parse_string */
+	const char *str;
 
 	/* private; internal state */
-	char tag[1024]; /* current tag */
-	int isshorttag; /* current tag is in short form ? */
+
+	/* current tag */
+	char tag[1024];
+	/* current tag is in short form ? */
+	int isshorttag;
 	size_t taglen;
-	char name[256]; /* current attribute name */
-	char data[BUFSIZ]; /* data buffer used for tag and attribute data */
+	/* current attribute name */
+	char name[256];
+	/* data buffer used for tag data, cdata and attribute data */
+	char data[BUFSIZ];
 	size_t readoffset;
 	size_t readlastbytes;
 	/* read buffer used by xmlparser_getnext */
 	unsigned char readbuf[BUFSIZ];
 } XMLParser;
+
+int     xml_codepointtoutf8(uint32_t, uint32_t *);
+ssize_t xml_entitytostr(const char *, char *, size_t);
+ssize_t xml_namedentitytostr(const char *, char *, size_t);
+ssize_t xml_numericetitytostr(const char *, char *, size_t);
 
 void xmlparser_parse_fd(XMLParser *, int);
 void xmlparser_parse_string(XMLParser *, const char *);

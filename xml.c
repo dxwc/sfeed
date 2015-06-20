@@ -7,6 +7,18 @@
 
 #include "xml.h"
 
+static const struct {
+	char *entity;
+	size_t len;
+	int c;
+} entities[] = {
+	{ .entity = "&lt;",   .len = 4, .c = '<'  },
+	{ .entity = "&gt;",   .len = 4, .c = '>'  },
+	{ .entity = "&apos;", .len = 6, .c = '\'' },
+	{ .entity = "&amp;",  .len = 5, .c = '&'  },
+	{ .entity = "&quot;", .len = 6, .c = '"'  }
+};
+
 static int
 xmlparser_string_getnext(XMLParser *x)
 {
@@ -185,7 +197,7 @@ xmlparser_parsecomment(XMLParser *x)
 }
 
 /* TODO:
- * <test><![CDATA[1234567dddd8]]]>
+ * <test><![CDATA[1234567dddd8]]>
  *
  * with x->data of sizeof(15) gives 2 ] at end of cdata, should be 1
  * test comment function too for similar bug?
@@ -194,12 +206,31 @@ xmlparser_parsecomment(XMLParser *x)
 static __inline__ void
 xmlparser_parsecdata(XMLParser *x)
 {
+	static const char *end = "]]>";
+	static const size_t endsiz = sizeof(end);
 	size_t datalen = 0, i = 0;
 	int c;
 
 	if(x->xmlcdatastart)
 		x->xmlcdatastart(x);
 	while((c = xmlparser_getnext(x)) != EOF) {
+		if(c == end[i++]) {
+			if(!end[i]) { /* end of match */
+				if(datalen >= endsiz) {
+					datalen -= endsiz;
+					x->data[datalen] = '\0';
+				}
+				if(x->xmlcdata)
+					x->xmlcdata(x, x->data, datalen);
+				if(x->xmlcdataend)
+					x->xmlcdataend(x);
+				break;
+			}
+			continue;
+		} else {
+			i = 0;
+		}
+#if 0
 		if(c == ']' && i < 2) {
 			i++;
 		} else if(c == '>') {
@@ -216,6 +247,7 @@ xmlparser_parsecdata(XMLParser *x)
 			}
 			i = 0;
 		}
+#endif
 		/* TODO: what if the end has ]>, and it's cut on the boundary */
 		if(datalen < sizeof(x->data) - 1) {
 			x->data[datalen++] = c;
@@ -227,6 +259,108 @@ xmlparser_parsecdata(XMLParser *x)
 			datalen = 1;
 		}
 	}
+}
+
+int
+xml_codepointtoutf8(uint32_t cp, uint32_t *utf)
+{
+	if(cp >= 0x10000) {
+		/* 4 bytes */
+		*utf = 0xf0808080 | ((cp & 0xfc0000) << 6) |
+		       ((cp & 0x3f000) << 4) | ((cp & 0xfc0) << 2) |
+		       (cp & 0x3f);
+		return 4;
+	} else if(cp >= 0x00800) {
+		/* 3 bytes */
+		*utf = 0xe08080 |
+		       ((cp & 0x3f000) << 4) | ((cp & 0xfc0) << 2) |
+		       (cp & 0x3f);
+		return 3;
+	} else if(cp >= 0x80) {
+		/* 2 bytes */
+		*utf = 0xc080 |
+		       ((cp & 0xfc0) << 2) | (cp & 0x3f);
+		return 2;
+	}
+	*utf = cp & 0xff;
+	return *utf ? 1 : 0; /* 1 byte */
+}
+
+ssize_t
+xml_namedentitytostr(const char *e, char *buf, size_t bufsiz)
+{
+	size_t i;
+
+	/* buffer is too small */
+	if(bufsiz < 2)
+		return -1;
+
+	/* doesn't start with &: can't match */
+	if(*e != '&')
+		return 0;
+
+	for(i = 0; sizeof(entities) / sizeof(*entities); i++) {
+		/* NOTE: compares max 6 chars */
+		if(!strncasecmp(e, entities[i].entity, 6)) {
+			buf[0] = entities[i].c;
+			buf[1] = '\0';
+			return 1;
+		}
+	}
+	return 0;
+}
+
+ssize_t
+xml_numericentitytostr(const char *e, char *buf, size_t bufsiz)
+{
+	uint32_t l = 0, cp = 0;
+	size_t b, len;
+	char *end;
+
+	/* buffer is too small */
+	if(bufsiz < 5)
+		return -1;
+
+	/* not a numeric entity */
+	if(!(e[0] == '&' && e[1] == '#'))
+		return 0;
+
+	/* e[1] == '#', numeric / hexadecimal entity */
+	e += 2; /* skip "&#" */
+	errno = 0;
+	/* hex (16) or decimal (10) */
+	if(*e == 'x')
+		l = strtoul(e + 1, &end, 16);
+	else
+		l = strtoul(e, &end, 10);
+	/* invalid value or not a well-formed entity */
+	if(errno != 0 || (*end != '\0' && *end != ';'))
+		return 0;
+	if(!(len = xml_codepointtoutf8(l, &cp)))
+		return 0;
+	/* make string */
+	for(b = 0; b < len; b++)
+		buf[b] = (cp >> (8 * (len - 1 - b))) & 0xff;
+	buf[len] = '\0';
+	return (ssize_t)len;
+}
+
+/* convert named- or numeric entity string to buffer string
+ * returns byte-length of string. */
+ssize_t
+xml_entitytostr(const char *e, char *buf, size_t bufsiz)
+{
+	/* buffer is too small */
+	if(bufsiz < 5)
+		return -1;
+	/* doesn't start with & */
+	if(e[0] != '&')
+		return 0;
+	/* named entity */
+	if(e[1] != '#')
+		return xml_namedentitytostr(e, buf, bufsiz);
+	else /* numeric entity */
+		return xml_numericentitytostr(e, buf, bufsiz);
 }
 
 static void
