@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <libgen.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -202,4 +203,25 @@ printcontent(const char *s, FILE *fp)
 			fputc(*p, fp);
 		}
 	}
+}
+
+/* Some implementations of basename(3) return a pointer to a static
+ * internal buffer (OpenBSD). Others modify the contents of `path` (POSIX).
+ * This is a wrapper function that is compatible with both versions.
+ * The program will error out if basename(3) failed, this can only happen
+ * with the OpenBSD version.
+ */
+char *
+xbasename(const char *path)
+{
+	char *p, *b;
+
+	if(!(p = strdup(path)))
+		err(1, "strdup");
+	if(!(b = basename(p)))
+		err(1, "basename");
+	if(!(b = strdup(b)))
+		err(1, "strdup");
+	free(p);
+	return b;
 }
