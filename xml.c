@@ -196,60 +196,35 @@ xmlparser_parsecomment(XMLParser *x)
 	}
 }
 
-/* TODO:
- * <test><![CDATA[1234567dddd8]]>
- *
- * with x->data of sizeof(15) gives 2 ] at end of cdata, should be 1
- * test comment function too for similar bug?
- *
- */
 static __inline__ void
 xmlparser_parsecdata(XMLParser *x)
 {
 	static const char *end = "]]>";
 	static const size_t endsiz = sizeof(end);
 	size_t datalen = 0, i = 0;
+	char tmp[4];
 	int c;
 
 	if(x->xmlcdatastart)
 		x->xmlcdatastart(x);
 	while((c = xmlparser_getnext(x)) != EOF) {
-		if(c == end[i++]) {
-			if(!end[i]) { /* end of match */
-				if(datalen >= endsiz) {
-					datalen -= endsiz;
-					x->data[datalen] = '\0';
-				}
+		if(c == end[i]) {
+			if(end[++i] == '\0') { /* end */
+				x->data[datalen] = '\0';
 				if(x->xmlcdata)
 					x->xmlcdata(x, x->data, datalen);
-				if(x->xmlcdataend)
-					x->xmlcdataend(x);
-				break;
+				return;
 			}
-			continue;
-		} else {
-			i = 0;
-		}
-#if 0
-		if(c == ']' && i < 2) {
-			i++;
-		} else if(c == '>') {
-			if(i == 2) { /* ]] */
-				if(datalen >= 2) {
-					datalen -= 2;
-					x->data[datalen] = '\0';
-					if(x->xmlcdata)
-						x->xmlcdata(x, x->data, datalen);
-				}
-				if(x->xmlcdataend)
-					x->xmlcdataend(x);
-				break;
+		} else if(i) {
+			if(x->xmlcdata) {
+				memcpy(tmp, end, i);
+				tmp[i] = '\0';
+				x->xmlcdata(x, tmp, i);
 			}
 			i = 0;
-		}
-#endif
-		/* TODO: what if the end has ]>, and it's cut on the boundary */
-		if(datalen < sizeof(x->data) - 1) {
+			x->data[0] = c;
+			datalen = 1;
+		} else if(datalen < sizeof(x->data) - 1) {
 			x->data[datalen++] = c;
 		} else {
 			x->data[datalen] = '\0';
