@@ -160,33 +160,38 @@ xmlparser_parseattrs(XMLParser *x)
 static __inline__ void
 xmlparser_parsecomment(XMLParser *x)
 {
+	static const char *end = "-->";
 	size_t datalen = 0, i = 0;
+	char tmp[4];
 	int c;
 
 	if(x->xmlcommentstart)
 		x->xmlcommentstart(x);
 	while((c = xmlparser_getnext(x)) != EOF) {
-		if(c == '-' && i < 2)
-			i++;
-		else if(c == '>') {
-			if(i == 2) { /* -- */
-				if(datalen >= 2) {
-					datalen -= 2;
-					x->data[datalen] = '\0';
-					if(x->xmlcomment)
-						x->xmlcomment(x, x->data, datalen);
-				}
+		if(c == end[i]) {
+			if(end[++i] == '\0') { /* end */
+				x->data[datalen] = '\0';
+				if(x->xmlcomment)
+					x->xmlcomment(x, x->data, datalen);
 				if(x->xmlcommentend)
 					x->xmlcommentend(x);
-				break;
+				return;
+			}
+		} else if(i) {
+			if(x->xmlcomment) {
+				x->data[datalen] = '\0';
+				if(datalen)
+					x->xmlcomment(x, x->data, datalen);
+				memcpy(tmp, end, i);
+				tmp[i] = '\0';
+				x->xmlcomment(x, tmp, i);
 			}
 			i = 0;
-		}
-		 /* || (c == '-' && d >= sizeof(x->data) - 4)) { */
-		/* TODO: what if the end has --, and it's cut on the boundary, test this. */
-		if(datalen < sizeof(x->data) - 1)
+			x->data[0] = c;
+			datalen = 1;
+		} else if(datalen < sizeof(x->data) - 1) {
 			x->data[datalen++] = c;
-		else {
+		} else {
 			x->data[datalen] = '\0';
 			if(x->xmlcomment)
 				x->xmlcomment(x, x->data, datalen);
@@ -200,7 +205,6 @@ static __inline__ void
 xmlparser_parsecdata(XMLParser *x)
 {
 	static const char *end = "]]>";
-	static const size_t endsiz = sizeof(end);
 	size_t datalen = 0, i = 0;
 	char tmp[4];
 	int c;
@@ -213,10 +217,15 @@ xmlparser_parsecdata(XMLParser *x)
 				x->data[datalen] = '\0';
 				if(x->xmlcdata)
 					x->xmlcdata(x, x->data, datalen);
+				if(x->xmlcdataend)
+					x->xmlcdataend(x);
 				return;
 			}
 		} else if(i) {
+			x->data[datalen] = '\0';
 			if(x->xmlcdata) {
+				if(datalen)
+					x->xmlcdata(x, x->data, datalen);
 				memcpy(tmp, end, i);
 				tmp[i] = '\0';
 				x->xmlcdata(x, tmp, i);
