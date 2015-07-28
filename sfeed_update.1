@@ -54,7 +54,7 @@ sfeed_plain $HOME/.sfeed/feeds/* > $HOME/.sfeed/feeds.txt
 # HTML
 sfeed_html $HOME/.sfeed/feeds/* > $HOME/.sfeed/feeds.html
 # HTML with frames
-mkdir somedir && cd somedir && sfeed_frames $HOME/.sfeed/feeds/*
+mkdir -p somedir && cd somedir && sfeed_frames $HOME/.sfeed/feeds/*
 .Ed
 .Sh SEE ALSO
 .Xr sfeed 1 ,

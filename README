@@ -124,14 +124,14 @@ output:
 To update feeds and format the feeds file (configfile argument is optional):
 
 	sfeed_update "configfile"
-	sfeed_html < $HOME/.sfeed/feeds > $HOME/.sfeed/feeds.html
-	sfeed_plain < $HOME/.sfeed/feeds > $HOME/.sfeed/feeds.txt
-
+	sfeed_html < $HOME/.sfeed/feeds/* > $HOME/.sfeed/feeds.html
+	sfeed_plain < $HOME/.sfeed/feeds/* > $HOME/.sfeed/feeds.txt
+	mkdir -p somedir && cd somedir && sfeed_frames $HOME/.sfeed/feeds/*
 
 Example script to view feeds with dmenu, opens selected url in $BROWSER:
 
 	#!/bin/sh
-	url=$(sfeed_plain < "$HOME/.sfeed/feeds" | dmenu -l 35 -i |
+	url=$(sfeed_plain < $HOME/.sfeed/feeds/* | dmenu -l 35 -i |
 		sed 's@^.* \([a-zA-Z]*://\)\(.*\)$@\1\2@')
 	[ ! "$url" = "" ] && $BROWSER "$url"
 
@@ -172,10 +172,7 @@ mktime("YYYY mm dd HH mm ss")):
 			print $0;
 		}
 	}' < feeds > feeds.clean
-
-	# compress old feeds file as archive.
-	gzip -c feeds > feeds_archive_`date +'%Y-%m-%d'`.gz
-	# move new file over old.
+	mv feeds feeds.old
 	mv feeds.clean feeds
 
 
