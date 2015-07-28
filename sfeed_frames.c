@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 			if (f->totalnew > 0)
 				fputs("<b><u>", fpmenu);
 			printxmlencoded(f->name, fpmenu);
-			fprintf(fpmenu, "(%lu)", f->totalnew);
+			fprintf(fpmenu, " (%lu)", f->totalnew);
 			if (f->totalnew > 0)
 				fputs("</u></b>", fpmenu);
 			fputs("</a><br/>\n", fpmenu);
