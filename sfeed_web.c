@@ -13,8 +13,8 @@ static char abslink[4096], feedlink[4096], basehref[4096], feedtype[256];
 static void
 printfeedtype(const char *s, FILE *fp)
 {
-	for(; *s; s++) {
-		if(!isspace((int)*s))
+	for (; *s; s++) {
+		if (!isspace((int)*s))
 			fputc(*s, fp);
 	}
 }
@@ -25,10 +25,10 @@ xmltagstart(XMLParser *p, const char *tag, size_t taglen)
 	(void)p;
 
 	isbase = islink = isfeedlink = 0;
-	if(taglen == 4) { /* optimization */
-		if(!strncasecmp(tag, "base", taglen))
+	if (taglen == 4) { /* optimization */
+		if (!strncasecmp(tag, "base", taglen))
 			isbase = 1;
-		else if(!strncasecmp(tag, "link", taglen))
+		else if (!strncasecmp(tag, "link", taglen))
 			islink = 1;
 	}
 }
@@ -41,12 +41,12 @@ xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort)
 	(void)taglen;
 	(void)isshort;
 
-	if(isfeedlink) {
-		if(*feedtype) {
+	if (isfeedlink) {
+		if (*feedtype) {
 			printfeedtype(feedtype, stdout);
 			putchar(' ');
 		}
-		if(absuri(feedlink, basehref, abslink, sizeof(abslink)) != -1)
+		if (absuri(feedlink, basehref, abslink, sizeof(abslink)) != -1)
 			fputs(abslink, stdout);
 		putchar('\n');
 		found++;
@@ -62,20 +62,20 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 	(void)taglen;
 	(void)valuelen;
 
-	if(namelen != 4) /* optimization */
+	if (namelen != 4) /* optimization */
 		return;
-	if(isbase) {
-		if(!strncasecmp(name, "href", namelen))
+	if (isbase) {
+		if (!strncasecmp(name, "href", namelen))
 			strlcpy(basehref, value, sizeof(basehref));
-	} else if(islink) {
-		if(!strncasecmp(name, "type", namelen)) {
-			if(!strncasecmp(value, "application/atom", strlen("application/atom")) ||
+	} else if (islink) {
+		if (!strncasecmp(name, "type", namelen)) {
+			if (!strncasecmp(value, "application/atom", strlen("application/atom")) ||
 			   !strncasecmp(value, "application/xml", strlen("application/xml")) ||
 			   !strncasecmp(value, "application/rss", strlen("application/rss"))) {
 				isfeedlink = 1;
 				strlcpy(feedtype, value, sizeof(feedtype));
 			}
-		} else if(!strncasecmp(name, "href", namelen)) {
+		} else if (!strncasecmp(name, "href", namelen)) {
 			strlcpy(feedlink, value, sizeof(feedlink));
 		}
 	}
@@ -86,7 +86,7 @@ main(int argc, char *argv[])
 {
 	XMLParser parser;
 
-	if(argc > 1)
+	if (argc > 1)
 		strlcpy(basehref, argv[1], sizeof(basehref));
 
 	memset(&parser, 0, sizeof(parser));

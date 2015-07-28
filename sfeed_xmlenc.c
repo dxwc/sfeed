@@ -14,7 +14,7 @@ xmltagstart(XMLParser *p, const char *tag, size_t taglen)
 	(void)p;
 
 	/* optimization: try to find processing instruction at start */
-	if(tags > 3)
+	if (tags > 3)
 		exit(1);
 	isxmlpi = (!strncasecmp(tag, "?xml", taglen)) ? 1 : 0;
 	tags++;
@@ -40,10 +40,10 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 	(void)taglen;
 	(void)valuelen;
 
-	if(isxmlpi && (!strncasecmp(name, "encoding", namelen))) {
-		if(*value) {
+	if (isxmlpi && (!strncasecmp(name, "encoding", namelen))) {
+		if (*value) {
 			/* output lowercase */
-			for(; *value; value++)
+			for (; *value; value++)
 				putc(tolower((int)*value), stdout);
 			putchar('\n');
 		}

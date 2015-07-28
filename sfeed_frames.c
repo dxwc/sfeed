@@ -30,22 +30,22 @@ normalizepath(const char *path, char *buf, size_t bufsiz)
 {
 	size_t i = 0, r = 0;
 
-	for(; *path && i < bufsiz; path++) {
-		if(isalpha((int)*path) || isdigit((int)*path)) {
+	for (; *path && i < bufsiz; path++) {
+		if (isalpha((int)*path) || isdigit((int)*path)) {
 			buf[i++] = tolower((int)*path);
 			r = 0;
 		} else {
 			/* don't repeat '-' */
-			if(!r)
+			if (!r)
 				buf[i++] = '-';
 			r++;
 		}
 	}
 	/* remove trailing '-' */
-	for(; i > 0 && (buf[i - 1] == '-'); i--)
+	for (; i > 0 && (buf[i - 1] == '-'); i--)
 		;
 
-	if(bufsiz > 0)
+	if (bufsiz > 0)
 		buf[i] = '\0';
 
 	return i;
@@ -64,23 +64,23 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 	time_t parsedtime;
 	int r;
 
-	if(f->name[0])
+	if (f->name[0])
 		feedname = f->name;
 	else
 		feedname = "unnamed";
 
 	/* make directory for feedname */
-	if(!(namelen = normalizepath(feedname, name, sizeof(name))))
+	if (!(namelen = normalizepath(feedname, name, sizeof(name))))
 		return;
-	
-	if(strlcpy(dirpath, name, sizeof(dirpath)) >= sizeof(dirpath))
+
+	if (strlcpy(dirpath, name, sizeof(dirpath)) >= sizeof(dirpath))
 		errx(1, "strlcpy: path truncation");
 	/* directory doesn't exist: try to create it. */
-	if(stat(dirpath, &st) == -1 && mkdir(dirpath, S_IRWXU) == -1)
+	if (stat(dirpath, &st) == -1 && mkdir(dirpath, S_IRWXU) == -1)
 		err(1, "mkdir: %s", dirpath);
-	
+
 	/* menu if not unnamed */
-	if(f->name[0]) {
+	if (f->name[0]) {
 		fputs("<h2 id=\"", fpitems);
 		printxmlencoded(f->name, fpitems);
 		fputs("\"><a href=\"#", fpitems);
@@ -91,17 +91,17 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 	}
 
 	fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", fpitems);
-	while(parseline(&line, &linesize, fields, FieldLast, '\t', fpin) > 0) {
+	while (parseline(&line, &linesize, fields, FieldLast, '\t', fpin) > 0) {
 		/* write content */
-		if(!(namelen = normalizepath(fields[FieldTitle], name, sizeof(name))))
+		if (!(namelen = normalizepath(fields[FieldTitle], name, sizeof(name))))
 			continue;
 		r = snprintf(filepath, sizeof(filepath), "%s/%s.html", dirpath, name);
-		if(r == -1 || (size_t)r >= sizeof(filepath))
+		if (r == -1 || (size_t)r >= sizeof(filepath))
 			errx(1, "snprintf: path truncation");
 
 		/* file doesn't exist yet and has write access */
-		if(access(filepath, F_OK) != 0) {
-			if(!(fpcontent = fopen(filepath, "w+b")))
+		if (access(filepath, F_OK) != 0) {
+			if (!(fpcontent = fopen(filepath, "w+b")))
 				err(1, "fopen: %s", filepath);
 			fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
 			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>\n"
@@ -118,7 +118,7 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 
 		/* set modified and access time of file to time of item. */
 		r = strtotime(fields[FieldUnixTimestamp], &parsedtime);
-		if(r != -1) {
+		if (r != -1) {
 			contenttime.actime = parsedtime;
 			contenttime.modtime = parsedtime;
 			utime(filepath, &contenttime);
@@ -128,21 +128,21 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		totalnew += isnew;
 		f->totalnew += isnew;
 		f->total++;
-		if(isnew)
+		if (isnew)
 			fputs("<tr class=\"n\">", fpitems);
 		else
 			fputs("<tr>", fpitems);
 		fputs("<td nowrap valign=\"top\">", fpitems);
 		fputs(fields[FieldTimeFormatted], fpitems);
 		fputs("</td><td nowrap valign=\"top\">", fpitems);
-		if(isnew)
+		if (isnew)
 			fputs("<b><u>", fpitems);
 		fputs("<a href=\"", fpitems);
 		fputs(filepath, fpitems);
 		fputs("\" target=\"content\">", fpitems);
 		printxmlencoded(fields[FieldTitle], fpitems);
 		fputs("</a>", fpitems);
-		if(isnew)
+		if (isnew)
 			fputs("</u></b>", fpitems);
 		fputs("</td></tr>\n", fpitems);
 	}
@@ -157,63 +157,63 @@ main(int argc, char *argv[])
 	int i;
 	struct feed *f;
 
-	if(!(feeds = calloc(argc, sizeof(struct feed *))))
+	if (!(feeds = calloc(argc, sizeof(struct feed *))))
 		err(1, "calloc");
 
 	/* 1 day is old news */
 	comparetime = time(NULL) - 86400;
 
 	/* write main index page */
-	if(!(fpindex = fopen("index.html", "w+b")))
+	if (!(fpindex = fopen("index.html", "w+b")))
 		err(1, "fopen: index.html");
-	if(!(fpmenu = fopen("menu.html", "w+b")))
+	if (!(fpmenu = fopen("menu.html", "w+b")))
 		err(1, "fopen: menu.html");
-	if(!(fpitems = fopen("items.html", "w+b")))
+	if (!(fpitems = fopen("items.html", "w+b")))
 		err(1, "fopen: items.html");
 	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
 	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>"
 	      "<body class=\"frame\"><div id=\"items\">", fpitems);
 
-	if(argc == 1) {
-		if(!(feeds[0] = calloc(1, sizeof(struct feed))))
+	if (argc == 1) {
+		if (!(feeds[0] = calloc(1, sizeof(struct feed))))
 			err(1, "calloc");
 		feeds[0]->name = "";
 		printfeed(fpitems, stdin, feeds[0]);
 	} else {
-		for(i = 1; i < argc; i++) {
-			if(!(feeds[i - 1] = calloc(1, sizeof(struct feed))))
+		for (i = 1; i < argc; i++) {
+			if (!(feeds[i - 1] = calloc(1, sizeof(struct feed))))
 				err(1, "calloc");
 			feeds[i - 1]->name = xbasename(argv[i]);
 
-			if(!(fp = fopen(argv[i], "r")))
+			if (!(fp = fopen(argv[i], "r")))
 				err(1, "fopen: %s", argv[i]);
 			printfeed(fpitems, fp, feeds[i - 1]);
-			if(ferror(fp))
+			if (ferror(fp))
 				err(1, "ferror: %s", argv[i]);
 			fclose(fp);
 		}
 	}
 	fputs("\n</div></body>\n</html>", fpitems); /* div items */
 
-	if(showsidebar) {
+	if (showsidebar) {
 		fputs("<html><head>"
 		      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />\n"
 		      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 		      "</head><body class=\"frame\"><div id=\"sidebar\">", fpmenu);
 
-		for(i = 1; i < argc; i++) {
+		for (i = 1; i < argc; i++) {
 			f = feeds[i - 1];
-			if(f->totalnew)
+			if (f->totalnew)
 				fputs("<a class=\"n\" href=\"items.html#", fpmenu);
 			else
 				fputs("<a href=\"items.html#", fpmenu);
 			printxmlencoded(f->name, fpmenu);
 			fputs("\" target=\"items\">", fpmenu);
-			if(f->totalnew > 0)
+			if (f->totalnew > 0)
 				fputs("<b><u>", fpmenu);
 			printxmlencoded(f->name, fpmenu);
 			fprintf(fpmenu, "(%lu)", f->totalnew);
-			if(f->totalnew > 0)
+			if (f->totalnew > 0)
 				fputs("</u></b>", fpmenu);
 			fputs("</a><br/>\n", fpmenu);
 		}
@@ -224,7 +224,7 @@ main(int argc, char *argv[])
 	fputs(")</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />\n"
 	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 	      "</head>\n", fpindex);
-	if(showsidebar) {
+	if (showsidebar) {
 		fputs("<frameset framespacing=\"0\" cols=\"200,*\" frameborder=\"1\">\n"
 		      "	<frame name=\"menu\" src=\"menu.html\" target=\"menu\">\n", fpindex);
 	} else {

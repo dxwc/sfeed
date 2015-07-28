@@ -135,23 +135,23 @@ gettag(int feedtype, const char *name, size_t namelen)
 	int i, n;
 
 	/* optimization: these are always non-matching */
-	if(namelen < 2 || namelen > 15)
+	if (namelen < 2 || namelen > 15)
 		return TagUnknown;
 
-	if(feedtype == FeedTypeRSS) {
-		for(i = 0; rsstag[i].name; i++) {
-			if(!(n = strncasecmp(rsstag[i].name, name, rsstag[i].namelen)))
+	if (feedtype == FeedTypeRSS) {
+		for (i = 0; rsstag[i].name; i++) {
+			if (!(n = strncasecmp(rsstag[i].name, name, rsstag[i].namelen)))
 				return rsstag[i].id;
 			/* optimization: it's sorted so nothing after it matches. */
-			if(n > 0)
+			if (n > 0)
 				return TagUnknown;
 		}
-	} else if(feedtype == FeedTypeAtom) {
-		for(i = 0; atomtag[i].name; i++) {
-			if(!(n = strncasecmp(atomtag[i].name, name, atomtag[i].namelen)))
+	} else if (feedtype == FeedTypeAtom) {
+		for (i = 0; atomtag[i].name; i++) {
+			if (!(n = strncasecmp(atomtag[i].name, name, atomtag[i].namelen)))
 				return atomtag[i].id;
 			/* optimization: it's sorted so nothing after it matches. */
-			if(n > 0)
+			if (n > 0)
 				return TagUnknown;
 		}
 	}
@@ -162,7 +162,7 @@ gettag(int feedtype, const char *name, size_t namelen)
 static void
 string_clear(String *s)
 {
-	if(s->data)
+	if (s->data)
 		s->data[0] = '\0';
 	s->len = 0;
 }
@@ -170,7 +170,7 @@ string_clear(String *s)
 static void
 string_buffer_init(String *s, size_t len)
 {
-	if(!(s->data = malloc(len)))
+	if (!(s->data = malloc(len)))
 		err(1, "malloc");
 	s->bufsiz = len;
 	string_clear(s);
@@ -182,9 +182,9 @@ string_buffer_realloc(String *s, size_t newlen)
 	char *p;
 	size_t alloclen;
 
-	for(alloclen = 16; alloclen <= newlen; alloclen *= 2)
+	for (alloclen = 16; alloclen <= newlen; alloclen *= 2)
 		;
-	if(!(p = realloc(s->data, alloclen)))
+	if (!(p = realloc(s->data, alloclen)))
 		err(1, "realloc");
 	s->bufsiz = alloclen;
 	s->data = p;
@@ -193,11 +193,11 @@ string_buffer_realloc(String *s, size_t newlen)
 static void
 string_append(String *s, const char *data, size_t len)
 {
-	if(!len || *data == '\0')
+	if (!len || *data == '\0')
 		return;
 	/* check if allocation is necesary, don't shrink buffer
 	   should be more than bufsiz ofcourse */
-	if(s->len + len >= s->bufsiz)
+	if (s->len + len >= s->bufsiz)
 		string_buffer_realloc(s, s->len + len + 1);
 	memcpy(s->data + s->len, data, len);
 	s->len += len;
@@ -229,25 +229,25 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 	char c = '+';
 	size_t i;
 
-	for(; *s && !isalpha(*s) && *s != '-' && *s != '+'; s++)
+	for (; *s && !isalpha(*s) && *s != '-' && *s != '+'; s++)
 		;
-	if(!*s || *s == 'Z' || *s == 'z')
+	if (!*s || *s == 'Z' || *s == 'z')
 		goto time_ok;
 
 	/* look until some common timezone delimiters are found */
-	for(i = 0; s[i] && isalpha((int)s[i]); i++)
+	for (i = 0; s[i] && isalpha((int)s[i]); i++)
 		;
 	/* copy tz name */
-	if(i >= sizeof(tzbuf))
+	if (i >= sizeof(tzbuf))
 		i = sizeof(tzbuf) - 1;
 	memcpy(tzbuf, s, i);
 	tzbuf[i] = '\0';
 
-	if((sscanf(s, "%c%02d:%02d", &c, &tzhour, &tzmin)) == 3) {
+	if ((sscanf(s, "%c%02d:%02d", &c, &tzhour, &tzmin)) == 3) {
 		;
-	} else if(sscanf(s, "%c%02d%02d", &c, &tzhour, &tzmin) == 3) {
+	} else if (sscanf(s, "%c%02d%02d", &c, &tzhour, &tzmin) == 3) {
 		;
-	} else if(sscanf(s, "%c%d", &c, &tzhour) == 2) {
+	} else if (sscanf(s, "%c%d", &c, &tzhour) == 2) {
 		tzmin = 0;
 	} else {
 		c = '+';
@@ -270,9 +270,9 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 time_ok:
 	r = snprintf(buf, bufsiz, "%s%c%02d%02d",
 	             tz, c, tzhour, tzmin);
-	if(r < 0 || (size_t)r >= bufsiz)
+	if (r < 0 || (size_t)r >= bufsiz)
 		return -1; /* truncation or error */
-	if(tzoffset)
+	if (tzoffset)
 		*tzoffset = (tzhour * 3600) + (tzmin * 60) * (c == '-' ? -1 : 1);
 	return 0;
 }
@@ -294,23 +294,23 @@ parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 	int tzoffset, r;
 
 	memset(&tm, 0, sizeof(tm));
-	for(i = 0; formats[i]; i++) {
-		if(!(p = strptime(s, formats[i], &tm)))
+	for (i = 0; formats[i]; i++) {
+		if (!(p = strptime(s, formats[i], &tm)))
 			continue;
 		tm.tm_isdst = -1; /* don't use DST */
-		if((t = timegm(&tm)) == -1) /* error */
+		if ((t = timegm(&tm)) == -1) /* error */
 			return -1;
-		if(gettimetz(p, tz, sizeof(tz), &tzoffset) != -1)
+		if (gettimetz(p, tz, sizeof(tz), &tzoffset) != -1)
 			t -= tzoffset;
-		if(buf) {
+		if (buf) {
 			r = snprintf(buf, bufsiz,
 			         "%04d-%02d-%02d %02d:%02d:%02d %s",
 			         tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 			         tm.tm_hour, tm.tm_min, tm.tm_sec, tz);
-			if(r == -1 || (size_t)r >= bufsiz)
+			if (r == -1 || (size_t)r >= bufsiz)
 				return -1; /* truncation */
 		}
-		if(tp)
+		if (tp)
 			*tp = t;
 		return 0;
 	}
@@ -327,16 +327,16 @@ string_print(String *s)
 	p = trimstart(s->data);
 	e = trimend(p);
 
-	for(; *p && p != e; p++) {
+	for (; *p && p != e; p++) {
 		/* isspace(c) && c != ' '. */
-		if(((unsigned)*p - '\t') < 5) {
+		if (((unsigned)*p - '\t') < 5) {
 			switch(*p) {
 			case '\n': fputs("\\n", stdout); break;
 			case '\\': fputs("\\\\", stdout); break;
 			case '\t': fputs("\\t", stdout); break;
 			default: break; /* ignore other whitespace chars */
 			}
-		} else if(!iscntrl((int)*p)) { /* ignore control chars */
+		} else if (!iscntrl((int)*p)) { /* ignore control chars */
 			putchar(*p);
 		}
 	}
@@ -353,10 +353,10 @@ printfields(void)
 	 * if the parsed time is invalid */
 	r = parsetime((&ctx.item.timestamp)->data, timebuf,
 	              sizeof(timebuf), &t);
-	if(r != -1)
+	if (r != -1)
 		printf("%ld", (long)t);
 	putchar(FieldSeparator);
-	if(r != -1)
+	if (r != -1)
 		fputs(timebuf, stdout);
 	putchar(FieldSeparator);
 	string_print(&ctx.item.title);
@@ -384,7 +384,8 @@ istag(const char *name, size_t len, const char *name2, size_t len2)
 }
 
 static int
-isattr(const char *name, size_t len, const char *name2, size_t len2) {
+isattr(const char *name, size_t len, const char *name2, size_t len2)
+{
 	return (len == len2 && !strcasecmp(name, name2));
 }
 
@@ -393,10 +394,10 @@ isattr(const char *name, size_t len, const char *name2, size_t len2) {
 static void
 xml_handler_data(XMLParser *p, const char *s, size_t len)
 {
-	if(ctx.field) {
+	if (ctx.field) {
 		/* add only data from <name> inside <author> tag
 		 * or any other non-<author> tag  */
-		if(ctx.tagid != AtomTagAuthor || !strcmp(p->tag, "name"))
+		if (ctx.tagid != AtomTagAuthor || !strcmp(p->tag, "name"))
 			string_append(ctx.field, s, len);
 	}
 }
@@ -406,7 +407,7 @@ xml_handler_cdata(XMLParser *p, const char *s, size_t len)
 {
 	(void)p;
 
-	if(ctx.field)
+	if (ctx.field)
 		string_append(ctx.field, s, len);
 }
 
@@ -417,11 +418,11 @@ xml_handler_attr_start(XMLParser *p, const char *tag, size_t taglen,
 	(void)tag;
 	(void)taglen;
 
-	if(!ISINCONTENT(ctx))
+	if (!ISINCONTENT(ctx))
 		return;
 
 	/* handles transforming inline XML to data */
-	if(!ctx.attrcount)
+	if (!ctx.attrcount)
 		xml_handler_data(p, " ", 1);
 	ctx.attrcount++;
 	xml_handler_data(p, name, namelen);
@@ -437,7 +438,7 @@ xml_handler_attr_end(struct xmlparser *p, const char *tag, size_t taglen,
 	(void)name;
 	(void)namelen;
 
-	if(!ISINCONTENT(ctx))
+	if (!ISINCONTENT(ctx))
 		return;
 
 	/* handles transforming inline XML to data */
@@ -452,10 +453,10 @@ xml_handler_start_element_parsed(XMLParser *p, const char *tag, size_t taglen,
 	(void)tag;
 	(void)taglen;
 
-	if(!ISINCONTENT(ctx))
+	if (!ISINCONTENT(ctx))
 		return;
 
-	if(isshort)
+	if (isshort)
 		xml_handler_data(p, "/>", 2);
 	else
 		xml_handler_data(p, ">", 1);
@@ -470,14 +471,14 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 	(void)taglen;
 
 	/* handles transforming inline XML to data */
-	if(ISINCONTENT(ctx)) {
+	if (ISINCONTENT(ctx)) {
 		xml_handler_data(p, value, valuelen);
 		return;
 	}
 
-	if(ctx.item.feedtype == FeedTypeAtom) {
-		if(ISCONTENTTAG(ctx)) {
-			if(isattr(name, namelen, STRP("type")) &&
+	if (ctx.item.feedtype == FeedTypeAtom) {
+		if (ISCONTENTTAG(ctx)) {
+			if (isattr(name, namelen, STRP("type")) &&
 			   (isattr(value, valuelen, STRP("xhtml")) ||
 			    isattr(value, valuelen, STRP("text/xhtml")) ||
 			    isattr(value, valuelen, STRP("html")) ||
@@ -490,7 +491,7 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 				p->xmlattrend = xml_handler_attr_end;
 				p->xmltagstartparsed = xml_handler_start_element_parsed;
 			}
-		} else if(ctx.tagid == AtomTagLink &&
+		} else if (ctx.tagid == AtomTagLink &&
 		          isattr(name, namelen, STRP("href")))
 		{
 			/* link href attribute */
@@ -504,11 +505,11 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 {
 	/* starts with div, handle as XML, don't convert entities
 	 * (set handler to NULL) */
-	if(ISCONTENTTAG(ctx) && ctx.item.feedtype == FeedTypeAtom &&
+	if (ISCONTENTTAG(ctx) && ctx.item.feedtype == FeedTypeAtom &&
 	   namelen == STRSIZ("div") && !strncmp(name, STRP("div"))) {
 		p->xmldataentity = NULL;
 	}
-	if(ctx.iscontent) {
+	if (ctx.iscontent) {
 		ctx.attrcount = 0;
 		ctx.iscontenttag = 0;
 		xml_handler_data(p, "<", 1);
@@ -517,14 +518,14 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 	}
 
 	/* start of RSS or Atom item / entry */
-	if(ctx.item.feedtype == FeedTypeNone) {
-		if(istag(name, namelen, STRP("entry"))) {
+	if (ctx.item.feedtype == FeedTypeNone) {
+		if (istag(name, namelen, STRP("entry"))) {
 			/* Atom */
 			ctx.item.feedtype = FeedTypeAtom;
 			/* default content type for Atom */
 			ctx.item.contenttype = ContentTypePlain;
 			ctx.field = NULL; /* XXX: optimization */
-		} else if(istag(name, namelen, STRP("item"))) {
+		} else if (istag(name, namelen, STRP("item"))) {
 			/* RSS */
 			ctx.item.feedtype = FeedTypeRSS;
 			/* default content type for RSS */
@@ -535,58 +536,58 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 	}
 
 	/* tag already set: return */
-	if(ctx.tag[0] != '\0')
+	if (ctx.tag[0] != '\0')
 		return;
 	/* in item */
 	strlcpy(ctx.tag, name, sizeof(ctx.tag)); /* NOTE: truncation ignored */
 	ctx.taglen = namelen;
 	ctx.tagid = gettag(ctx.item.feedtype, ctx.tag, ctx.taglen);
-	if(ctx.tagid == TagUnknown)
+	if (ctx.tagid == TagUnknown)
 		ctx.field = NULL;
 
-	if(ctx.item.feedtype == FeedTypeRSS) {
-		if(ctx.tagid == RSSTagPubdate || ctx.tagid == RSSTagDcdate)
+	if (ctx.item.feedtype == FeedTypeRSS) {
+		if (ctx.tagid == RSSTagPubdate || ctx.tagid == RSSTagDcdate)
 			ctx.field = &ctx.item.timestamp;
-		else if(ctx.tagid == RSSTagTitle)
+		else if (ctx.tagid == RSSTagTitle)
 			ctx.field = &ctx.item.title;
-		else if(ctx.tagid == RSSTagLink)
+		else if (ctx.tagid == RSSTagLink)
 			ctx.field = &ctx.item.link;
-		else if(ctx.tagid == RSSTagDescription ||
+		else if (ctx.tagid == RSSTagDescription ||
 		        ctx.tagid == RSSTagContentencoded) {
 			/* ignore, prefer content:encoded over description */
-			if(ctx.tagid != RSSTagDescription || !ctx.item.content.len) {
+			if (ctx.tagid != RSSTagDescription || !ctx.item.content.len) {
 				ctx.iscontenttag = 1;
 				ctx.field = &ctx.item.content;
 			}
-		} else if(ctx.tagid == RSSTagGuid) {
+		} else if (ctx.tagid == RSSTagGuid) {
 			ctx.field = &ctx.item.id;
-		} else if(ctx.tagid == RSSTagAuthor || ctx.tagid == RSSTagDccreator) {
+		} else if (ctx.tagid == RSSTagAuthor || ctx.tagid == RSSTagDccreator) {
 			ctx.field = &ctx.item.author;
 		}
-	} else if(ctx.item.feedtype == FeedTypeAtom) {
-		if(ctx.tagid == AtomTagPublished || ctx.tagid == AtomTagUpdated) {
+	} else if (ctx.item.feedtype == FeedTypeAtom) {
+		if (ctx.tagid == AtomTagPublished || ctx.tagid == AtomTagUpdated) {
 			/* ignore, prefer updated over published */
-			if(ctx.tagid != AtomTagPublished || !ctx.item.timestamp.len) {
+			if (ctx.tagid != AtomTagPublished || !ctx.item.timestamp.len) {
 				ctx.field = &ctx.item.timestamp;
 			}
-		} else if(ctx.tagid == AtomTagTitle) {
+		} else if (ctx.tagid == AtomTagTitle) {
 			ctx.field = &ctx.item.title;
-		} else if(ctx.tagid == AtomTagSummary || ctx.tagid == AtomTagContent) {
+		} else if (ctx.tagid == AtomTagSummary || ctx.tagid == AtomTagContent) {
 			/* ignore, prefer content:encoded over description */
-			if(ctx.tagid != AtomTagSummary || !ctx.item.content.len) {
+			if (ctx.tagid != AtomTagSummary || !ctx.item.content.len) {
 				ctx.iscontenttag = 1;
 				ctx.field = &ctx.item.content;
 			}
-		} else if(ctx.tagid == AtomTagId) {
+		} else if (ctx.tagid == AtomTagId) {
 			ctx.field = &ctx.item.id;
-		} else if(ctx.tagid == AtomTagLink) {
+		} else if (ctx.tagid == AtomTagLink) {
 			ctx.field = &ctx.item.link;
-		} else if(ctx.tagid == AtomTagAuthor) {
+		} else if (ctx.tagid == AtomTagAuthor) {
 			ctx.field = &ctx.item.author;
 		}
 	}
 	/* clear field */
-	if(ctx.field)
+	if (ctx.field)
 		string_clear(ctx.field);
 }
 
@@ -600,10 +601,10 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
 	 * xml_data_handler */
 	len = xml_entitytostr(data, buffer, sizeof(buffer));
 	/* this should never happen (buffer too small) */
-	if(len < 0)
+	if (len < 0)
 		return;
 
-	if(len > 0)
+	if (len > 0)
 		xml_handler_data(p, buffer, (size_t)len);
 	else
 		xml_handler_data(p, data, datalen);
@@ -614,11 +615,11 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 {
 	int tagid;
 
-	if(ctx.iscontent) {
+	if (ctx.iscontent) {
 		ctx.attrcount = 0;
 		tagid = gettag(ctx.item.feedtype, name, namelen);
 		/* close content */
-		if(ctx.tagid == tagid) {
+		if (ctx.tagid == tagid) {
 			ctx.iscontent = 0;
 			ctx.iscontenttag = 0;
 			ctx.tag[0] = '\0';
@@ -632,17 +633,17 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 
 			return;
 		}
-		if(!isshort) {
+		if (!isshort) {
 			xml_handler_data(p, "</", 2);
 			xml_handler_data(p, name, namelen);
 			xml_handler_data(p, ">", 1);
 		}
 		return;
 	}
-	if(ctx.item.feedtype == FeedTypeNone)
+	if (ctx.item.feedtype == FeedTypeNone)
 		return;
 	/* end of RSS or Atom entry / item */
-	if((ctx.item.feedtype == FeedTypeAtom &&
+	if ((ctx.item.feedtype == FeedTypeAtom &&
 	   istag(name, namelen, STRP("entry"))) || /* Atom */
 	   (ctx.item.feedtype == FeedTypeRSS &&
 	   istag(name, namelen, STRP("item")))) /* RSS */
@@ -665,7 +666,7 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 		/* not sure if needed */
 		ctx.iscontenttag = 0;
 		ctx.iscontent = 0;
-	} else if(ctx.taglen == namelen && !strcmp(ctx.tag, name)) {
+	} else if (ctx.taglen == namelen && !strcmp(ctx.tag, name)) {
 		/* clear */
 		/* XXX: optimize ? */
 		ctx.field = NULL;
@@ -682,7 +683,7 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 int
 main(int argc, char *argv[])
 {
-	if(argc > 1)
+	if (argc > 1)
 		baseurl = argv[1];
 
 	/* init strings and initial memory pool size */

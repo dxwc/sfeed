@@ -167,10 +167,10 @@ parseline(char **line, size_t *size, char **fields,
 	char *prev, *s;
 	unsigned int i;
 
-	if(getline(line, size, fp) <= 0)
+	if (getline(line, size, fp) <= 0)
 		return -1;
 
-	for(prev = *line, i = 0;
+	for (prev = *line, i = 0;
 	    (s = strchr(prev, separator)) && i < maxfields - 1;
 	    i++) {
 		*s = '\0';
@@ -179,7 +179,7 @@ parseline(char **line, size_t *size, char **fields,
 	}
 	fields[i++] = prev;
 	/* make non-parsed fields empty. */
-	for(; i < maxfields; i++)
+	for (; i < maxfields; i++)
 		fields[i] = "";
 
 	return (int)i;
@@ -190,7 +190,7 @@ trimend(const char *s)
 {
 	size_t len = strlen(s);
 
-	for(; len > 0 && isspace((int)s[len - 1]); len--)
+	for (; len > 0 && isspace((int)s[len - 1]); len--)
 		;
 	return (char*)&s[len];
 }
@@ -198,7 +198,7 @@ trimend(const char *s)
 char *
 trimstart(const char *s)
 {
-	for(; *s && isspace((int)*s); s++)
+	for (; *s && isspace((int)*s); s++)
 		;
 	return (char *)s;
 }
@@ -206,7 +206,7 @@ trimstart(const char *s)
 void
 printxmlencoded(const char *s, FILE *fp)
 {
-	for(; *s; s++) {
+	for (; *s; s++) {
 		switch(*s) {
 		case '<':  fputs("&lt;", fp);   break;
 		case '>':  fputs("&gt;", fp);   break;
@@ -228,17 +228,17 @@ printutf8pad(FILE *fp, const char *s, size_t len, int pad)
 	size_t n = 0, i;
 	int r;
 
-	for(i = 0; *s && n < len; i++, s++) {
-		if(ISUTF8(*s)) {
-			if((r = mbtowc(&w, s, 4)) == -1)
+	for (i = 0; *s && n < len; i++, s++) {
+		if (ISUTF8(*s)) {
+			if ((r = mbtowc(&w, s, 4)) == -1)
 				break;
-			if((r = wcwidth(w)) == -1)
+			if ((r = wcwidth(w)) == -1)
 				r = 1;
 			n += (size_t)r;
 		}
 		putc(*s, fp);
 	}
-	for(; n < len; n++)
+	for (; n < len; n++)
 		putc(pad, fp);
 }
 
@@ -250,7 +250,7 @@ strtotime(const char *s, time_t *t)
 
 	errno = 0;
 	l = strtol(s, NULL, 10);
-	if(errno != 0)
+	if (errno != 0)
 		return -1;
 	*t = (time_t)l;
 
@@ -264,8 +264,8 @@ printcontent(const char *s, FILE *fp)
 {
 	const char *p;
 
-	for(p = s; *p; p++) {
-		if(*p == '\\') {
+	for (p = s; *p; p++) {
+		if (*p == '\\') {
 			switch (*(++p)) {
 			case '\\': fputc('\\', fp); break;
 			case 't':  fputc('\t', fp); break;
@@ -289,11 +289,11 @@ xbasename(const char *path)
 {
 	char *p, *b;
 
-	if(!(p = strdup(path)))
+	if (!(p = strdup(path)))
 		err(1, "strdup");
-	if(!(b = basename(p)))
+	if (!(b = basename(p)))
 		err(1, "basename");
-	if(!(b = strdup(b)))
+	if (!(b = strdup(b)))
 		err(1, "strdup");
 	free(p);
 	return b;
