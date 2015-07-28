@@ -24,8 +24,8 @@ LDFLAGS = ${LIBS}
 
 # uncomment for compat
 #CFLAGS += -DCOMPAT
-# uncomment if your libc doesn't support strlcpy
-#EXTRAOBJ = strlcpy.o
+# uncomment if your libc doesn't support strlcat and strlcpy
+#EXTRAOBJ = strlcat.o strlcpy.o
 
 # compiler and linker
 #CC = cc

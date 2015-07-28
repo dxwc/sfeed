@@ -13,6 +13,7 @@ SRC = \
 	util.c\
 	xml.c
 COMPATSRC = \
+	strlcat.c\
 	strlcpy.c
 BIN = \
 	sfeed\
