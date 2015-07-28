@@ -15,11 +15,10 @@ printfeed(FILE *fp, const char *feedname)
 {
 	char *fields[FieldLast];
 	time_t parsedtime;
-	int r;
 
 	while(parseline(&line, &size, fields, FieldLast, '\t', fp) > 0) {
-		r = strtotime(fields[FieldUnixTimestamp], &parsedtime);
-		if(r != -1 && parsedtime >= comparetime)
+		if(strtotime(fields[FieldUnixTimestamp], &parsedtime) != -1 &&
+		   parsedtime >= comparetime)
 			fputs(" N ", stdout);
 		else
 			fputs("   ", stdout);
@@ -38,6 +37,7 @@ int
 main(int argc, char *argv[])
 {
 	FILE *fp;
+	char *name;
 	int i;
 
 	/* 1 day is old news */
@@ -49,7 +49,9 @@ main(int argc, char *argv[])
 		for(i = 1; i < argc; i++) {
 			if(!(fp = fopen(argv[i], "r")))
 				err(1, "fopen: %s", argv[i]);
-			printfeed(fp, xbasename(argv[i]));
+			name = xbasename(argv[i]);
+			printfeed(fp, name);
+			free(name);
 			if(ferror(fp))
 				err(1, "ferror: %s", argv[i]);
 			fclose(fp);
