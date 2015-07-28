@@ -345,7 +345,7 @@ string_print(String *s)
 static void
 printfields(void)
 {
-	char timebuf[64];
+	char link[4096], timebuf[64];
 	time_t t;
 	int r;
 
@@ -362,7 +362,8 @@ printfields(void)
 	string_print(&ctx.item.title);
 	putchar(FieldSeparator);
 	/* always print absolute urls */
-	printlink(ctx.item.link.data, baseurl, stdout);
+	if (absuri(ctx.item.link.data, baseurl, link, sizeof(link)) != -1)
+		fputs(link, stdout);
 	putchar(FieldSeparator);
 	string_print(&ctx.item.content);
 	putchar(FieldSeparator);

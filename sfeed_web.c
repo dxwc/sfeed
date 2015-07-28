@@ -7,8 +7,8 @@
 #include "util.h"
 #include "xml.h"
 
-static unsigned int isbase = 0, islink = 0, isfeedlink = 0, found = 0;
-static char feedlink[4096] = "", basehref[4096] = "", feedtype[256] = "";
+static unsigned int isbase, islink, isfeedlink, found;
+static char abslink[4096], feedlink[4096], basehref[4096], feedtype[256];
 
 static void
 printfeedtype(const char *s, FILE *fp)
@@ -46,7 +46,8 @@ xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort)
 			printfeedtype(feedtype, stdout);
 			putchar(' ');
 		}
-		printlink(feedlink, basehref, stdout);
+		if(absuri(feedlink, basehref, abslink, sizeof(abslink)) != -1)
+			fputs(abslink, stdout);
 		putchar('\n');
 		found++;
 	}
@@ -74,8 +75,9 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 				isfeedlink = 1;
 				strlcpy(feedtype, value, sizeof(feedtype));
 			}
-		} else if(!strncasecmp(name, "href", namelen))
+		} else if(!strncasecmp(name, "href", namelen)) {
 			strlcpy(feedlink, value, sizeof(feedlink));
+		}
 	}
 }
 
