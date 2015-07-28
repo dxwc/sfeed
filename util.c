@@ -1,72 +1,152 @@
+#include <sys/types.h>
+
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <libgen.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 #include <string.h>
-#include <sys/types.h>
 #include <time.h>
 #include <wchar.h>
 
 #include "util.h"
 
-void
-printurlencoded(const char *s, size_t len, FILE *fp)
+static void
+encodehex(unsigned char c, char *s)
 {
-	size_t i;
+	static const char *table = "0123456789ABCDEF";
 
-	for(i = 0; i < len && s[i]; i++) {
-		if((int)s[i] == ' ')
-			fputs("%20", fp);
-		else if((unsigned char)s[i] > 127 || iscntrl((int)s[i]))
-			fprintf(fp, "%%%02X", (unsigned char)s[i]);
-		else
-			fputc(s[i], fp);
-	}
+	s[0] = table[((c - (c % 16)) / 16) % 16];
+	s[1] = table[c % 16];
 }
 
-/* print link; if link is relative use baseurl to make it absolute */
-void
-printlink(const char *link, const char *baseurl, FILE *fp)
+int
+parseuri(const char *s, struct uri *u, int rel)
 {
-	const char *ebaseproto, *ebasedomain, *p;
-	int isrelative;
+	const char *p = s;
+	size_t i;
 
-	/* protocol part */
-	for(p = link; *p && (isalpha((int)*p) || isdigit((int)*p) ||
-		                *p == '+' || *p == '-' || *p == '.'); p++);
-	/* relative link (baseurl is used). */
-	isrelative = strncmp(p, "://", strlen("://"));
-	if(isrelative) {
-		if((ebaseproto = strstr(baseurl, "://"))) {
-			ebaseproto += strlen("://");
-			printurlencoded(baseurl, ebaseproto - baseurl, fp);
+	memset(u, 0, sizeof(struct uri));
+	if (!*s)
+		return 0;
+
+	/* prefix is "//", don't read protocol, skip to domain parsing */
+	if (!strncmp(p, "//", 2)) {
+		p += 2; /* skip "//" */
+	} else {
+		/* protocol part */
+		for (p = s; *p && (isalpha((int)*p) || isdigit((int)*p) ||
+			       *p == '+' || *p == '-' || *p == '.'); p++)
+			;
+		if (!strncmp(p, "://", 3)) {
+			if (p - s + 1 >= (ssize_t)sizeof(u->proto))
+				return -1; /* protocol too long */
+			memcpy(u->proto, s, p - s);
+			p += 3; /* skip "://" */
 		} else {
-			ebaseproto = baseurl;
-			if(*baseurl || (link[0] == '/' && link[1] == '/'))
-				fputs("http://", fp);
-		}
-		if(link[0] == '/') { /* relative to baseurl domain (not path).  */
-			if(link[1] == '/') /* absolute url but with protocol from baseurl. */
-				link += 2;
-			else if((ebasedomain = strchr(ebaseproto, '/')))
-				/* relative to baseurl and baseurl path. */
-				printurlencoded(ebaseproto, ebasedomain - ebaseproto, fp);
-			else
-				printurlencoded(ebaseproto, strlen(ebaseproto), fp);
-		} else if((ebasedomain = strrchr(ebaseproto, '/'))) {
-			/* relative to baseurl and baseurl path. */
-			printurlencoded(ebaseproto, ebasedomain - ebaseproto + 1, fp);
-		} else {
-			printurlencoded(ebaseproto, strlen(ebaseproto), fp);
-			if(*baseurl && *link)
-				fputc('/', fp);
+			p = s; /* no protocol format, set to start */
+			/* relative url: read rest as path, else as domain */
+			if (rel)
+				goto readpath;
 		}
 	}
-	printurlencoded(link, strlen(link), fp);
+	/* domain / host part, skip until "/" or end. */
+	i = strcspn(p, "/");
+	if (i + 1 >= sizeof(u->host))
+		return -1; /* host too long */
+	memcpy(u->host, p, i);
+	p = &p[i];
+
+readpath:
+	if (u->host[0]) {
+		p = &p[strspn(p, "/")];
+		strlcpy(u->path, "/", sizeof(u->path));
+	} else {
+		/* having no host is an error in this case */
+		if (!rel)
+			return -1;
+	}
+	/* treat truncation as an error */
+	return strlcat(u->path, p, sizeof(u->path)) >= sizeof(u->path) ? -1 : 0;
+}
+
+/* get absolute uri; if link is relative use baseuri to make it absolute */
+int
+absuri(const char *link, const char *base, char *buf, size_t bufsiz)
+{
+	struct uri ulink, ubase;
+	char tmp[4096] = "", *p;
+	int r = -1, c;
+
+	buf[0] = '\0';
+	if (parseuri(base, &ubase, 0) == -1 ||
+	    parseuri(link, &ulink, 1) == -1)
+		return -1;
+
+	if (!ulink.host[0] && !ubase.host[0])
+		return -1;
+
+	r = snprintf(tmp, sizeof(tmp), "%s://%s",
+		ulink.proto[0] ?
+			ulink.proto :
+			(ubase.proto[0] ? ubase.proto : "http"),
+		!strncmp(link, "//", 2) ?
+			ulink.host :
+			(ulink.host[0] ? ulink.host : ubase.host));
+	if (r == -1 || (size_t)r >= sizeof(tmp))
+		return -1;
+
+	/* relative to root */
+	if (!ulink.host[0] && ulink.path[0] != '/') {
+		/* relative to base url path */
+		if (ulink.path[0]) {
+			if ((p = strrchr(ubase.path, '/'))) {
+				/* temporary null-terminate */
+				c = *(++p);
+				*p = '\0';
+				strlcat(tmp, ubase.path, sizeof(tmp));
+				*p = c; /* restore */
+			}
+		} else {
+			strlcat(tmp, ubase.path, sizeof(tmp));
+		}
+	}
+	if (strlcat(tmp, ulink.path, sizeof(tmp)) >= sizeof(tmp))
+		return -1;
+
+	return encodeuri(tmp, buf, bufsiz);
+}
+
+int
+encodeuri(const char *s, char *buf, size_t bufsiz)
+{
+	size_t i, b;
+
+	if (!bufsiz)
+		return -1;
+	for (i = 0, b = 0; s[i]; i++) {
+		if ((int)s[i] == ' ' ||
+		    (unsigned char)s[i] > 127 ||
+		    iscntrl((int)s[i])) {
+			if (b + 3 >= bufsiz)
+				return -1;
+			buf[b++] = '%';
+			encodehex(s[i], &buf[b]);
+			b += 2;
+		} else {
+			if (b >= bufsiz)
+				return -1;
+			buf[b++] = s[i];
+		}
+	}
+	if (b >= bufsiz)
+		return -1;
+	buf[b] = '\0';
+
+	return 0;
 }
 
 /* read a field-separated line from 'fp',
@@ -135,6 +215,8 @@ printxmlencoded(const char *s, FILE *fp)
 	}
 }
 
+/* print `len` columns of characters. If string is shorter pad the rest
+ * with characters `pad`. */
 void
 printutf8pad(FILE *fp, const char *s, size_t len, int pad)
 {
@@ -156,6 +238,7 @@ printutf8pad(FILE *fp, const char *s, size_t len, int pad)
 		putc(pad, fp);
 }
 
+/* parse time to time_t, assumes time_t is signed */
 int
 strtotime(const char *s, time_t *t)
 {
@@ -179,15 +262,12 @@ printcontent(const char *s, FILE *fp)
 
 	for(p = s; *p; p++) {
 		if(*p == '\\') {
-			p++;
-			if(*p == '\\')
-				fputc('\\', fp);
-			else if(*p == 't')
-				fputc('\t', fp);
-			else if(*p == 'n')
-				fputc('\n', fp);
-			else
-				fputc(*p, fp); /* unknown */
+			switch (*(++p)) {
+			case '\\': fputc('\\', fp); break;
+			case 't':  fputc('\t', fp); break;
+			case 'n':  fputc('\n', fp); break;
+			default:   fputc(*p,   fp);
+			}
 		} else {
 			fputc(*p, fp);
 		}
