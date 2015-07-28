@@ -80,6 +80,7 @@ absuri(const char *link, const char *base, char *buf, size_t bufsiz)
 	struct uri ulink, ubase;
 	char tmp[4096] = "", *p;
 	int r = -1, c;
+	size_t i;
 
 	buf[0] = '\0';
 	if (parseuri(base, &ubase, 0) == -1 ||
@@ -107,11 +108,14 @@ absuri(const char *link, const char *base, char *buf, size_t bufsiz)
 				/* temporary null-terminate */
 				c = *(++p);
 				*p = '\0';
-				strlcat(tmp, ubase.path, sizeof(tmp));
+				i = strlcat(tmp, ubase.path, sizeof(tmp));
 				*p = c; /* restore */
+				if (i >= sizeof(tmp))
+					return -1;
 			}
 		} else {
-			strlcat(tmp, ubase.path, sizeof(tmp));
+			if (strlcat(tmp, ubase.path, sizeof(tmp)) >= sizeof(tmp))
+				return -1;
 		}
 	}
 	if (strlcat(tmp, ulink.path, sizeof(tmp)) >= sizeof(tmp))
