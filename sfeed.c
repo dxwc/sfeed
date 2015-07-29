@@ -205,7 +205,9 @@ string_append(String *s, const char *data, size_t len)
 }
 
 /* get timezone from string, return as formatted string and time offset,
- * for the offset it assumes GMT */
+ * for the offset it assumes UTC.
+ * NOTE: only parses timezones in RFC822, other timezones are ambiguous
+ * anyway. If needed you can add ones yourself, like "cest", "cet" etc. */
 static int
 gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 {
@@ -214,66 +216,81 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 		int offhour;
 		int offmin;
 	} tzones[] = {
-		{ "cdt", 5, 0 },
-		{ "cst", 6, 0 },
-		{ "edt", 4, 0 },
-		{ "est", 5, 0 },
-		{ "mdt", 6, 0 },
-		{ "mst", 7, 0 },
-		{ "pdt", 7, 0 },
-		{ "pst", 8, 0 }
+		{ "CDT", -5, 0 },
+		{ "CST", -6, 0 },
+		{ "EDT", -4, 0 },
+		{ "EST", -5, 0 },
+		{ "GMT",  0, 0 },
+		{ "MDT", -6, 0 },
+		{ "MST", -7, 0 },
+		{ "PDT", -7, 0 },
+		{ "PST", -8, 0 },
+		{ "UT",   0, 0 },
+		{ "UTC",  0, 0 },
+		{ "A",   -1, 0 },
+		{ "M",  -12, 0 },
+		{ "N",    1, 0 },
+		{ "Y",   12, 0 },
+		{ "Z",    0, 0 }
 	};
-
-	char tzbuf[16], *tz = "GMT";
+	char tzbuf[5] = "", *tz = "", c = '+';
 	int tzhour = 0, tzmin = 0, r;
-	char c = '+';
 	size_t i;
 
-	for (; *s && !isalpha(*s) && *s != '-' && *s != '+'; s++)
-		;
 	if (!*s || *s == 'Z' || *s == 'z')
 		goto time_ok;
+	/* skip whitespace */
+	s = &s[strspn(s, " 	")];
 
 	/* look until some common timezone delimiters are found */
 	for (i = 0; s[i] && isalpha((int)s[i]); i++)
 		;
 	/* copy tz name */
 	if (i >= sizeof(tzbuf))
-		i = sizeof(tzbuf) - 1;
+		return -1; /* timezone too long */
 	memcpy(tzbuf, s, i);
 	tzbuf[i] = '\0';
+	printf("tzbuf: |%s|\n", tzbuf);
 
-	if ((sscanf(s, "%c%02d:%02d", &c, &tzhour, &tzmin)) == 3) {
+	if ((sscanf(s, "%c%02d:%02d", &c, &tzhour, &tzmin)) == 3)
 		;
-	} else if (sscanf(s, "%c%02d%02d", &c, &tzhour, &tzmin) == 3) {
+	else if (sscanf(s, "%c%02d%02d", &c, &tzhour, &tzmin) == 3)
 		;
-	} else if (sscanf(s, "%c%d", &c, &tzhour) == 2) {
+	else if (sscanf(s, "%c%d", &c, &tzhour) == 2)
 		tzmin = 0;
-	} else {
+	else
+		tzhour = tzmin = 0;
+	if (!tzhour && !tzmin)
 		c = '+';
-		tzhour = 0;
-		tzmin = 0;
-	}
 
-	/* compare tz and adjust offset relative to GMT */
-	if (tzbuf[0])
-		tz = tzbuf;
+	/* compare tz and adjust offset relative to UTC */
 	for (i = 0; i < LEN(tzones); i++) {
-		if (!(strcasecmp(tzbuf, tzones[i].name))) {
-			tz = "GMT";
-			tzhour += tzones[i].offhour;
-			tzmin += tzones[i].offmin;
+		if (!strcmp(tzbuf, tzones[i].name)) {
+			tz = "UTC";
+			tzhour = tzones[i].offhour;
+			tzmin = tzones[i].offmin;
+			c = tzones[i].offhour < 0 ? '-' : '+';
 			break;
 		}
 	}
+	tzhour = abs(tzhour);
+	tzmin = abs(tzmin);
 
 time_ok:
-	r = snprintf(buf, bufsiz, "%s%c%02d%02d",
-	             tz, c, tzhour, tzmin);
+	/* timezone set but non-match */
+	if (tzbuf[0] && !tz[0]) {
+		r = snprintf(buf, bufsiz, "%s", tzbuf);
+		tzhour = tzmin = 0;
+		c = '+';
+	} else {
+		r = snprintf(buf, bufsiz, "%s%c%02d:%02d",
+		             tz[0] ? tz : "UTC", c, tzhour, tzmin);
+	}
 	if (r < 0 || (size_t)r >= bufsiz)
 		return -1; /* truncation or error */
 	if (tzoffset)
-		*tzoffset = (tzhour * 3600) + (tzmin * 60) * (c == '-' ? -1 : 1);
+		*tzoffset = ((tzhour * 3600) + (tzmin * 60)) *
+		            (c == '-' ? -1 : 1);
 	return 0;
 }
 
@@ -300,8 +317,9 @@ parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 		tm.tm_isdst = -1; /* don't use DST */
 		if ((t = timegm(&tm)) == -1) /* error */
 			return -1;
-		if (gettimetz(p, tz, sizeof(tz), &tzoffset) != -1)
-			t -= tzoffset;
+		if (gettimetz(p, tz, sizeof(tz), &tzoffset) == -1)
+			return -1;
+		t -= tzoffset;
 		if (buf) {
 			r = snprintf(buf, bufsiz,
 			         "%04d-%02d-%02d %02d:%02d:%02d %s",
