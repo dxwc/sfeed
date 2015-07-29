@@ -72,33 +72,36 @@ sfeedrc   - Config file. This file is evaluated as a shellscript in
 Files written at runtime by sfeed_update
 ----------------------------------------
 
-feeds     - Tab-separated format containing all feeds. The sfeed_update script
+feeds     - TAB-separated format containing all feeds. The sfeed_update script
             merges new items with this file.
 feeds.new - Temporary file used by sfeed_update to merge items.
 
 
-TAB-SEPARATED format
+TAB-separated format
 --------------------
 
 The items are saved in a TSV-like format except newlines, tabs and
 backslash are escaped with \ (\n, \t and \\). Other whitespace except
 spaces are removed.
 
-The timestamp field is converted to a unix timestamp. The timestamp is also
+The timestamp field is converted to a UNIX timestamp. The timestamp is also
 stored as formatted as a separate field. The other fields are left untouched
 (including HTML).
 
 The order and format of the fields are:
 
-item unix timestamp      - string unix timestamp (GMT+0)
-item formatted timestamp - string timestamp (YYYY-mm-dd HH:MM:SS tz[+-]HHMM)
+item UNIX timestamp      - string UNIX timestamp (UTC+0)
+item formatted timestamp - string timestamp, YYYY-mm-dd HH:MM:SS (UTC[+-]HH:MM)|tz
 item title               - string
 item link                - string, absolute url, unsafe characters are encoded
 item content             - string
-item contenttype         - string ("html" or "plain")
+item contenttype         - string, "html" or "plain"
 item id                  - string
 item author              - string
-feed type                - string ("rss" or "atom")
+feed type                - string, "rss" or "atom"
+
+CAVEAT: if a timezone is not supported (non-RFC822) the UNIX timestamp is
+        interpreted as UTC+0.
 
 
 Build and install
