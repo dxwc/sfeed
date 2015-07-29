@@ -566,8 +566,8 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 		}
 	} else if (ctx.item.feedtype == FeedTypeAtom) {
 		if (ctx.tagid == AtomTagPublished || ctx.tagid == AtomTagUpdated) {
-			/* ignore, prefer updated over published */
-			if (ctx.tagid != AtomTagPublished || !ctx.item.timestamp.len) {
+			/* ignore, prefer published over updated */
+			if (ctx.tagid != AtomTagUpdated || !ctx.item.timestamp.len) {
 				ctx.field = &ctx.item.timestamp;
 			}
 		} else if (ctx.tagid == AtomTagTitle) {
