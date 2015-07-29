@@ -73,7 +73,7 @@ readpath:
 	return strlcat(u->path, p, sizeof(u->path)) >= sizeof(u->path) ? -1 : 0;
 }
 
-/* get absolute uri; if link is relative use baseuri to make it absolute */
+/* get absolute uri; if `link` is relative use `base` to make it absolute. */
 int
 absuri(const char *link, const char *base, char *buf, size_t bufsiz)
 {

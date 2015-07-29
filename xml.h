@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 typedef struct xmlparser {
 	/* handlers */
 	void (*xmltagstart)(struct xmlparser *, const char *, size_t);
