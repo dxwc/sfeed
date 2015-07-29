@@ -206,7 +206,7 @@ string_append(String *s, const char *data, size_t len)
 
 /* get timezone from string, return as formatted string and time offset,
  * for the offset it assumes UTC.
- * NOTE: only parses timezones in RFC822, other timezones are ambiguous
+ * NOTE: only parses timezones in RFC-822, other timezones are ambiguous
  * anyway. If needed you can add ones yourself, like "cest", "cet" etc. */
 static int
 gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)

@@ -47,8 +47,6 @@ sfeed_frames      - Format feeds as a HTML file with frames.
 sfeed_opml_import - Generate a sfeedrc config file based on an opml file.
 sfeed_opml_export - Generate an opml file based on a sfeedrc config file.
 sfeed_plain       - Format feeds file (TSV) from sfeed_update to plain text.
-sfeed_stats       - Format feeds file to show a summary listing of the total
-                    amount, new amount and timestamp of the latest item.
 sfeed_update      - Shellscript; update feeds and merge with old feeds in the
                     file $HOME/.sfeed/feeds by default.
 sfeed_web         - Find urls to RSS/Atom feed from a webpage.
@@ -100,7 +98,7 @@ item id                  - string
 item author              - string
 feed type                - string, "rss" or "atom"
 
-CAVEAT: if a timezone is not supported (non-RFC822) the UNIX timestamp is
+CAVEAT: if a timezone is not supported (non-RFC-822) the UNIX timestamp is
         interpreted as UTC+0.
 
 
