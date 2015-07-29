@@ -250,7 +250,6 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 		return -1; /* timezone too long */
 	memcpy(tzbuf, s, i);
 	tzbuf[i] = '\0';
-	printf("tzbuf: |%s|\n", tzbuf);
 
 	if ((sscanf(s, "%c%02d:%02d", &c, &tzhour, &tzmin)) == 3)
 		;
