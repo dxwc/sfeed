@@ -6,6 +6,7 @@ SRC = \
 	sfeed.c\
 	sfeed_frames.c\
 	sfeed_html.c\
+	sfeed_mbox.c\
 	sfeed_opml_import.c\
 	sfeed_plain.c\
 	sfeed_web.c\
@@ -19,6 +20,7 @@ BIN = \
 	sfeed\
 	sfeed_frames\
 	sfeed_html\
+	sfeed_mbox\
 	sfeed_opml_import\
 	sfeed_plain\
 	sfeed_web\
@@ -30,6 +32,7 @@ MAN1 = \
 	sfeed.1\
 	sfeed_frames.1\
 	sfeed_html.1\
+	sfeed_mbox.1\
 	sfeed_opml_export.1\
 	sfeed_opml_import.1\
 	sfeed_plain.1\
@@ -76,6 +79,9 @@ sfeed_frames: sfeed_frames.o util.o ${EXTRAOBJ}
 
 sfeed_html: sfeed_html.o util.o
 	${CC} -o $@ sfeed_html.o util.o ${LDFLAGS}
+
+sfeed_mbox: sfeed_mbox.o util.o
+	${CC} -o $@ sfeed_mbox.o util.o ${LDFLAGS}
 
 sfeed_opml_import: sfeed_opml_import.o xml.o util.o ${EXTRAOBJ}
 	${CC} -o $@ sfeed_opml_import.o xml.o util.o ${EXTRAOBJ}  ${LDFLAGS}

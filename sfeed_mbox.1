@@ -1,0 +1,30 @@
+.Dd May 17, 2015
+.Dt SFEED_MBOX 1
+.Os
+.Sh NAME
+.Nm sfeed_mbox
+.Nd formats a feeds file to mail
+.Sh SYNOPSIS
+.Nm
+.Sh DESCRIPTION
+.Nm
+formats a feeds file (TSV) from
+.Xr sfeed_update 1
+to mail. It reads TSV data from stdin and writes e-mails to stdout. These can
+be further processed by tools like
+.Xr procmail 1 .
+.Sh FORMAT
+Depending on the original content\-type the mail will be formatted as
+plain-text (text/plain) or HTML (text/html).
+.Sh CUSTOM HEADERS
+To make filtering simpler some custom headers are set:
+.Bl -tag -width Ds
+.It X-Feedname
+The feedname (set in sfeedrc).
+.El
+.Sh SEE ALSO
+.Xr procmail 1 ,
+.Xr sfeed 1 ,
+.Xr sfeed_update 1
+.Sh AUTHORS
+.An Hiltjo Posthuma Aq Mt hiltjo@codemadness.org
