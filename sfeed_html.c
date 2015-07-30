@@ -75,9 +75,10 @@ main(int argc, char *argv[])
 
 	if (!(feeds = calloc(argc, sizeof(struct feed *))))
 		err(1, "calloc");
-
+	if ((comparetime = time(NULL)) == -1)
+		err(1, "time");
 	/* 1 day old is old news */
-	comparetime = time(NULL) - 86400;
+	comparetime -= 86400;
 
 	fputs("<!DOCTYPE HTML>\n"
 	      "<html>\n"

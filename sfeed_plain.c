@@ -40,8 +40,10 @@ main(int argc, char *argv[])
 	char *name;
 	int i;
 
+	if ((comparetime = time(NULL)) == -1)
+		err(1, "time");
 	/* 1 day is old news */
-	comparetime = time(NULL) - (3600 * 24);
+	comparetime -= 86400;
 
 	if (argc == 1) {
 		printfeed(stdin, "");
