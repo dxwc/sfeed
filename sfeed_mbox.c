@@ -22,7 +22,7 @@ printfeed(FILE *fp, const char *feedname)
 	time_t parsedtime;
 	int r;
 
-	if(!(user = getenv("USER")))
+	if (!(user = getenv("USER")))
 		user = "you";
 	if (gethostname(host, sizeof(host)) == -1)
 		err(1, "gethostname");
@@ -35,39 +35,39 @@ printfeed(FILE *fp, const char *feedname)
 		errx(1, "can't format current time");
 
 	while (parseline(&line, &linesize, fields, FieldLast, '\t', fp) > 0) {
-		/* mbox header */
-		printf("From MAILER-DAEMON  %s\n", mtimebuf);
-		printf("From: %s <sfeed@>\n", feedname);
-		printf("To: %s <%s@%s>\n", user, user, host);
-		printf("Subject: %s\n", fields[FieldTitle]);
+		if ((r = strtotime(fields[FieldUnixTimestamp], &parsedtime)) == -1)
+			continue; /* invalid date */
+		if (!gmtime_r(&parsedtime, &tm))
+			continue; /* invalid date */
+		if (!strftime(timebuf, sizeof(timebuf),
+		    "%a, %d %b %Y %H:%M +0000", &tm))
+			continue; /* invalid date */
 
-		printf("Message-Id: <%s-%s-sfeed>\n",
-			fields[FieldUnixTimestamp],
-			fields[FieldId]);
-
-		r = strtotime(fields[FieldUnixTimestamp], &parsedtime);
-		if (r != -1) {
-			if (gmtime_r(&parsedtime, &tm) &&
-			   strftime(timebuf, sizeof(timebuf), "%d %b %y %H:%M +0000", &tm))
-				printf("Date: %s\n", timebuf);
-		}
-		printf("Content-Type: text/%s; charset=UTF-8\n",
-			fields[FieldContentType]);
-		printf("Content-Transfer-Encoding: binary\n");
-
-		if (*feedname != '\0')
-			printf("X-Feedname: %s\n", feedname);
-		printf("\nLink: %s", fields[FieldLink]);
-		printf("\n\n");
+		/* mbox + mail header */
+		printf("From MAILER-DAEMON %s\n"
+			"Date: %s\n"
+			"From: %s <sfeed@>\n"
+			"To: %s <%s@%s>\n"
+			"Subject: %s\n"
+			"Message-ID: <%s-%s-sfeed>\n"
+			"Content-Type: text/%s; charset=UTF-8\n"
+			"Content-Transfer-Encoding: binary\n"
+			"X-Feedname: %s\n"
+			"\n",
+			mtimebuf, timebuf, fields[FieldAuthor],
+			user, user, host, fields[FieldTitle],
+			fields[FieldUnixTimestamp], fields[FieldId],
+			fields[FieldContentType], feedname);
 
 		if (!strcmp(fields[FieldContentType], "html")) {
-			printf("<html><body>\n");
+			printf("<p>Link: <a href=\"%s\">%s</a></p>\n\n",
+			fields[FieldLink], fields[FieldLink]);
 			printcontent(fields[FieldContent], stdout);
-			printf("</body></html>\n");
 		} else {
+			printf("Link: %s\n\n", fields[FieldLink]);
 			printcontent(fields[FieldContent], stdout);
 		}
-		fputs("\n", stdout);
+		fputs("\n\n", stdout);
 	}
 }
 
