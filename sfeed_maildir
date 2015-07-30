@@ -10,6 +10,12 @@ procmailconfig="$HOME/.sfeed/procmailrc"
 # message-id cache to prevent duplicates.
 mkdir -p "${maildir}/.cache"
 
+if ! test -r "${procmailconfig}"; then
+	echo "Procmail configuration file \"${procmailconfig}\" does not exist or is not readable." >&2
+	echo "See procmailrc.example for an example." >&2
+	exit 1
+fi
+
 find "${feedsdir}" -type f -exec printf '%s\n' {} \; | while read -r d; do
 	(name=$(basename "${d}")
 	mkdir -p "${maildir}/${name}/cur"
