@@ -285,7 +285,7 @@ xml_namedentitytostr(const char *e, char *buf, size_t bufsiz)
 	if (*e != '&')
 		return 0;
 
-	for (i = 0; sizeof(entities) / sizeof(*entities); i++) {
+	for (i = 0; i < sizeof(entities) / sizeof(*entities); i++) {
 		/* NOTE: compares max 6 chars */
 		if (!strncasecmp(e, entities[i].entity, 6)) {
 			buf[0] = entities[i].c;
