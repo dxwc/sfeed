@@ -41,7 +41,7 @@ cat <<!
 !
 
 feeds
-# wait till all items are processed (in parallel).
+# wait till all items are processed (concurrently).
 wait
 
 cat <<!

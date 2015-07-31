@@ -4,9 +4,10 @@ v0.9
 Features:
 ---------
 
-* sfeed_update: feeds are now by default updated in parallel for an increase
+* sfeed_update: feeds are now by default updated concurrently for an increase
   in performance.
 * sfeed_update: Auto-detect XML character set encoding (sfeed_xmlenc).
+* Add sfeed_mbox: format feeds to mbox.
 * Add sfeed_web: find RSS/Atom feeds from web-pages.
 * Add sfeed_frames, a formatting program to output feeds as a HTML file with
   frames. It's optimized to look good in older browsers that don't necesarily
@@ -21,7 +22,7 @@ Bug fixes:
 
 * Fix off-by-one in string_append when reallocating buffer.
 * Parsing datetime strings containing timezone suffix to UNIX timestamps
-  was wrong. UNIX timestamps are in GMT+0 time. For simplicity sake output
+  was wrong. UNIX timestamps are in UTC+0 time. For simplicity sake output
   parsed datetime strings in a formatted manner without converting the
   time to the user selected timezone (YYYY-mm-dd HH:mm:ss TZ([-+]offset?).
 * Also when determining if an item is new (by comparing the UNIX

@@ -114,7 +114,7 @@ trap -- "kill -TERM -$$" "2"
 mkdir -p "${sfeeddir}"
 # fetch feeds specified in config file.
 feeds
-# wait till all feeds are fetched (allows running in parallel).
+# wait till all feeds are fetched (concurrently).
 wait
 # cleanup temporary files etc.
 cleanup

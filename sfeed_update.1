@@ -34,7 +34,8 @@ use
 .Xr wget 1 ,
 or an other network downloader or you can override the merge() function to
 change the merge logic. The function feeds() is called to fetch the feeds. By
-default the function feed() is executed as a parallel job to speedup updating.
+default the function feed() is executed concurrently as a background job to
+speedup updating.
 .El
 .Sh FILES WRITTEN
 .Bl -tag -width 17n

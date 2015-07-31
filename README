@@ -61,8 +61,8 @@ sfeedrc   - Config file. This file is evaluated as a shellscript in
             to use wget, fetch or an other download program or you can override
             the merge() function to change the merge logic. The function
             feeds() is called to fetch the feeds. The function feed() can
-            safely be executed as a parallel job in your sfeedrc config file to
-            speed up updating.
+            safely be executed concurrently as a background job in your sfeedrc
+            config file to speed up updating.
 
 
 Files written at runtime by sfeed_update
