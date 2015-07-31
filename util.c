@@ -72,8 +72,8 @@ readpath:
 	return strlcat(u->path, p, sizeof(u->path)) >= sizeof(u->path) ? -1 : 0;
 }
 
-/* get absolute uri; if `link` is relative use `base` to make it absolute.
- * the returned string in `buf` is uri encoded, see: encodeuri().  */
+/* Get absolute uri; if `link` is relative use `base` to make it absolute.
+ * the returned string in `buf` is uri encoded, see: encodeuri(). */
 int
 absuri(const char *link, const char *base, char *buf, size_t bufsiz)
 {
@@ -153,7 +153,7 @@ encodeuri(const char *s, char *buf, size_t bufsiz)
 	return 0;
 }
 
-/* read a field-separated line from 'fp',
+/* Read a field-separated line from 'fp',
  * separated by a character 'separator',
  * 'fields' is a list of pointer with a maximum size of 'maxfields'.
  * 'maxfields' must be > 0.
@@ -185,7 +185,7 @@ parseline(char **line, size_t *size, char **fields,
 	return (int)i;
 }
 
-/* parse time to time_t, assumes time_t is signed */
+/* Parse time to time_t, assumes time_t is signed. */
 int
 strtotime(const char *s, time_t *t)
 {
@@ -207,7 +207,7 @@ print(const char *s, FILE *fp, int (*fn)(int, FILE *))
 		fn((int)*s, fp);
 }
 
-/* Unescape / decode fields printed by string_print_encode()
+/* Unescape / decode fields printed by string_print_encoded()
  * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
  * are ignored: "\z" etc. Call `fn` on each escaped character. */
 void
@@ -245,8 +245,7 @@ xmlencode(int c, FILE *fp)
  * internal buffer (OpenBSD). Others modify the contents of `path` (POSIX).
  * This is a wrapper function that is compatible with both versions.
  * The program will error out if basename(3) failed, this can only happen
- * with the OpenBSD version.
- */
+ * with the OpenBSD version. */
 char *
 xbasename(const char *path)
 {

@@ -104,7 +104,7 @@ static void   xml_handler_start_element_parsed(XMLParser *, const char *,
 static FeedContext ctx;
 static XMLParser parser; /* XML parser state */
 
-/* unique number for parsed tag (faster comparison) */
+/* Unique id for parsed tag (faster comparison). */
 static enum TagId
 gettag(enum FeedType feedtype, const char *name, size_t namelen)
 {
@@ -164,7 +164,7 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 	return TagUnknown; /* NOTREACHED */
 }
 
-/* clear string only; don't free, prevents unnecessary reallocation */
+/* Clear string only; don't free, prevents unnecessary reallocation. */
 static void
 string_clear(String *s)
 {
@@ -210,7 +210,7 @@ string_append(String *s, const char *data, size_t len)
 	s->data[s->len] = '\0';
 }
 
-/* get timezone from string, return as formatted string and time offset,
+/* Get timezone from string, return as formatted string and time offset,
  * for the offset it assumes UTC.
  * NOTE: only parses timezones in RFC-822, other timezones are ambiguous
  * anyway. If needed you can add ones yourself, like "cest", "cet" etc. */
