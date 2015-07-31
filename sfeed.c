@@ -18,16 +18,16 @@
 /* length of string */
 #define STRSIZ(s)         (sizeof(s)-1)
 
-enum { FeedTypeNone = 0, FeedTypeRSS = 1, FeedTypeAtom = 2 };
+enum FeedType { FeedTypeNone = 0, FeedTypeRSS = 1, FeedTypeAtom = 2 };
 static const char *feedtypes[] = { "", "rss", "atom" };
 
-enum { ContentTypeNone = 0, ContentTypePlain = 1, ContentTypeHTML = 2 };
+enum ContentType { ContentTypeNone = 0, ContentTypePlain = 1, ContentTypeHTML = 2 };
 static const char *contenttypes[] = { "", "plain", "html" };
 
 static const int FieldSeparator = '\t'; /* output field seperator character */
 static const char *baseurl = "";
 
-enum {
+enum TagId {
 	TagUnknown = 0,
 	/* RSS */
 	RSSTagDcdate, RSSTagPubdate, RSSTagTitle,
@@ -59,9 +59,9 @@ typedef struct feeditem {
 } FeedItem;
 
 typedef struct feedtag {
-	char   *name;
-	size_t  namelen;
-	int id;
+	char       *name;
+	size_t      namelen;
+	enum TagId  id;
 } FeedTag;
 
 typedef struct feedcontext {
@@ -75,7 +75,7 @@ typedef struct feedcontext {
 	int       attrcount;
 } FeedContext;
 
-static int    gettag(int, const char *, size_t);
+static enum TagId gettag(enum FeedType, const char *, size_t);
 static int    gettimetz(const char *, char *, size_t, int *);
 static int    isattr(const char *, size_t, const char *, size_t);
 static int    istag(const char *, size_t, const char *, size_t);
@@ -85,7 +85,8 @@ static void   string_append(String *, const char *, size_t);
 static void   string_buffer_init(String *, size_t);
 static void   string_buffer_realloc(String *, size_t);
 static void   string_clear(String *);
-static void   string_print(String *);
+static void   string_print_encoded(String *);
+static void   string_print_trimmed(String *);
 static void   xml_handler_attr(XMLParser *, const char *, size_t,
                                const char *, size_t, const char *, size_t);
 static void   xml_handler_attr_start(XMLParser *, const char *, size_t,
@@ -104,8 +105,8 @@ static FeedContext ctx;
 static XMLParser parser; /* XML parser state */
 
 /* unique number for parsed tag (faster comparison) */
-static int
-gettag(int feedtype, const char *name, size_t namelen)
+static enum TagId
+gettag(enum FeedType feedtype, const char *name, size_t namelen)
 {
 	/* RSS, alphabetical order */
 	static FeedTag rsstag[] = {
@@ -138,24 +139,29 @@ gettag(int feedtype, const char *name, size_t namelen)
 	if (namelen < 2 || namelen > 15)
 		return TagUnknown;
 
-	if (feedtype == FeedTypeRSS) {
+	switch (feedtype) {
+	case FeedTypeRSS:
 		for (i = 0; rsstag[i].name; i++) {
 			if (!(n = strncasecmp(rsstag[i].name, name, rsstag[i].namelen)))
-				return rsstag[i].id;
+				return rsstag[i].id; /* found */
 			/* optimization: it's sorted so nothing after it matches. */
 			if (n > 0)
 				return TagUnknown;
 		}
-	} else if (feedtype == FeedTypeAtom) {
+		break;
+	case FeedTypeAtom:
 		for (i = 0; atomtag[i].name; i++) {
 			if (!(n = strncasecmp(atomtag[i].name, name, atomtag[i].namelen)))
-				return atomtag[i].id;
+				return atomtag[i].id; /* found */
 			/* optimization: it's sorted so nothing after it matches. */
 			if (n > 0)
 				return TagUnknown;
 		}
+		break;
+	default:
+		return TagUnknown;
 	}
-	return TagUnknown;
+	return TagUnknown; /* NOTREACHED */
 }
 
 /* clear string only; don't free, prevents unnecessary reallocation */
@@ -334,28 +340,54 @@ parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 	return -1;
 }
 
-/* print text, escape tabs, newline and carriage return etc */
+/* Print text, encode TABs, newlines and '\', remove other whitespace.
+ * Remove leading and trailing whitespace. */
 static void
-string_print(String *s)
+string_print_encoded(String *s)
 {
 	const char *p, *e;
 
 	/* skip leading whitespace */
-	p = trimstart(s->data);
-	e = trimend(p);
+	for (p = s->data; *p && isspace((int)*p); p++)
+		;
+	/* seek offset of trailing whitespace */
+	for (e = p + strlen(p); e > p && isspace((int)*(e - 1)); e--)
+		;
 
 	for (; *p && p != e; p++) {
-		/* isspace(c) && c != ' '. */
-		if (((unsigned)*p - '\t') < 5) {
-			switch(*p) {
-			case '\n': fputs("\\n", stdout); break;
+		if (isspace((int)*p) && *p != ' ') {
+			switch (*p) {
+			case '\n': fputs("\\n",  stdout); break;
 			case '\\': fputs("\\\\", stdout); break;
-			case '\t': fputs("\\t", stdout); break;
+			case '\t': fputs("\\t",  stdout); break;
 			default: break; /* ignore other whitespace chars */
 			}
 		} else if (!iscntrl((int)*p)) { /* ignore control chars */
 			putchar(*p);
 		}
+	}
+}
+
+/* Print text, replace TABs, carriage return and other whitespace with ' '.
+ * Other control chars are removed. Remove leading and trailing whitespace. */
+static void
+string_print_trimmed(String *s)
+{
+	const char *p, *e;
+
+	/* skip leading whitespace */
+	for (p = s->data; *p && isspace((int)*p); p++)
+		;
+	/* seek offset of trailing whitespace */
+	for (e = p + strlen(p); e > p && isspace((int)*(e - 1)); e--)
+		;
+
+	for (; *p && p != e; p++) {
+		if (isspace((int)*p))
+			putchar(' ');
+		else if (!iscntrl((int)*p))
+			/* ignore other control chars */
+			putchar((int)*p);
 	}
 }
 
@@ -376,19 +408,19 @@ printfields(void)
 	if (r != -1)
 		fputs(timebuf, stdout);
 	putchar(FieldSeparator);
-	string_print(&ctx.item.title);
+	string_print_trimmed(&ctx.item.title);
 	putchar(FieldSeparator);
 	/* always print absolute urls */
 	if (absuri(ctx.item.link.data, baseurl, link, sizeof(link)) != -1)
 		fputs(link, stdout);
 	putchar(FieldSeparator);
-	string_print(&ctx.item.content);
+	string_print_encoded(&ctx.item.content);
 	putchar(FieldSeparator);
 	fputs(contenttypes[ctx.item.contenttype], stdout);
 	putchar(FieldSeparator);
-	string_print(&ctx.item.id);
+	string_print_trimmed(&ctx.item.id);
 	putchar(FieldSeparator);
-	string_print(&ctx.item.author);
+	string_print_trimmed(&ctx.item.author);
 	putchar(FieldSeparator);
 	fputs(feedtypes[ctx.item.feedtype], stdout);
 	putchar('\n');
@@ -555,53 +587,59 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 	/* tag already set: return */
 	if (ctx.tag[0] != '\0')
 		return;
+
 	/* in item */
 	strlcpy(ctx.tag, name, sizeof(ctx.tag)); /* NOTE: truncation ignored */
 	ctx.taglen = namelen;
 	ctx.tagid = gettag(ctx.item.feedtype, ctx.tag, ctx.taglen);
-	if (ctx.tagid == TagUnknown)
-		ctx.field = NULL;
 
-	if (ctx.item.feedtype == FeedTypeRSS) {
-		if (ctx.tagid == RSSTagPubdate || ctx.tagid == RSSTagDcdate)
+	switch (ctx.tagid) {
+	case RSSTagPubdate:
+	case RSSTagDcdate:
+		ctx.field = &ctx.item.timestamp;
+		break;
+	case AtomTagPublished:
+	case AtomTagUpdated:
+		/* prefer published over updated if set */
+		if (ctx.tagid != AtomTagUpdated || !ctx.item.timestamp.len) {
 			ctx.field = &ctx.item.timestamp;
-		else if (ctx.tagid == RSSTagTitle)
-			ctx.field = &ctx.item.title;
-		else if (ctx.tagid == RSSTagLink)
-			ctx.field = &ctx.item.link;
-		else if (ctx.tagid == RSSTagDescription ||
-		        ctx.tagid == RSSTagContentencoded) {
-			/* ignore, prefer content:encoded over description */
-			if (ctx.tagid != RSSTagDescription || !ctx.item.content.len) {
-				ctx.iscontenttag = 1;
-				ctx.field = &ctx.item.content;
-			}
-		} else if (ctx.tagid == RSSTagGuid) {
-			ctx.field = &ctx.item.id;
-		} else if (ctx.tagid == RSSTagAuthor || ctx.tagid == RSSTagDccreator) {
-			ctx.field = &ctx.item.author;
 		}
-	} else if (ctx.item.feedtype == FeedTypeAtom) {
-		if (ctx.tagid == AtomTagPublished || ctx.tagid == AtomTagUpdated) {
-			/* ignore, prefer published over updated */
-			if (ctx.tagid != AtomTagUpdated || !ctx.item.timestamp.len) {
-				ctx.field = &ctx.item.timestamp;
-			}
-		} else if (ctx.tagid == AtomTagTitle) {
-			ctx.field = &ctx.item.title;
-		} else if (ctx.tagid == AtomTagSummary || ctx.tagid == AtomTagContent) {
-			/* ignore, prefer content:encoded over description */
-			if (ctx.tagid != AtomTagSummary || !ctx.item.content.len) {
-				ctx.iscontenttag = 1;
-				ctx.field = &ctx.item.content;
-			}
-		} else if (ctx.tagid == AtomTagId) {
-			ctx.field = &ctx.item.id;
-		} else if (ctx.tagid == AtomTagLink) {
-			ctx.field = &ctx.item.link;
-		} else if (ctx.tagid == AtomTagAuthor) {
-			ctx.field = &ctx.item.author;
+		break;
+	case RSSTagTitle:
+	case AtomTagTitle:
+		ctx.field = &ctx.item.title;
+		break;
+	case RSSTagLink:
+	case AtomTagLink:
+		ctx.field = &ctx.item.link;
+		break;
+	case RSSTagDescription:
+	case RSSTagContentencoded:
+		/* prefer content:encoded over description if set */
+		if (ctx.tagid != RSSTagDescription || !ctx.item.content.len) {
+			ctx.iscontenttag = 1;
+			ctx.field = &ctx.item.content;
 		}
+		break;
+	case AtomTagSummary:
+	case AtomTagContent:
+		/* prefer content over summary if set */
+		if (ctx.tagid != AtomTagSummary || !ctx.item.content.len) {
+			ctx.iscontenttag = 1;
+			ctx.field = &ctx.item.content;
+		}
+		break;
+	case RSSTagGuid:
+	case AtomTagId:
+		ctx.field = &ctx.item.id;
+		break;
+	case RSSTagAuthor:
+	case RSSTagDccreator:
+	case AtomTagAuthor:
+		ctx.field = &ctx.item.author;
+		break;
+	default:
+		ctx.field = NULL;
 	}
 	/* clear field */
 	if (ctx.field)

@@ -24,11 +24,11 @@ printfeed(FILE *fp, struct feed *f)
 
 	if (f->name[0] != '\0') {
 		fputs("<h2 id=\"", stdout);
-		printxmlencoded(f->name, stdout);
+		print(f->name, stdout, xmlencode);
 		fputs("\"><a href=\"#", stdout);
-		printxmlencoded(f->name, stdout);
+		print(f->name, stdout, xmlencode);
 		fputs("\">", stdout);
-		printxmlencoded(f->name, stdout);
+		print(f->name, stdout, xmlencode);
 		fputs("</a></h2>\n", stdout);
 	}
 	fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", stdout);
@@ -53,10 +53,10 @@ printfeed(FILE *fp, struct feed *f)
 			fputs("<b><u>", stdout);
 		if (islink) {
 			fputs("<a href=\"", stdout);
-			printxmlencoded(fields[FieldLink], stdout);
+			print(fields[FieldLink], stdout, xmlencode);
 			fputs("\">", stdout);
 		}
-		printxmlencoded(fields[FieldTitle], stdout);
+		print(fields[FieldTitle], stdout, xmlencode);
 		if (islink)
 			fputs("</a>", stdout);
 		if (isnew)
@@ -126,11 +126,11 @@ main(int argc, char *argv[])
 				fputs("<li class=\"n\"><a href=\"#", stdout);
 			else
 				fputs("<li><a href=\"#", stdout);
-			printxmlencoded(f->name, stdout);
+			print(f->name, stdout, xmlencode);
 			fputs("\">", stdout);
 			if (f->totalnew > 0)
 				fputs("<b><u>", stdout);
-			printxmlencoded(f->name, stdout);
+			print(f->name, stdout, xmlencode);
 			fprintf(stdout, " (%lu)", f->totalnew);
 			if (f->totalnew > 0)
 				fputs("</u></b>", stdout);

@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <wchar.h>
 
 #include "util.h"
 
@@ -73,7 +72,8 @@ readpath:
 	return strlcat(u->path, p, sizeof(u->path)) >= sizeof(u->path) ? -1 : 0;
 }
 
-/* get absolute uri; if `link` is relative use `base` to make it absolute. */
+/* get absolute uri; if `link` is relative use `base` to make it absolute.
+ * the returned string in `buf` is uri encoded, see: encodeuri().  */
 int
 absuri(const char *link, const char *base, char *buf, size_t bufsiz)
 {
@@ -185,63 +185,6 @@ parseline(char **line, size_t *size, char **fields,
 	return (int)i;
 }
 
-char *
-trimend(const char *s)
-{
-	size_t len = strlen(s);
-
-	for (; len > 0 && isspace((int)s[len - 1]); len--)
-		;
-	return (char*)&s[len];
-}
-
-char *
-trimstart(const char *s)
-{
-	for (; *s && isspace((int)*s); s++)
-		;
-	return (char *)s;
-}
-
-void
-printxmlencoded(const char *s, FILE *fp)
-{
-	for (; *s; s++) {
-		switch(*s) {
-		case '<':  fputs("&lt;", fp);   break;
-		case '>':  fputs("&gt;", fp);   break;
-		case '\'': fputs("&apos;", fp); break;
-		case '&':  fputs("&amp;", fp);  break;
-		case '"':  fputs("&quot;", fp); break;
-		default:
-			fputc((int)*s, fp);
-		}
-	}
-}
-
-/* print `len` columns of characters. If string is shorter pad the rest
- * with characters `pad`. */
-void
-printutf8pad(FILE *fp, const char *s, size_t len, int pad)
-{
-	wchar_t w;
-	size_t n = 0, i;
-	int r;
-
-	for (i = 0; *s && n < len; i++, s++) {
-		if (ISUTF8(*s)) {
-			if ((r = mbtowc(&w, s, 4)) == -1)
-				break;
-			if ((r = wcwidth(w)) == -1)
-				r = 1;
-			n += (size_t)r;
-		}
-		putc(*s, fp);
-	}
-	for (; n < len; n++)
-		putc(pad, fp);
-}
-
 /* parse time to time_t, assumes time_t is signed */
 int
 strtotime(const char *s, time_t *t)
@@ -257,25 +200,45 @@ strtotime(const char *s, time_t *t)
 	return 0;
 }
 
-/* print text, ignore tabs, newline and carriage return etc
- * print some HTML 2.0 / XML 1.0 as normal text */
 void
-printcontent(const char *s, FILE *fp)
+print(const char *s, FILE *fp, int (*fn)(int, FILE *))
 {
-	const char *p;
+	for (; *s; s++)
+		fn((int)*s, fp);
+}
 
-	for (p = s; *p; p++) {
-		if (*p == '\\') {
-			switch (*(++p)) {
-			case '\\': fputc('\\', fp); break;
-			case 't':  fputc('\t', fp); break;
-			case 'n':  fputc('\n', fp); break;
-			default:   fputc(*p,   fp);
+/* unescape / decode fields printed by string_print_encode()
+ * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
+ * are ignored: "\z" etc. Call `fn` on each escaped character. */
+void
+decodefield(const char *s, FILE *fp, int (*fn)(int, FILE *))
+{
+	for (; *s; s++) {
+		if (*s == '\\') {
+			switch (*(++s)) {
+			case '\\': fn('\\', fp); break;
+			case 't':  fn('\t', fp); break;
+			case 'n':  fn('\n', fp); break;
+			case '\0': return;
 			}
 		} else {
-			fputc(*p, fp);
+			fn((int)*s, fp);
 		}
 	}
+}
+
+/* print some HTML 2.0 / XML 1.0 as normal text */
+int
+xmlencode(int c, FILE *fp)
+{
+	switch(c) {
+	case '<':  return fputs("&lt;",   fp);
+	case '>':  return fputs("&gt;",   fp);
+	case '\'': return fputs("&apos;", fp);
+	case '&':  return fputs("&amp;",  fp);
+	case '"':  return fputs("&quot;", fp);
+	}
+	return fputc(c, fp);
 }
 
 /* Some implementations of basename(3) return a pointer to a static

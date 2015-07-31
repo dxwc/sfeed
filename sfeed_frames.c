@@ -83,11 +83,11 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 	/* menu if not unnamed */
 	if (f->name[0]) {
 		fputs("<h2 id=\"", fpitems);
-		printxmlencoded(f->name, fpitems);
+		print(f->name, fpitems, xmlencode);
 		fputs("\"><a href=\"#", fpitems);
-		printxmlencoded(f->name, fpitems);
+		print(f->name, fpitems, xmlencode);
 		fputs("\">", fpitems);
-		printxmlencoded(f->name, fpitems);
+		print(f->name, fpitems, xmlencode);
 		fputs("</a></h2>\n", fpitems);
 	}
 
@@ -108,11 +108,14 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>\n"
 			      "<body class=\"frame\"><div class=\"content\">"
 			      "<h2><a href=\"", fpcontent);
-			printxmlencoded(fields[FieldLink], fpcontent);
+			print(fields[FieldLink], fpcontent, xmlencode);
 			fputs("\">", fpcontent);
-			printxmlencoded(fields[FieldTitle], fpcontent);
+			print(fields[FieldTitle], fpcontent, xmlencode);
 			fputs("</a></h2>", fpcontent);
-			printcontent(fields[FieldContent], fpcontent);
+			/* NOTE: this prints the raw HTML of the feed, this is
+			 * potentially dangerous, it is up to the user / browser
+			 * to trust a feed it's HTML content. */
+			decodefield(fields[FieldContent], fpcontent, fputc);
 			fputs("</div></body></html>", fpcontent);
 			fclose(fpcontent);
 		}
@@ -141,7 +144,7 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		fputs("<a href=\"", fpitems);
 		fputs(filepath, fpitems);
 		fputs("\" target=\"content\">", fpitems);
-		printxmlencoded(fields[FieldTitle], fpitems);
+		print(fields[FieldTitle], fpitems, xmlencode);
 		fputs("</a>", fpitems);
 		if (isnew)
 			fputs("</u></b>", fpitems);
@@ -210,11 +213,11 @@ main(int argc, char *argv[])
 				fputs("<a class=\"n\" href=\"items.html#", fpmenu);
 			else
 				fputs("<a href=\"items.html#", fpmenu);
-			printxmlencoded(f->name, fpmenu);
+			print(f->name, fpmenu, xmlencode);
 			fputs("\" target=\"items\">", fpmenu);
 			if (f->totalnew > 0)
 				fputs("<b><u>", fpmenu);
-			printxmlencoded(f->name, fpmenu);
+			print(f->name, fpmenu, xmlencode);
 			fprintf(fpmenu, " (%lu)", f->totalnew);
 			if (f->totalnew > 0)
 				fputs("</u></b>", fpmenu);

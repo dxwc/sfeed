@@ -78,25 +78,30 @@ feeds.new - Temporary file used by sfeed_update to merge items.
 TAB-separated format
 --------------------
 
-The items are saved in a TSV-like format except newlines, tabs and
-backslash are escaped with \ (\n, \t and \\). Other whitespace except
-spaces are removed.
+The items are saved in a TSV-like format.
+
+The fields: title, id, author are not allowed to have newlines, tabs, all
+whitespace is replaced by a single space character. Control characters are
+removed.
+
+The content field can contain newlines and is escaped. TABs, newline and '\'
+are escaped with '\', so: '\n', '\t', and '\\'. Other whitespace characters
+except space are removed. Control characters are also removed.
 
 The timestamp field is converted to a UNIX timestamp. The timestamp is also
-stored as formatted as a separate field. The other fields are left untouched
-(including HTML).
+stored as formatted as a separate field.
 
 The order and format of the fields are:
 
-item UNIX timestamp      - string UNIX timestamp (UTC+0)
+item UNIX timestamp      - string UNIX timestamp (UTC+0).
 item formatted timestamp - string timestamp, YYYY-mm-dd HH:MM:SS (UTC[+-]HH:MM)|tz
 item title               - string
-item link                - string, absolute url, unsafe characters are encoded
+item link                - string, absolute url, unsafe characters are encoded.
 item content             - string
-item contenttype         - string, "html" or "plain"
+item contenttype         - string, "html" or "plain".
 item id                  - string
 item author              - string
-feed type                - string, "rss" or "atom"
+feed type                - string, "rss" or "atom".
 
 CAVEAT: if a timezone is not supported (non-RFC-822) the UNIX timestamp is
         interpreted as UTC+0.
