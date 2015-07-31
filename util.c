@@ -207,7 +207,7 @@ print(const char *s, FILE *fp, int (*fn)(int, FILE *))
 		fn((int)*s, fp);
 }
 
-/* unescape / decode fields printed by string_print_encode()
+/* Unescape / decode fields printed by string_print_encode()
  * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
  * are ignored: "\z" etc. Call `fn` on each escaped character. */
 void
@@ -227,7 +227,7 @@ decodefield(const char *s, FILE *fp, int (*fn)(int, FILE *))
 	}
 }
 
-/* print some HTML 2.0 / XML 1.0 as normal text */
+/* Escape characters below as HTML 2.0 / XML 1.0. */
 int
 xmlencode(int c, FILE *fp)
 {

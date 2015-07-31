@@ -3,16 +3,19 @@
 .Os
 .Sh NAME
 .Nm sfeed_mbox
-.Nd formats a feeds file to mail
+.Nd formats a feeds file to mbox
 .Sh SYNOPSIS
 .Nm
 .Sh DESCRIPTION
 .Nm
 formats a feeds file (TSV) from
-.Xr sfeed_update 1
-to mail. It reads TSV data from stdin and writes e-mails to stdout. These can
-be further processed by tools like
-.Xr procmail 1 .
+.Xr sfeed 1
+to mbox. It reads TSV data from stdin and writes mail in the mbox format
+to stdout. These can be further processed by tools like
+.Xr procmail 1
+or
+.Xr fdm 1
+for example.
 .Sh FORMAT
 Depending on the original content\-type the mail will be formatted as
 plain-text (text/plain) or HTML (text/html).
@@ -23,8 +26,8 @@ To make filtering simpler some custom headers are set:
 The feedname (set in sfeedrc).
 .El
 .Sh SEE ALSO
+.Xr fdm 1 ,
 .Xr procmail 1 ,
-.Xr sfeed 1 ,
-.Xr sfeed_update 1
+.Xr sfeed 1
 .Sh AUTHORS
 .An Hiltjo Posthuma Aq Mt hiltjo@codemadness.org

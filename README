@@ -23,10 +23,7 @@ Optional dependencies
   used by sfeed_update. If the text in your RSS/Atom feeds are already UTF-8
   encoded then you don't need this. For an alternative minimal iconv
   implementation: http://git.etalabs.net/cgit/noxcuse/tree/src/iconv.c
-- mandoc for documentation: http://mdocml.bsd.lv/ . If your host
-  system doesn't have mandoc you can copy the legacy man-pages from doc/man
-  to your $MANPATH. For the most up-to-date documentation you can convert
-  the pages to the legacy format with mandoc -Tman (make doc-oldman).
+- mandoc for documentation: http://mdocml.bsd.lv/ .
 
 
 Platforms tested
@@ -42,11 +39,12 @@ Files
 
 sfeed             - Binary (from sfeed.c); read XML RSS or Atom feed data from
                     stdin. Write feed data in tab-separated format to stdout.
-sfeed_html        - Format feeds file (TSV) from sfeed_update to HTML.
-sfeed_frames      - Format feeds as a HTML file with frames.
+sfeed_html        - Format feeds file (TSV) to HTML.
+sfeed_frames      - Format feeds file (TSV) to HTML file(s) with frames.
+sfeed_mbox        - Format feeds file (TSV) to mbox.
 sfeed_opml_import - Generate a sfeedrc config file based on an opml file.
 sfeed_opml_export - Generate an opml file based on a sfeedrc config file.
-sfeed_plain       - Format feeds file (TSV) from sfeed_update to plain text.
+sfeed_plain       - Format feeds file (TSV) to a plain-text list.
 sfeed_update      - Shellscript; update feeds and merge with old feeds in the
                     file $HOME/.sfeed/feeds by default.
 sfeed_web         - Find urls to RSS/Atom feed from a webpage.
@@ -80,13 +78,13 @@ TAB-separated format
 
 The items are saved in a TSV-like format.
 
-The fields: title, id, author are not allowed to have newlines, tabs, all
+The fields: title, id, author are not allowed to have newlines and TABs. All
 whitespace is replaced by a single space character. Control characters are
 removed.
 
-The content field can contain newlines and is escaped. TABs, newline and '\'
+The content field can contain newlines and is escaped. TABs, newlines and '\'
 are escaped with '\', so: '\n', '\t', and '\\'. Other whitespace characters
-except space are removed. Control characters are also removed.
+except space are removed. Control characters are removed.
 
 The timestamp field is converted to a UNIX timestamp. The timestamp is also
 stored as formatted as a separate field.
@@ -96,7 +94,7 @@ The order and format of the fields are:
 item UNIX timestamp      - string UNIX timestamp (UTC+0).
 item formatted timestamp - string timestamp, YYYY-mm-dd HH:MM:SS (UTC[+-]HH:MM)|tz
 item title               - string
-item link                - string, absolute url, unsafe characters are encoded.
+item link                - string, absolute url, characters are uri encoded.
 item content             - string
 item contenttype         - string, "html" or "plain".
 item id                  - string
@@ -115,8 +113,8 @@ Using make (respects $DESTDIR and $PREFIX):
 make install
 
 
-Usage
------
+Usage and examples
+------------------
 
 Find RSS/Atom feed urls from a webpage:
 
@@ -126,18 +124,19 @@ output:
 	application/rss+xml http://codemadness.org/blog/rss.xml
 	application/atom+xml http://codemadness.org/blog/atom.xml
 
+- - -
 
 To update feeds and format the feeds file (configfile argument is optional):
 
 	sfeed_update "configfile"
-	sfeed_html < $HOME/.sfeed/feeds/* > $HOME/.sfeed/feeds.html
-	sfeed_plain < $HOME/.sfeed/feeds/* > $HOME/.sfeed/feeds.txt
+	sfeed_html $HOME/.sfeed/feeds/* > $HOME/.sfeed/feeds.html
+	sfeed_plain $HOME/.sfeed/feeds/* > $HOME/.sfeed/feeds.txt
 	mkdir -p somedir && cd somedir && sfeed_frames $HOME/.sfeed/feeds/*
 
 Example script to view feeds with dmenu, opens selected url in $BROWSER:
 
 	#!/bin/sh
-	url=$(sfeed_plain < $HOME/.sfeed/feeds/* | dmenu -l 35 -i |
+	url=$(sfeed_plain $HOME/.sfeed/feeds/* | dmenu -l 35 -i |
 		sed 's@^.* \([a-zA-Z]*://\)\(.*\)$@\1\2@')
 	[ ! "$url" = "" ] && $BROWSER "$url"
 
@@ -157,12 +156,14 @@ format:
 
 	sfeed_opml_import < opmlfile.xml > $HOME/.sfeed/sfeedrc
 
+- - -
 
 Export an opml file of your feeds from a sfeedrc config file (configfile
 argument is optional):
 
 	sfeed_opml_export configfile > myfeeds.opml
 
+- - -
 
 Over time your feeds file might become quite big. You can archive items from a
 specific date by doing for example: (make sure to change
@@ -180,6 +181,103 @@ mktime("YYYY mm dd HH mm ss")):
 	}' < feeds > feeds.clean
 	mv feeds feeds.old
 	mv feeds.clean feeds
+
+- - -
+
+Convert mbox to separate maildirs per feed and filter duplicate messages
+using fdm: https://github.com/nicm/fdm .
+
+For example using the following config (~/.sfeed/fdm.conf):
+
+	set unmatched-mail keep
+
+	account "sfeed" mbox "%[home]/.sfeed/mbox"
+		$cachepath = "%[home]/.sfeed/mbox.cache"
+		cache "${cachepath}"
+		$feedsdir = "%[home]/feeds/"
+
+		# check if in cache by message-id.
+		match case "^Message-ID: (.*)" in headers
+			action {
+				tag "msgid" value "%1"
+			}
+			continue
+			# if in cache, stop.
+			match matched and in-cache "${cachepath}" key "%[msgid]"
+			action {
+				keep
+			}
+
+		# not in cache, process it and add to cache.
+		match case "^X-Feedname: (.*)" in headers
+		action {
+			maildir "${feedsdir}%1"
+			add-to-cache "${cachepath}" key "%[msgid]"
+			keep
+		}
+
+Now run:
+
+$ sfeed_mbox ~/.sfeed/feeds/* > ~/.sfeed/mbox
+$ fdm -f ~/.sfeed/fdm.conf fetch
+
+Now you can view feeds in mutt(1) for example.
+
+- - -
+
+Use procmail to format mbox to separate maildirs per feed.
+Depends on: procmail, formail, sfeed_mbox.
+
+procmail_maildirs.sh file:
+
+	maildir="$HOME/feeds"
+	feedsdir="$HOME/.sfeed/feeds"
+	procmailconfig="$HOME/.sfeed/procmailrc"
+
+	# message-id cache to prevent duplicates.
+	mkdir -p "${maildir}/.cache"
+
+	if ! test -r "${procmailconfig}"; then
+		echo "Procmail configuration file \"${procmailconfig}\" does not exist or is not readable." >&2
+		echo "See procmailrc.example for an example." >&2
+		exit 1
+	fi
+
+	find "${feedsdir}" -type f -exec printf '%s\n' {} \; | while read -r d; do
+		(name=$(basename "${d}")
+		mkdir -p "${maildir}/${name}/cur"
+		mkdir -p "${maildir}/${name}/new"
+		mkdir -p "${maildir}/${name}/tmp"
+		printf 'Mailbox %s\n' "${name}"
+		sfeed_mbox "${d}" | formail -s procmail "${procmailconfig}") &
+	done
+	wait
+
+Procmailrc file:
+
+	# Example for use with sfeed_maildir.
+	# The header X-Feedname is used to split into separate maildirs. It is assumes
+	# this name is sane.
+
+	MAILDIR="$HOME/feeds/"
+
+	:0
+	* ^X-Feedname: \/.*
+	{
+		FEED="$MATCH"
+
+		:0 Wh: "msgid_$FEED.lock"
+		| formail -D 1024000 ".cache/msgid_$FEED.cache"
+
+		:0
+		"$FEED"/
+	}
+
+Now run:
+
+$ procmail_maildirs.sh
+
+Now you can view feeds in mutt(1) for example.
 
 
 License

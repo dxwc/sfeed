@@ -601,9 +601,8 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 	case AtomTagPublished:
 	case AtomTagUpdated:
 		/* prefer published over updated if set */
-		if (ctx.tagid != AtomTagUpdated || !ctx.item.timestamp.len) {
+		if (ctx.tagid != AtomTagUpdated || !ctx.item.timestamp.len)
 			ctx.field = &ctx.item.timestamp;
-		}
 		break;
 	case RSSTagTitle:
 	case AtomTagTitle:
