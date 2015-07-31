@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <unistd.h>
 
 #include "xml.h"
@@ -18,7 +17,12 @@ static const struct {
 	{ .entity = "&gt;",   .len = 4, .c = '>'  },
 	{ .entity = "&apos;", .len = 6, .c = '\'' },
 	{ .entity = "&amp;",  .len = 5, .c = '&'  },
-	{ .entity = "&quot;", .len = 6, .c = '"'  }
+	{ .entity = "&quot;", .len = 6, .c = '"'  },
+	{ .entity = "&LT;",   .len = 4, .c = '<'  },
+	{ .entity = "&GT;",   .len = 4, .c = '>'  },
+	{ .entity = "&APOS;", .len = 6, .c = '\'' },
+	{ .entity = "&AMP;",  .len = 5, .c = '&'  },
+	{ .entity = "&QUOT;", .len = 6, .c = '"'  }
 };
 
 static int
@@ -287,7 +291,7 @@ xml_namedentitytostr(const char *e, char *buf, size_t bufsiz)
 
 	for (i = 0; i < sizeof(entities) / sizeof(*entities); i++) {
 		/* NOTE: compares max 6 chars */
-		if (!strncasecmp(e, entities[i].entity, 6)) {
+		if (!strncmp(e, entities[i].entity, 6)) {
 			buf[0] = entities[i].c;
 			buf[1] = '\0';
 			return 1;
