@@ -61,14 +61,14 @@ printfeed(FILE *fp, const char *feedname)
 
 		if (!strcmp(fields[FieldContentType], "html")) {
 			fputs("<p>Link: <a href=\"", stdout);
-			decodefield(fields[FieldLink], stdout, fputc);
+			print(fields[FieldLink], stdout, fputc);
 			fputs("\">", stdout);
-			decodefield(fields[FieldLink], stdout, fputc);
+			print(fields[FieldLink], stdout, fputc);
 			fputs("</a></p>\n\n", stdout);
 			decodefield(fields[FieldContent], stdout, fputc);
 		} else {
 			fputs("Link: ", stdout);
-			decodefield(fields[FieldLink], stdout, fputc);
+			print(fields[FieldLink], stdout, fputc);
 			fputs("\n\n", stdout);
 			decodefield(fields[FieldContent], stdout, fputc);
 		}
