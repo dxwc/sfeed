@@ -443,12 +443,13 @@ isattr(const char *name, size_t len, const char *name2, size_t len2)
 static void
 xml_handler_data(XMLParser *p, const char *s, size_t len)
 {
-	if (ctx.field) {
-		/* add only data from <name> inside <author> tag
-		 * or any other non-<author> tag  */
-		if (ctx.tagid != AtomTagAuthor || !strcmp(p->tag, "name"))
-			string_append(ctx.field, s, len);
-	}
+	if (!ctx.field)
+		return;
+
+	/* add only data from <name> inside <author> tag
+	 * or any other non-<author> tag  */
+	if (ctx.tagid != AtomTagAuthor || !strcmp(p->tag, "name"))
+		string_append(ctx.field, s, len);
 }
 
 static void
@@ -456,8 +457,10 @@ xml_handler_cdata(XMLParser *p, const char *s, size_t len)
 {
 	(void)p;
 
-	if (ctx.field)
-		string_append(ctx.field, s, len);
+	if (!ctx.field)
+		return;
+
+	string_append(ctx.field, s, len);
 }
 
 static void
@@ -554,6 +557,7 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 {
 	/* starts with div, handle as XML, don't convert entities
 	 * (set handler to NULL) */
+	/* TODO: this behaviour in the XML parser is changed, test this */
 	if (ISCONTENTTAG(ctx) && ctx.item.feedtype == FeedTypeAtom &&
 	   namelen == STRSIZ("div") && !strncmp(name, STRP("div"))) {
 		p->xmldataentity = NULL;
@@ -717,7 +721,7 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 		ctx.taglen = 0;
 		ctx.tagid = TagUnknown;
 
-		/* not sure if needed */
+		/* TODO: not sure if needed */
 		ctx.iscontenttag = 0;
 		ctx.iscontent = 0;
 	} else if (ctx.taglen == namelen && !strcmp(ctx.tag, name)) {
@@ -728,7 +732,7 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 		ctx.taglen = 0;
 		ctx.tagid = TagUnknown;
 
-		/* not sure if needed */
+		/* TODO: not sure if needed */
 		ctx.iscontenttag = 0;
 		ctx.iscontent = 0;
 	}
