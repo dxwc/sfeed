@@ -49,15 +49,15 @@ printcontent(const char *s, FILE *fp)
 static size_t
 normalizepath(const char *path, char *buf, size_t bufsiz)
 {
-	size_t i = 0, r = 0;
+	size_t i, r = 0;
 
-	for (; *path && i < bufsiz; path++) {
+	for (i = 0; *path && i < bufsiz; path++) {
 		if (isalpha((int)*path) || isdigit((int)*path)) {
 			buf[i++] = tolower((int)*path);
 			r = 0;
 		} else {
-			/* don't repeat '-' */
-			if (!r)
+			/* don't repeat '-', don't start with '-' */
+			if (!r && i)
 				buf[i++] = '-';
 			r++;
 		}
