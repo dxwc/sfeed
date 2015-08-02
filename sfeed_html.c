@@ -33,7 +33,7 @@ printfeed(FILE *fp, struct feed *f)
 	}
 	fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", stdout);
 
-	while (parseline(&line, &linesize, fields, FieldLast, '\t', fp) > 0) {
+	while (parseline(&line, &linesize, fields, fp) > 0) {
 		r = strtotime(fields[FieldUnixTimestamp], &parsedtime);
 		isnew = (r != -1 && parsedtime >= comparetime) ? 1 : 0;
 		islink = (fields[FieldLink][0] != '\0') ? 1 : 0;

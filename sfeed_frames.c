@@ -112,7 +112,7 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 	}
 
 	fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", fpitems);
-	while (parseline(&line, &linesize, fields, FieldLast, '\t', fpin) > 0) {
+	while (parseline(&line, &linesize, fields, fpin) > 0) {
 		/* write content */
 		if (!(namelen = normalizepath(fields[FieldTitle], name, sizeof(name))))
 			continue;

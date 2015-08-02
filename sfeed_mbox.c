@@ -76,7 +76,7 @@ printfeed(FILE *fp, const char *feedname)
 	if (!strftime(mtimebuf, sizeof(mtimebuf), "%a %b %d %H:%M:%S %Y", &tm))
 		errx(1, "can't format current time");
 
-	while (parseline(&line, &linesize, fields, FieldLast, '\t', fp) > 0) {
+	while (parseline(&line, &linesize, fields, fp) > 0) {
 		if ((r = strtotime(fields[FieldUnixTimestamp], &parsedtime)) == -1)
 			continue; /* invalid date */
 		if (!gmtime_r(&parsedtime, &tm))

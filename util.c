@@ -155,23 +155,21 @@ encodeuri(const char *s, char *buf, size_t bufsiz)
 
 /* Read a field-separated line from 'fp',
  * separated by a character 'separator',
- * 'fields' is a list of pointer with a maximum size of 'maxfields'.
- * 'maxfields' must be > 0.
- * 'line' buffer is allocated using malloc, 'size' will contain the
- * allocated buffer size.
- * returns: amount of fields read or -1 on error. */
-int
-parseline(char **line, size_t *size, char **fields,
-          unsigned int maxfields, int separator, FILE *fp)
+ * 'fields' is a list of pointers with a size of FieldLast (must be >0).
+ * 'line' buffer is allocated using malloc, 'size' will contain the allocated
+ * buffer size.
+ * returns: amount of fields read (>0) or -1 on error. */
+ssize_t
+parseline(char **line, size_t *size, char *fields[FieldLast], FILE *fp)
 {
 	char *prev, *s;
-	unsigned int i;
+	size_t i;
 
 	if (getline(line, size, fp) <= 0)
 		return -1;
 
 	for (prev = *line, i = 0;
-	    (s = strchr(prev, separator)) && i < maxfields - 1;
+	    (s = strchr(prev, '\t')) && i < FieldLast - 1;
 	    i++) {
 		*s = '\0';
 		fields[i] = prev;
@@ -179,10 +177,10 @@ parseline(char **line, size_t *size, char **fields,
 	}
 	fields[i++] = prev;
 	/* make non-parsed fields empty. */
-	for (; i < maxfields; i++)
+	for (; i < FieldLast; i++)
 		fields[i] = "";
 
-	return (int)i;
+	return (ssize_t)i;
 }
 
 /* Parse time to time_t, assumes time_t is signed. */
@@ -195,7 +193,8 @@ strtotime(const char *s, time_t *t)
 	l = strtol(s, NULL, 10);
 	if (errno != 0)
 		return -1;
-	*t = (time_t)l;
+	if (t)
+		*t = (time_t)l;
 
 	return 0;
 }

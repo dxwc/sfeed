@@ -44,7 +44,7 @@ printfeed(FILE *fp, const char *feedname)
 	char *fields[FieldLast];
 	time_t parsedtime;
 
-	while (parseline(&line, &size, fields, FieldLast, '\t', fp) > 0) {
+	while (parseline(&line, &size, fields, fp) > 0) {
 		if (strtotime(fields[FieldUnixTimestamp], &parsedtime) != -1 &&
 		   parsedtime >= comparetime)
 			fputs(" N ", stdout);
