@@ -26,20 +26,49 @@ static struct feed **feeds = NULL;
 
 /* Unescape / decode fields printed by string_print_encoded()
  * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
- * are ignored: "\z" etc. Call `fn` on each escaped character. */
-void
+ * are ignored: "\z" etc. */
+static void
 printcontent(const char *s, FILE *fp)
 {
 	for (; *s; s++) {
-		if (*s == '\\') {
+		switch (*s) {
+		case '\\':
 			switch (*(++s)) {
 			case '\0': return; /* ignore */
 			case '\\': fputc('\\', fp); break;
 			case 't':  fputc('\t', fp); break;
 			case 'n':  fputc('\n', fp); break;
 			}
-		} else {
+			break;
+		default:
 			fputc((int)*s, fp);
+		}
+	}
+}
+
+/* Unescape / decode fields printed by string_print_encoded()
+ * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
+ * are ignored: "\z" etc. Encode HTML 2.0 / XML 1.0 entities.  */
+static void
+printcontentxml(const char *s, FILE *fp)
+{
+	for (; *s; s++) {
+		switch (*s) {
+		case '\\':
+			switch (*(++s)) {
+			case '\0': return; /* ignore */
+			case '\\': fputc('\\', fp); break;
+			case 't':  fputc('\t', fp); break;
+			case 'n':  fputc('\n', fp); break;
+			}
+			break;
+		/* XML entities */
+		case '<':  fputs("&lt;",   fp); break;
+		case '>':  fputs("&gt;",   fp); break;
+		case '\'': fputs("&apos;", fp); break;
+		case '&':  fputs("&amp;",  fp); break;
+		case '"':  fputs("&quot;", fp); break;
+		default:   fputc((int)*s, fp);
 		}
 	}
 }
@@ -135,7 +164,14 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 			/* NOTE: this prints the raw HTML of the feed, this is
 			 * potentially dangerous, it is up to the user / browser
 			 * to trust a feed it's HTML content. */
-			printcontent(fields[FieldContent], fpcontent);
+			if (!strcmp(fields[FieldContentType], "html")) {
+				printcontent(fields[FieldContent], fpcontent);
+			} else {
+				/* plain-text, wrap with <pre> */
+				fputs("<pre>", fpcontent);
+				printcontentxml(fields[FieldContent], fpcontent);
+				fputs("</pre>", fpcontent);
+			}
 			fputs("</div></body></html>", fpcontent);
 			fclose(fpcontent);
 		}
