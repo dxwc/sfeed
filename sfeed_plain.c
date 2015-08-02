@@ -22,9 +22,6 @@ printutf8pad(FILE *fp, const char *s, size_t len, int pad)
 	int r;
 
 	for (i = 0; *s && n < len; i++, s++) {
-		/* skip control characters */
-		if (iscntrl(*s))
-			continue;
 		if (ISUTF8(*s)) {
 			if ((r = mbtowc(&w, s, 4)) == -1)
 				break;
