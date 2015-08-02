@@ -77,7 +77,7 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 {
 	char dirpath[PATH_MAX], filepath[PATH_MAX];
 	char *fields[FieldLast], *feedname;
-	char name[PATH_MAX];
+	char name[128];
 	size_t namelen;
 	struct stat st;
 	FILE *fpcontent = NULL;
