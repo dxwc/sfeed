@@ -447,7 +447,7 @@ xml_handler_data(XMLParser *p, const char *s, size_t len)
 		return;
 
 	/* add only data from <name> inside <author> tag
-	 * or any other non-<author> tag  */
+	 * or any other non-<author> tag */
 	if (ctx.tagid != AtomTagAuthor || !strcmp(p->tag, "name"))
 		string_append(ctx.field, s, len);
 }
@@ -505,6 +505,12 @@ xml_handler_start_element_parsed(XMLParser *p, const char *tag, size_t taglen,
 	(void)tag;
 	(void)taglen;
 
+	if (ctx.iscontenttag) {
+		ctx.iscontent = 1;
+		ctx.iscontenttag = 0;
+		return;
+	}
+
 	if (!ISINCONTENT(ctx))
 		return;
 
@@ -537,11 +543,8 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 			    isattr(value, valuelen, STRP("text/html"))))
 			{
 				ctx.item.contenttype = ContentTypeHTML;
-				ctx.iscontent = 1;
-/*				p->xmldataentity = NULL;*/ /* TODO: don't convert entities? test this */
 				p->xmlattrstart = xml_handler_attr_start;
 				p->xmlattrend = xml_handler_attr_end;
-				p->xmltagstartparsed = xml_handler_start_element_parsed;
 			}
 		} else if (ctx.tagid == AtomTagLink &&
 		          isattr(name, namelen, STRP("href")))
@@ -555,16 +558,8 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 static void
 xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 {
-	/* starts with div, handle as XML, don't convert entities
-	 * (set handler to NULL) */
-	/* TODO: this behaviour in the XML parser is changed, test this */
-	if (ISCONTENTTAG(ctx) && ctx.item.feedtype == FeedTypeAtom &&
-	   namelen == STRSIZ("div") && !strncmp(name, STRP("div"))) {
-		p->xmldataentity = NULL;
-	}
-	if (ctx.iscontent) {
+	if (ISINCONTENT(ctx)) {
 		ctx.attrcount = 0;
-		ctx.iscontenttag = 0;
 		xml_handler_data(p, "<", 1);
 		xml_handler_data(p, name, namelen);
 		return;
@@ -577,13 +572,11 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 			ctx.item.feedtype = FeedTypeAtom;
 			/* default content type for Atom */
 			ctx.item.contenttype = ContentTypePlain;
-			ctx.field = NULL; /* XXX: optimization */
 		} else if (istag(name, namelen, STRP("item"))) {
 			/* RSS */
 			ctx.item.feedtype = FeedTypeRSS;
 			/* default content type for RSS */
 			ctx.item.contenttype = ContentTypeHTML;
-			ctx.field = NULL; /* XXX: optimization */
 		}
 		return;
 	}
@@ -655,6 +648,9 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
 	char buffer[16];
 	int len;
 
+	if (!ctx.field)
+		return;
+
 	/* try to translate entity, else just pass as data to
 	 * xml_data_handler */
 	len = xml_entitytostr(data, buffer, sizeof(buffer));
@@ -683,12 +679,6 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 			ctx.tag[0] = '\0';
 			ctx.taglen = 0;
 			ctx.tagid = TagUnknown;
-
-			p->xmldataentity = xml_handler_data_entity;
-			p->xmlattrstart = NULL;
-			p->xmlattrend = NULL;
-			p->xmltagstartparsed = NULL;
-
 			return;
 		}
 		if (!isshort) {
@@ -715,26 +705,20 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 		string_clear(&ctx.item.content);
 		string_clear(&ctx.item.id);
 		string_clear(&ctx.item.author);
+
 		ctx.item.feedtype = FeedTypeNone;
-		ctx.item.contenttype = ContentTypePlain;
+		ctx.item.contenttype = ContentTypeNone;
+
 		ctx.tag[0] = '\0'; /* unset tag */
 		ctx.taglen = 0;
 		ctx.tagid = TagUnknown;
-
-		/* TODO: not sure if needed */
-		ctx.iscontenttag = 0;
-		ctx.iscontent = 0;
-	} else if (ctx.taglen == namelen && !strcmp(ctx.tag, name)) {
-		/* clear */
-		/* XXX: optimize ? */
 		ctx.field = NULL;
+	} else if (ctx.taglen == namelen && !strcmp(ctx.tag, name)) {
+		/* close field tag */
 		ctx.tag[0] = '\0'; /* unset tag */
 		ctx.taglen = 0;
 		ctx.tagid = TagUnknown;
-
-		/* TODO: not sure if needed */
-		ctx.iscontenttag = 0;
-		ctx.iscontent = 0;
+		ctx.field = NULL;
 	}
 }
 
@@ -751,16 +735,16 @@ main(int argc, char *argv[])
 	string_buffer_init(&ctx.item.content, 4096);
 	string_buffer_init(&ctx.item.id, 1024);
 	string_buffer_init(&ctx.item.author, 256);
-	ctx.item.contenttype = ContentTypePlain;
-	ctx.item.feedtype = FeedTypeNone;
 
 	memset(&parser, 0, sizeof(parser));
 	parser.xmltagstart = xml_handler_start_element;
+	parser.xmltagstartparsed = xml_handler_start_element_parsed;
 	parser.xmltagend = xml_handler_end_element;
 	parser.xmldata = xml_handler_data;
 	parser.xmldataentity = xml_handler_data_entity;
 	parser.xmlattr = xml_handler_attr;
 	parser.xmlcdata = xml_handler_cdata;
+
 	xmlparser_parse_fd(&parser, 0);
 
 	return 0;
