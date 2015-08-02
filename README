@@ -166,21 +166,62 @@ argument is optional):
 - - -
 
 Over time your feeds file might become quite big. You can archive items from a
-specific date by doing for example: (make sure to change
-mktime("YYYY mm dd HH mm ss")):
+specific date by doing for example:
 
-	#!/bin/sh
-	set -x -e
-	gawk -F '\t' 'BEGIN {
-		time = mktime("2012 01 01 12 34 56");
-	}
+File sfeed_archive.c:
+
+	#include <sys/types.h>
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+	#include <time.h>
+
+	#include "util.h"
+
+	int
+	main(int argc, char *argv[])
 	{
-		if(int($1) >= int(time)) {
-			print $0;
+		char *line = NULL, *p;
+		time_t parsedtime, comparetime;
+		struct tm tm;
+		size_t size = 0;
+		int r, c, y, m, d;
+
+		if (argc != 2 || strlen(argv[1]) != 8 ||
+		    sscanf(argv[1], "%4d%2d%2d", &y, &m, &d) != 3) {
+			fputs("usage: sfeed_archive yyyymmdd\n", stderr);
+			exit(1);
 		}
-	}' < feeds > feeds.clean
-	mv feeds feeds.old
-	mv feeds.clean feeds
+
+		memset(&tm, 0, sizeof(tm));
+		tm.tm_isdst = -1; /* don't use DST */
+		tm.tm_year = y - 1900;
+		tm.tm_mon = m - 1;
+		tm.tm_mday = d;
+		if ((comparetime = mktime(&tm)) == -1)
+			usage();
+
+		while ((getline(&line, &size, stdin)) > 0) {
+			if (!(p = strchr(line, '\t')))
+				continue;
+			c = *p;
+			*p = '\0'; /* temporary null-terminate */
+			if ((r = strtotime(line, &parsedtime)) != -1 &&
+			    parsedtime >= comparetime) {
+				*p = c; /* restore */
+				fputs(line, stdout);
+			}
+		}
+		return 0;
+	}
+
+Now compile and run:
+
+	$ cc util.c sfeed_archive.c -o sfeed_archive -std=c99
+	$ ./sfeed_archive 20150101 < feeds > feeds.new
+	$ mv feeds feeds.bak
+	$ mv feeds.new feeds
 
 - - -
 
@@ -218,8 +259,8 @@ For example using the following config (~/.sfeed/fdm.conf):
 
 Now run:
 
-$ sfeed_mbox ~/.sfeed/feeds/* > ~/.sfeed/mbox
-$ fdm -f ~/.sfeed/fdm.conf fetch
+	$ sfeed_mbox ~/.sfeed/feeds/* > ~/.sfeed/mbox
+	$ fdm -f ~/.sfeed/fdm.conf fetch
 
 Now you can view feeds in mutt(1) for example.
 
@@ -275,7 +316,7 @@ Procmailrc file:
 
 Now run:
 
-$ procmail_maildirs.sh
+	$ procmail_maildirs.sh
 
 Now you can view feeds in mutt(1) for example.
 
