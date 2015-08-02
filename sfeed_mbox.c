@@ -13,6 +13,48 @@
 static char *line = NULL;
 static size_t linesize = 0;
 
+/* Unescape / decode fields printed by string_print_encoded()
+ * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
+ * are ignored: "\z" etc. Mangle "From " in mboxrd style (always prefix >). */
+static void
+printcontent(const char *s, FILE *fp)
+{
+	if (!strncmp(s, "From ", 5))
+		fputc('>', fp);
+
+	for (; *s; s++) {
+read:
+		switch (*s) {
+		case '\\':
+			switch (*(++s)) {
+			case '\0': return; /* ignore */
+			case '\\': fputc('\\', fp); break;
+			case 't':  fputc('\t', fp); break;
+			case 'n':
+				fputc('\n', fp);
+				for (s++; *s && *s == '>'; s++)
+					fputc('>', fp);
+				/* escape "From ", mboxrd-style. */
+				if (!strncmp(s, "From ", 5))
+					fputc('>', fp);
+				goto read;
+			}
+			break;
+		case '\0': return; /* ignore */
+		case '\n':
+			fputc((int)*s, fp);
+			for (s++; *s && *s == '>'; s++)
+				fputc('>', fp);
+			/* escape "From ", mboxrd-style. */
+			if (!strncmp(s, "From ", 5))
+				fputc('>', fp);
+			goto read;
+		default:
+			fputc((int)*s, fp);
+		}
+	}
+}
+
 static void
 printfeed(FILE *fp, const char *feedname)
 {
@@ -61,14 +103,14 @@ printfeed(FILE *fp, const char *feedname)
 
 		if (!strcmp(fields[FieldContentType], "html")) {
 			fputs("<p>Link: <a href=\"", stdout);
-			print(fields[FieldLink], stdout, xmlencode);
+			xmlencode(fields[FieldLink], stdout);
 			fputs("\">", stdout);
 			fputs(fields[FieldLink], stdout);
 			fputs("</a></p>\n\n", stdout);
-			decodefield(fields[FieldContent], stdout, fputc);
+			printcontent(fields[FieldContent], stdout);
 		} else {
 			printf("Link: %s\n\n", fields[FieldLink]);
-			decodefield(fields[FieldContent], stdout, fputc);
+			printcontent(fields[FieldContent], stdout);
 		}
 		fputs("\n\n", stdout);
 	}
