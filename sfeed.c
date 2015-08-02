@@ -34,8 +34,8 @@ enum TagId {
 	RSSTagLink, RSSTagDescription, RSSTagContentencoded,
 	RSSTagGuid, RSSTagAuthor, RSSTagDccreator,
 	/* Atom */
-	AtomTagPublished, AtomTagUpdated, AtomTagTitle,
-	AtomTagSummary, AtomTagContent,
+	AtomTagPublished, AtomTagUpdated, AtomTagTitle, AtomTagMediaTitle,
+	AtomTagMediaDescription, AtomTagSummary, AtomTagContent,
 	AtomTagId, AtomTagLink, AtomTagAuthor
 };
 
@@ -123,20 +123,22 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 	};
 	/* Atom, alphabetical order */
 	static FeedTag atomtag[] = {
-		{ STRP("author"),    AtomTagAuthor    },
-		{ STRP("content"),   AtomTagContent   },
-		{ STRP("id"),        AtomTagId        },
-		{ STRP("link"),      AtomTagLink      },
-		{ STRP("published"), AtomTagPublished },
-		{ STRP("summary"),   AtomTagSummary   },
-		{ STRP("title"),     AtomTagTitle     },
-		{ STRP("updated"),   AtomTagUpdated   },
+		{ STRP("author"),            AtomTagAuthor           },
+		{ STRP("content"),           AtomTagContent          },
+		{ STRP("id"),                AtomTagId               },
+		{ STRP("link"),              AtomTagLink             },
+		{ STRP("media:description"), AtomTagMediaDescription },
+		{ STRP("media:title"),       AtomTagMediaTitle       },
+		{ STRP("published"),         AtomTagPublished        },
+		{ STRP("summary"),           AtomTagSummary          },
+		{ STRP("title"),             AtomTagTitle            },
+		{ STRP("updated"),           AtomTagUpdated          },
 		{ NULL, 0, -1 }
 	};
 	int i, n;
 
 	/* optimization: these are always non-matching */
-	if (namelen < 2 || namelen > 15)
+	if (namelen < 2 || namelen > 17)
 		return TagUnknown;
 
 	switch (feedtype) {
@@ -582,7 +584,7 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 	}
 
 	/* tag already set: return */
-	if (ctx.tag[0] != '\0')
+	if (ctx.tagid)
 		return;
 
 	/* in item */
@@ -602,8 +604,13 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 			ctx.field = &ctx.item.timestamp;
 		break;
 	case RSSTagTitle:
-	case AtomTagTitle:
 		ctx.field = &ctx.item.title;
+		break;
+	case AtomTagMediaTitle:
+	case AtomTagTitle:
+		/* prefer title over media:title if set */
+		if (ctx.tagid != AtomTagMediaTitle || !ctx.item.content.len)
+			ctx.field = &ctx.item.title;
 		break;
 	case RSSTagLink:
 	case AtomTagLink:
@@ -617,10 +624,12 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 			ctx.field = &ctx.item.content;
 		}
 		break;
+	case AtomTagMediaDescription:
 	case AtomTagSummary:
 	case AtomTagContent:
-		/* prefer content over summary if set */
-		if (ctx.tagid != AtomTagSummary || !ctx.item.content.len) {
+		/* prefer content over summary and media:description if set */
+		if ((ctx.tagid != AtomTagMediaDescription &&
+		    ctx.tagid != AtomTagSummary) || !ctx.item.content.len) {
 			ctx.iscontenttag = 1;
 			ctx.field = &ctx.item.content;
 		}
