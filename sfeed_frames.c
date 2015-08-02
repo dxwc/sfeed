@@ -24,6 +24,26 @@ static unsigned long totalnew = 0;
 
 static struct feed **feeds = NULL;
 
+/* Unescape / decode fields printed by string_print_encoded()
+ * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
+ * are ignored: "\z" etc. Call `fn` on each escaped character. */
+void
+printcontent(const char *s, FILE *fp)
+{
+	for (; *s; s++) {
+		if (*s == '\\') {
+			switch (*(++s)) {
+			case '\0': return; /* ignore */
+			case '\\': fputc('\\', fp); break;
+			case 't':  fputc('\t', fp); break;
+			case 'n':  fputc('\n', fp); break;
+			}
+		} else {
+			fputc((int)*s, fp);
+		}
+	}
+}
+
 /* normalize path names, transform to lower-case and replace non-alpha and
  * non-digit with '-' */
 static size_t
@@ -83,11 +103,11 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 	/* menu if not unnamed */
 	if (f->name[0]) {
 		fputs("<h2 id=\"", fpitems);
-		print(f->name, fpitems, xmlencode);
+		xmlencode(f->name, fpitems);
 		fputs("\"><a href=\"#", fpitems);
-		print(f->name, fpitems, xmlencode);
+		xmlencode(f->name, fpitems);
 		fputs("\">", fpitems);
-		print(f->name, fpitems, xmlencode);
+		xmlencode(f->name, fpitems);
 		fputs("</a></h2>\n", fpitems);
 	}
 
@@ -108,14 +128,14 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>\n"
 			      "<body class=\"frame\"><div class=\"content\">"
 			      "<h2><a href=\"", fpcontent);
-			print(fields[FieldLink], fpcontent, xmlencode);
+			xmlencode(fields[FieldLink], fpcontent);
 			fputs("\">", fpcontent);
-			print(fields[FieldTitle], fpcontent, xmlencode);
+			xmlencode(fields[FieldTitle], fpcontent);
 			fputs("</a></h2>", fpcontent);
 			/* NOTE: this prints the raw HTML of the feed, this is
 			 * potentially dangerous, it is up to the user / browser
 			 * to trust a feed it's HTML content. */
-			decodefield(fields[FieldContent], fpcontent, fputc);
+			printcontent(fields[FieldContent], fpcontent);
 			fputs("</div></body></html>", fpcontent);
 			fclose(fpcontent);
 		}
@@ -144,7 +164,7 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		fputs("<a href=\"", fpitems);
 		fputs(filepath, fpitems);
 		fputs("\" target=\"content\">", fpitems);
-		print(fields[FieldTitle], fpitems, xmlencode);
+		xmlencode(fields[FieldTitle], fpitems);
 		fputs("</a>", fpitems);
 		if (isnew)
 			fputs("</u></b>", fpitems);
@@ -213,11 +233,11 @@ main(int argc, char *argv[])
 				fputs("<a class=\"n\" href=\"items.html#", fpmenu);
 			else
 				fputs("<a href=\"items.html#", fpmenu);
-			print(f->name, fpmenu, xmlencode);
+			xmlencode(f->name, fpmenu);
 			fputs("\" target=\"items\">", fpmenu);
 			if (f->totalnew > 0)
 				fputs("<b><u>", fpmenu);
-			print(f->name, fpmenu, xmlencode);
+			xmlencode(f->name, fpmenu);
 			fprintf(fpmenu, " (%lu)", f->totalnew);
 			if (f->totalnew > 0)
 				fputs("</u></b>", fpmenu);

@@ -200,45 +200,20 @@ strtotime(const char *s, time_t *t)
 	return 0;
 }
 
+/* Escape characters below as HTML 2.0 / XML 1.0. */
 void
-print(const char *s, FILE *fp, int (*fn)(int, FILE *))
-{
-	for (; *s; s++)
-		fn((int)*s, fp);
-}
-
-/* Unescape / decode fields printed by string_print_encoded()
- * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
- * are ignored: "\z" etc. Call `fn` on each escaped character. */
-void
-decodefield(const char *s, FILE *fp, int (*fn)(int, FILE *))
+xmlencode(const char *s, FILE *fp)
 {
 	for (; *s; s++) {
-		if (*s == '\\') {
-			switch (*(++s)) {
-			case '\\': fn('\\', fp); break;
-			case 't':  fn('\t', fp); break;
-			case 'n':  fn('\n', fp); break;
-			case '\0': return;
-			}
-		} else {
-			fn((int)*s, fp);
+		switch(*s) {
+		case '<':  fputs("&lt;",   fp); break;
+		case '>':  fputs("&gt;",   fp); break;
+		case '\'': fputs("&apos;", fp); break;
+		case '&':  fputs("&amp;",  fp); break;
+		case '"':  fputs("&quot;", fp); break;
+		default:   fputc(*s, fp);
 		}
 	}
-}
-
-/* Escape characters below as HTML 2.0 / XML 1.0. */
-int
-xmlencode(int c, FILE *fp)
-{
-	switch(c) {
-	case '<':  return fputs("&lt;",   fp);
-	case '>':  return fputs("&gt;",   fp);
-	case '\'': return fputs("&apos;", fp);
-	case '&':  return fputs("&amp;",  fp);
-	case '"':  return fputs("&quot;", fp);
-	}
-	return fputc(c, fp);
 }
 
 /* Some implementations of basename(3) return a pointer to a static

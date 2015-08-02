@@ -26,13 +26,11 @@ enum { FieldUnixTimestamp = 0, FieldTimeFormatted, FieldTitle, FieldLink,
        FieldLast };
 
 int    absuri(const char *, const char *, char *, size_t);
-void   decodefield(const char *, FILE *, int (*)(int, FILE *));
 int    encodeuri(const char *, char *, size_t);
 int    parseline(char **, size_t *, char **, unsigned int, int, FILE *);
 int    parseuri(const char *, struct uri *, int);
-void   print(const char *, FILE *, int (*)(int, FILE *));
 int    strtotime(const char *, time_t *);
 char * xbasename(const char *);
-int    xmlencode(int, FILE *);
+void   xmlencode(const char *, FILE *);
 
 
