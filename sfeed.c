@@ -15,8 +15,6 @@
 #define ISCONTENTTAG(ctx) (!((ctx).iscontent) && (ctx).iscontenttag)
 /* string and size */
 #define STRP(s)           s,sizeof(s)-1
-/* length of string */
-#define STRSIZ(s)         (sizeof(s)-1)
 
 enum FeedType { FeedTypeNone = 0, FeedTypeRSS = 1, FeedTypeAtom = 2 };
 static const char *feedtypes[] = { "", "rss", "atom" };
@@ -31,8 +29,8 @@ enum TagId {
 	TagUnknown = 0,
 	/* RSS */
 	RSSTagDcdate, RSSTagPubdate, RSSTagTitle,
-	RSSTagLink, RSSTagDescription, RSSTagContentencoded,
-	RSSTagGuid, RSSTagAuthor, RSSTagDccreator,
+	RSSTagDescription, RSSTagContentencoded,
+	RSSTagGuid, RSSTagLink, RSSTagDccreator, RSSTagAuthor,
 	/* Atom */
 	AtomTagPublished, AtomTagUpdated, AtomTagTitle, AtomTagMediaTitle,
 	AtomTagMediaDescription, AtomTagSummary, AtomTagContent,
@@ -59,20 +57,18 @@ typedef struct feeditem {
 } FeedItem;
 
 typedef struct feedtag {
-	char       *name;
-	size_t      namelen;
-	enum TagId  id;
+	char       *name;        /* name of tag to match */
+	size_t      len;         /* len of `name` */
+	enum TagId  id;          /* unique ID */
 } FeedTag;
 
 typedef struct feedcontext {
-	String   *field;        /* pointer to current FeedItem field String */
-	FeedItem  item;         /* data for current feed item */
-	char      tag[256];     /* current tag _inside_ a feeditem */
-	int       tagid;        /* unique number for parsed tag (faster comparison) */
-	size_t    taglen;
-	int       iscontent;    /* in content data */
-	int       iscontenttag; /* in content tag */
-	int       attrcount;
+	String    *field;        /* pointer to current FeedItem field String */
+	FeedItem   item;         /* data for current feed item */
+	enum TagId tagid;        /* unique number for parsed tag */
+	int        iscontent;    /* in content data */
+	int        iscontenttag; /* in content tag */
+	int        attrcount;
 } FeedContext;
 
 static enum TagId gettag(enum FeedType, const char *, size_t);
@@ -89,22 +85,22 @@ static void   string_print_encoded(String *);
 static void   string_print_trimmed(String *);
 static void   xml_handler_attr(XMLParser *, const char *, size_t,
                                const char *, size_t, const char *, size_t);
-static void   xml_handler_attr_start(XMLParser *, const char *, size_t,
-                                     const char *, size_t);
 static void   xml_handler_attr_end(struct xmlparser *, const char *, size_t,
                                    const char *, size_t);
+static void   xml_handler_attr_start(XMLParser *, const char *, size_t,
+                                     const char *, size_t);
 static void   xml_handler_cdata(XMLParser *, const char *, size_t);
 static void   xml_handler_data(XMLParser *, const char *, size_t);
 static void   xml_handler_data_entity(XMLParser *, const char *, size_t);
-static void   xml_handler_end_element(XMLParser *, const char *, size_t, int);
-static void   xml_handler_start_element(XMLParser *, const char *, size_t);
-static void   xml_handler_start_element_parsed(XMLParser *, const char *,
-                                               size_t, int);
+static void   xml_handler_end_el(XMLParser *, const char *, size_t, int);
+static void   xml_handler_start_el(XMLParser *, const char *, size_t);
+static void   xml_handler_start_el_parsed(XMLParser *, const char *,
+                                          size_t, int);
 
 static FeedContext ctx;
 static XMLParser parser; /* XML parser state */
 
-/* Unique id for parsed tag (faster comparison). */
+/* Unique id for parsed tag. */
 static enum TagId
 gettag(enum FeedType feedtype, const char *name, size_t namelen)
 {
@@ -144,7 +140,7 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 	switch (feedtype) {
 	case FeedTypeRSS:
 		for (i = 0; rsstag[i].name; i++) {
-			if (!(n = strncasecmp(rsstag[i].name, name, rsstag[i].namelen)))
+			if (!(n = strncasecmp(rsstag[i].name, name, rsstag[i].len)))
 				return rsstag[i].id; /* found */
 			/* optimization: it's sorted so nothing after it matches. */
 			if (n > 0)
@@ -153,7 +149,7 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 		break;
 	case FeedTypeAtom:
 		for (i = 0; atomtag[i].name; i++) {
-			if (!(n = strncasecmp(atomtag[i].name, name, atomtag[i].namelen)))
+			if (!(n = strncasecmp(atomtag[i].name, name, atomtag[i].len)))
 				return atomtag[i].id; /* found */
 			/* optimization: it's sorted so nothing after it matches. */
 			if (n > 0)
@@ -203,7 +199,7 @@ string_append(String *s, const char *data, size_t len)
 {
 	if (!len || *data == '\0')
 		return;
-	/* check if allocation is necesary, don't shrink buffer
+	/* check if allocation is necesary, don't shrink buffer,
 	   should be more than bufsiz ofcourse */
 	if (s->len + len >= s->bufsiz)
 		string_buffer_realloc(s, s->len + len + 1);
@@ -215,7 +211,7 @@ string_append(String *s, const char *data, size_t len)
 /* Get timezone from string, return as formatted string and time offset,
  * for the offset it assumes UTC.
  * NOTE: only parses timezones in RFC-822, other timezones are ambiguous
- * anyway. If needed you can add ones yourself, like "cest", "cet" etc. */
+ * anyway. If needed you can add some yourself, like "cest", "cet" etc. */
 static int
 gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 {
@@ -248,7 +244,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 	if (!*s || *s == 'Z' || *s == 'z')
 		goto time_ok;
 	/* skip whitespace */
-	s = &s[strspn(s, " 	")];
+	s = &s[strspn(s, " \t")];
 
 	/* look until some common timezone delimiters are found */
 	for (i = 0; s[i] && isalpha((int)s[i]); i++)
@@ -441,7 +437,7 @@ isattr(const char *name, size_t len, const char *name2, size_t len2)
 }
 
 /* NOTE: this handler can be called multiple times if the data in this
- * block is bigger than the buffer */
+ * block is bigger than the buffer. */
 static void
 xml_handler_data(XMLParser *p, const char *s, size_t len)
 {
@@ -501,28 +497,6 @@ xml_handler_attr_end(struct xmlparser *p, const char *tag, size_t taglen,
 }
 
 static void
-xml_handler_start_element_parsed(XMLParser *p, const char *tag, size_t taglen,
-	int isshort)
-{
-	(void)tag;
-	(void)taglen;
-
-	if (ctx.iscontenttag) {
-		ctx.iscontent = 1;
-		ctx.iscontenttag = 0;
-		return;
-	}
-
-	if (!ISINCONTENT(ctx))
-		return;
-
-	if (isshort)
-		xml_handler_data(p, "/>", 2);
-	else
-		xml_handler_data(p, ">", 1);
-}
-
-static void
 xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 	const char *name, size_t namelen, const char *value,
 	size_t valuelen)
@@ -558,8 +532,10 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 }
 
 static void
-xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
+xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
 {
+	int tagid;
+
 	if (ISINCONTENT(ctx)) {
 		ctx.attrcount = 0;
 		xml_handler_data(p, "<", 1);
@@ -583,14 +559,14 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 		return;
 	}
 
-	/* tag already set: return */
+	/* field tagid already set: return */
 	if (ctx.tagid)
 		return;
 
 	/* in item */
-	strlcpy(ctx.tag, name, sizeof(ctx.tag)); /* NOTE: truncation ignored */
-	ctx.taglen = namelen;
-	ctx.tagid = gettag(ctx.item.feedtype, ctx.tag, ctx.taglen);
+	tagid = gettag(ctx.item.feedtype, name, namelen);
+	if (tagid != TagUnknown)
+		ctx.tagid = tagid;
 
 	switch (ctx.tagid) {
 	case RSSTagPubdate:
@@ -652,6 +628,28 @@ xml_handler_start_element(XMLParser *p, const char *name, size_t namelen)
 }
 
 static void
+xml_handler_start_el_parsed(XMLParser *p, const char *tag, size_t taglen,
+	int isshort)
+{
+	(void)tag;
+	(void)taglen;
+
+	if (ctx.iscontenttag) {
+		ctx.iscontent = 1;
+		ctx.iscontenttag = 0;
+		return;
+	}
+
+	if (!ISINCONTENT(ctx))
+		return;
+
+	if (isshort)
+		xml_handler_data(p, "/>", 2);
+	else
+		xml_handler_data(p, ">", 1);
+}
+
+static void
 xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
 {
 	char buffer[16];
@@ -674,37 +672,27 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
 }
 
 static void
-xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int isshort)
+xml_handler_end_el(XMLParser *p, const char *name, size_t namelen, int isshort)
 {
-	int tagid;
-
-	if (ctx.iscontent) {
-		ctx.attrcount = 0;
-		tagid = gettag(ctx.item.feedtype, name, namelen);
-		/* close content */
-		if (ctx.tagid == tagid) {
-			ctx.iscontent = 0;
-			ctx.iscontenttag = 0;
-			ctx.tag[0] = '\0';
-			ctx.taglen = 0;
-			ctx.tagid = TagUnknown;
-			return;
-		}
-		if (!isshort) {
-			xml_handler_data(p, "</", 2);
-			xml_handler_data(p, name, namelen);
-			xml_handler_data(p, ">", 1);
-		}
-		return;
-	}
 	if (ctx.item.feedtype == FeedTypeNone)
 		return;
-	/* end of RSS or Atom entry / item */
-	if ((ctx.item.feedtype == FeedTypeAtom &&
+
+	if (ISINCONTENT(ctx)) {
+		/* not close content field */
+		if (gettag(ctx.item.feedtype, name, namelen) != ctx.tagid) {
+			if (!isshort) {
+				xml_handler_data(p, "</", 2);
+				xml_handler_data(p, name, namelen);
+				xml_handler_data(p, ">", 1);
+			}
+			return;
+		}
+	} else if (!ctx.tagid && ((ctx.item.feedtype == FeedTypeAtom &&
 	   istag(name, namelen, STRP("entry"))) || /* Atom */
 	   (ctx.item.feedtype == FeedTypeRSS &&
-	   istag(name, namelen, STRP("item")))) /* RSS */
+	   istag(name, namelen, STRP("item"))))) /* RSS */
 	{
+		/* end of RSS or Atom entry / item */
 		printfields();
 
 		/* clear strings */
@@ -717,18 +705,14 @@ xml_handler_end_element(XMLParser *p, const char *name, size_t namelen, int issh
 
 		ctx.item.feedtype = FeedTypeNone;
 		ctx.item.contenttype = ContentTypeNone;
-
-		ctx.tag[0] = '\0'; /* unset tag */
-		ctx.taglen = 0;
-		ctx.tagid = TagUnknown;
-		ctx.field = NULL;
-	} else if (ctx.taglen == namelen && !strcmp(ctx.tag, name)) {
-		/* close field tag */
-		ctx.tag[0] = '\0'; /* unset tag */
-		ctx.taglen = 0;
-		ctx.tagid = TagUnknown;
-		ctx.field = NULL;
+	} else if (!ctx.tagid || gettag(ctx.item.feedtype, name, namelen) != ctx.tagid) {
+		/* not end of field */
+		return;
 	}
+	/* close field */
+	ctx.iscontent = 0;
+	ctx.tagid = TagUnknown;
+	ctx.field = NULL;
 }
 
 int
@@ -745,14 +729,13 @@ main(int argc, char *argv[])
 	string_buffer_init(&ctx.item.id, 1024);
 	string_buffer_init(&ctx.item.author, 256);
 
-	memset(&parser, 0, sizeof(parser));
-	parser.xmltagstart = xml_handler_start_element;
-	parser.xmltagstartparsed = xml_handler_start_element_parsed;
-	parser.xmltagend = xml_handler_end_element;
-	parser.xmldata = xml_handler_data;
-	parser.xmldataentity = xml_handler_data_entity;
 	parser.xmlattr = xml_handler_attr;
 	parser.xmlcdata = xml_handler_cdata;
+	parser.xmldata = xml_handler_data;
+	parser.xmldataentity = xml_handler_data_entity;
+	parser.xmltagend = xml_handler_end_el;
+	parser.xmltagstart = xml_handler_start_el;
+	parser.xmltagstartparsed = xml_handler_start_el_parsed;
 
 	xmlparser_parse_fd(&parser, 0);
 
