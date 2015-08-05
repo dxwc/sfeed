@@ -80,10 +80,15 @@ feed() {
 
 	# get new data and merge with old.
 	sfeedfilenew="${sfeeddir}/${name}.new"
-	touch "${sfeedfile}"
-	merge "${sfeedfile}" "${tmpfeedfile}" > "${sfeedfilenew}"
-	# overwrite old file with updated file
-	mv "${sfeedfilenew}" "${sfeedfile}") &
+	# if file exists, merge
+	if [ -e "${sfeedfile}" ]; then
+		merge "${sfeedfile}" "${tmpfeedfile}" > "${sfeedfilenew}"
+		# overwrite old file with updated file
+		mv "${sfeedfilenew}" "${sfeedfile}"
+	else
+		# else just copy
+		mv "${tmpfeedfile}" "${sfeedfile}"
+	fi) &
 }
 
 terminated() {
