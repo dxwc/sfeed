@@ -57,7 +57,7 @@ all: $(BIN)
 .c.o:
 	${CC} -c ${CFLAGS} $<
 
-dist: $(BIN) doc
+dist: $(BIN)
 	rm -rf release/${VERSION}
 	mkdir -p release/${VERSION}
 	cp -f ${MAN1} ${HDR} ${SCRIPTS} ${SRC} ${COMPATSRC} ${DOC} \
@@ -123,4 +123,4 @@ uninstall:
 	# removing manual pages.
 	for m in $(MAN1); do rm -f ${DESTDIR}${MANPREFIX}/man1/$$m; done
 
-.PHONY: all clean dist doc doc-html doc-oldman install uninstall
+.PHONY: all clean dist install uninstall
