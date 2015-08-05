@@ -131,7 +131,7 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 		{ STRP("updated"),           AtomTagUpdated          },
 		{ NULL, 0, -1 }
 	};
-	const FeedTag *tags = NULL;
+	const FeedTag *tags;
 	int i, n;
 
 	/* optimization: these are always non-matching */
@@ -293,7 +293,6 @@ static int
 parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 {
 	time_t t;
-	char tz[64] = "";
 	struct tm tm;
 	const char *formats[] = {
 		"%a, %d %b %Y %H:%M:%S",
@@ -301,7 +300,7 @@ parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 		"%Y-%m-%dT%H:%M:%S",
 		NULL
 	};
-	char *p;
+	char tz[16], *p;
 	size_t i;
 	int tzoffset, r;
 
@@ -374,7 +373,7 @@ string_print_trimmed(String *s)
 
 	for (; *p && p != e; p++) {
 		if (isspace((int)*p))
-			putchar(' ');
+			putchar(' '); /* any whitespace to space */
 		else if (!iscntrl((int)*p))
 			/* ignore other control chars */
 			putchar((int)*p);
