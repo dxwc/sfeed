@@ -10,7 +10,7 @@ sfeeddir="${sfeedpath}/feeds"
 # loadconfig(configfile)
 loadconfig() {
 	# allow to specify config via argv[1].
-	if [ ! "$1" = "" ]; then
+	if [ ! x"$1" = x"" ]; then
 		# get absolute path of config file.
 		config=$(readlink -f "$1")
 	else
