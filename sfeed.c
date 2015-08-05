@@ -85,7 +85,7 @@ static void   string_print_encoded(String *);
 static void   string_print_trimmed(String *);
 static void   xml_handler_attr(XMLParser *, const char *, size_t,
                                const char *, size_t, const char *, size_t);
-static void   xml_handler_attr_end(struct xmlparser *, const char *, size_t,
+static void   xml_handler_attr_end(XMLParser *, const char *, size_t,
                                    const char *, size_t);
 static void   xml_handler_attr_start(XMLParser *, const char *, size_t,
                                      const char *, size_t);
@@ -480,7 +480,7 @@ xml_handler_attr_start(XMLParser *p, const char *tag, size_t taglen,
 }
 
 static void
-xml_handler_attr_end(struct xmlparser *p, const char *tag, size_t taglen,
+xml_handler_attr_end(XMLParser *p, const char *tag, size_t taglen,
 	const char *name, size_t namelen)
 {
 	(void)tag;
