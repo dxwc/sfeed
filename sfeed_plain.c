@@ -44,9 +44,9 @@ printfeed(FILE *fp, const char *feedname)
 	while (parseline(&line, &size, fields, fp) > 0) {
 		if (strtotime(fields[FieldUnixTimestamp], &parsedtime) != -1 &&
 		   parsedtime >= comparetime)
-			fputs(" N ", stdout);
+			fputs("N ", stdout);
 		else
-			fputs("   ", stdout);
+			fputs("  ", stdout);
 
 		if (feedname[0])
 			printf("%-15.15s ", feedname);
