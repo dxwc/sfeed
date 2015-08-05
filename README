@@ -228,7 +228,7 @@ Now compile and run:
 Convert mbox to separate maildirs per feed and filter duplicate messages
 using fdm: https://github.com/nicm/fdm .
 
-For example using the following config (~/.sfeed/fdm.conf):
+fdm config file (~/.sfeed/fdm.conf):
 
 	set unmatched-mail keep
 
@@ -266,8 +266,8 @@ Now you can view feeds in mutt(1) for example.
 
 - - -
 
-Use procmail to format mbox to separate maildirs per feed.
-Depends on: procmail, formail, sfeed_mbox.
+Convert mbox to separate maildirs per feed and filter duplicate messages
+using procmail.
 
 procmail_maildirs.sh file:
 
