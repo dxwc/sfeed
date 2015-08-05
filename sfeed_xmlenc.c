@@ -7,6 +7,7 @@
 
 #include "xml.h"
 
+static XMLParser parser;
 static int isxmlpi = 0, tags = 0;
 
 static void
@@ -55,12 +56,9 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 int
 main(void)
 {
-	XMLParser parser;
-
-	memset(&parser, 0, sizeof(parser));
+	parser.xmlattr = xmlattr;
 	parser.xmltagstart = xmltagstart;
 	parser.xmltagend = xmltagend;
-	parser.xmlattr = xmlattr;
 
 	xmlparser_parse_fd(&parser, 0);
 
