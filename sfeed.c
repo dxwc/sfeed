@@ -105,7 +105,7 @@ static enum TagId
 gettag(enum FeedType feedtype, const char *name, size_t namelen)
 {
 	/* RSS, alphabetical order */
-	static FeedTag rsstag[] = {
+	static FeedTag rsstags[] = {
 		{ STRP("author"),          RSSTagAuthor         },
 		{ STRP("content:encoded"), RSSTagContentencoded },
 		{ STRP("dc:creator"),      RSSTagDccreator      },
@@ -118,7 +118,7 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 		{ NULL, 0, -1 }
 	};
 	/* Atom, alphabetical order */
-	static FeedTag atomtag[] = {
+	static FeedTag atomtags[] = {
 		{ STRP("author"),            AtomTagAuthor           },
 		{ STRP("content"),           AtomTagContent          },
 		{ STRP("id"),                AtomTagId               },
@@ -131,6 +131,7 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 		{ STRP("updated"),           AtomTagUpdated          },
 		{ NULL, 0, -1 }
 	};
+	const FeedTag *tags = NULL;
 	int i, n;
 
 	/* optimization: these are always non-matching */
@@ -138,26 +139,17 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 		return TagUnknown;
 
 	switch (feedtype) {
-	case FeedTypeRSS:
-		for (i = 0; rsstag[i].name; i++) {
-			if (!(n = strncasecmp(rsstag[i].name, name, rsstag[i].len)))
-				return rsstag[i].id; /* found */
-			/* optimization: it's sorted so nothing after it matches. */
-			if (n > 0)
-				return TagUnknown;
-		}
-		break;
-	case FeedTypeAtom:
-		for (i = 0; atomtag[i].name; i++) {
-			if (!(n = strncasecmp(atomtag[i].name, name, atomtag[i].len)))
-				return atomtag[i].id; /* found */
-			/* optimization: it's sorted so nothing after it matches. */
-			if (n > 0)
-				return TagUnknown;
-		}
-		break;
-	default:
-		return TagUnknown;
+	case FeedTypeRSS:  tags = &rsstags[0];  break;
+	case FeedTypeAtom: tags = &atomtags[0]; break;
+	default:           return TagUnknown;
+	}
+	/* search */
+	for (i = 0; tags[i].name; i++) {
+		if (!(n = strncasecmp(tags[i].name, name, tags[i].len)))
+			return tags[i].id; /* found */
+		/* optimization: it's sorted so nothing after it matches. */
+		if (n > 0)
+			return TagUnknown;
 	}
 	return TagUnknown; /* NOTREACHED */
 }
