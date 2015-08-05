@@ -6,11 +6,12 @@
 # list of feeds to fetch:
 feeds() {
 	# feed <name> <feedurl> [basesiteurl] [encoding]
-	feed "codemadness" "http://www.codemadness.nl/blog/rss.xml"
+	feed "codemadness" "http://www.codemadness.nl/rss.xml"
 	feed "explosm" "http://feeds.feedburner.com/Explosm"
-	feed "linux kernel" "http://kernel.org/kdist/rss.xml" "http://kernel.org" "iso-8859-1"
-	feed "phoronix" "http://feeds.feedburner.com/Phoronix"
+	feed "linux kernel" "http://kernel.org/kdist/rss.xml" "http://kernel.org"
 	feed "slashdot" "http://rss.slashdot.org/Slashdot/slashdot" "http://slashdot.org"
 	feed "tweakers" "http://feeds.feedburner.com/tweakers/mixed" "http://tweakers.net" "iso-8859-1"
+	# get youtube Atom feed: curl -s -L 'https://www.youtube.com/user/gocoding/videos' | sfeed_web | cut -f 1
+	feed "yt golang" "https://www.youtube.com/feeds/videos.xml?channel_id=UCO3LEtymiLrgvpb59cNsb8A"
 	feed "xkcd" "http://xkcd.com/atom.xml" "http://xkcd.com"
 }
