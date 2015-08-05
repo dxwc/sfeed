@@ -9,6 +9,7 @@
 #include "util.h"
 #include "xml.h"
 
+static XMLParser parser;
 static unsigned int isbase, islink, isfeedlink, found;
 static char abslink[4096], feedlink[4096], basehref[4096], feedtype[256];
 
@@ -27,12 +28,13 @@ xmltagstart(XMLParser *p, const char *tag, size_t taglen)
 	(void)p;
 
 	isbase = islink = isfeedlink = 0;
-	if (taglen == 4) { /* optimization */
-		if (!strncasecmp(tag, "base", taglen))
-			isbase = 1;
-		else if (!strncasecmp(tag, "link", taglen))
-			islink = 1;
-	}
+	if (taglen != 4) /* optimization */
+		return;
+
+	if (!strncasecmp(tag, "base", taglen))
+		isbase = 1;
+	else if (!strncasecmp(tag, "link", taglen))
+		islink = 1;
 }
 
 static void
@@ -43,16 +45,15 @@ xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort)
 	(void)taglen;
 	(void)isshort;
 
-	if (isfeedlink) {
-		if (*feedtype) {
-			printfeedtype(feedtype, stdout);
-			putchar(' ');
-		}
-		if (absuri(feedlink, basehref, abslink, sizeof(abslink)) != -1)
-			fputs(abslink, stdout);
-		putchar('\n');
-		found++;
-	}
+	if (!isfeedlink)
+		return;
+
+	if (absuri(feedlink, basehref, abslink, sizeof(abslink)) != -1)
+		fputs(abslink, stdout);
+	fputc('\t', stdout);
+	printfeedtype(feedtype, stdout);
+	putchar('\n');
+	found++;
 }
 
 static void
@@ -86,14 +87,11 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 int
 main(int argc, char *argv[])
 {
-	XMLParser parser;
-
 	if (argc > 1)
 		strlcpy(basehref, argv[1], sizeof(basehref));
 
-	memset(&parser, 0, sizeof(parser));
-	parser.xmltagstart = xmltagstart;
 	parser.xmlattr = xmlattr;
+	parser.xmltagstart = xmltagstart;
 	parser.xmltagstartparsed = xmltagstartparsed;
 
 	xmlparser_parse_fd(&parser, 0);
