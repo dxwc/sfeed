@@ -1,18 +1,10 @@
 typedef struct xmlparser {
 	/* handlers */
-	void (*xmltagstart)(struct xmlparser *, const char *, size_t);
-	void (*xmltagstartparsed)(struct xmlparser *, const char *,
-	      size_t, int);
-	void (*xmltagend)(struct xmlparser *, const char *, size_t, int);
-	void (*xmldatastart)(struct xmlparser *);
-	void (*xmldata)(struct xmlparser *, const char *, size_t);
-	void (*xmldataend)(struct xmlparser *);
-	void (*xmldataentity)(struct xmlparser *, const char *, size_t);
-	void (*xmlattrstart)(struct xmlparser *, const char *, size_t,
-	      const char *, size_t);
 	void (*xmlattr)(struct xmlparser *, const char *, size_t,
 	      const char *, size_t, const char *, size_t);
 	void (*xmlattrend)(struct xmlparser *, const char *, size_t,
+	      const char *, size_t);
+	void (*xmlattrstart)(struct xmlparser *, const char *, size_t,
 	      const char *, size_t);
 	void (*xmlattrentity)(struct xmlparser *, const char *, size_t,
 	      const char *, size_t, const char *, size_t);
@@ -22,6 +14,14 @@ typedef struct xmlparser {
 	void (*xmlcommentstart)(struct xmlparser *);
 	void (*xmlcomment)(struct xmlparser *, const char *, size_t);
 	void (*xmlcommentend)(struct xmlparser *);
+	void (*xmldata)(struct xmlparser *, const char *, size_t);
+	void (*xmldataend)(struct xmlparser *);
+	void (*xmldataentity)(struct xmlparser *, const char *, size_t);
+	void (*xmldatastart)(struct xmlparser *);
+	void (*xmltagend)(struct xmlparser *, const char *, size_t, int);
+	void (*xmltagstart)(struct xmlparser *, const char *, size_t);
+	void (*xmltagstartparsed)(struct xmlparser *, const char *,
+	      size_t, int);
 
 	int (*getnext)(struct xmlparser *);
 
@@ -37,16 +37,17 @@ typedef struct xmlparser {
 
 	/* current tag */
 	char tag[1024];
-	/* current tag is in short form ? */
-	int isshorttag;
 	size_t taglen;
+	/* current tag is in short form ? <tag /> */
+	int isshorttag;
 	/* current attribute name */
 	char name[256];
 	/* data buffer used for tag data, cdata and attribute data */
 	char data[BUFSIZ];
+
 	size_t readoffset;
 	size_t readlastbytes;
-	/* read buffer used by xmlparser_getnext */
+	/* read buffer used by xmlparser_parse_fd */
 	unsigned char readbuf[BUFSIZ];
 } XMLParser;
 
