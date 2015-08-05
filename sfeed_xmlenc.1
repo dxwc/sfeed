@@ -12,7 +12,7 @@ reads XML data from stdin and writes the found text\-encoding to stdout.
 .Sh EXAMPLES
 Get text\-encoding from xkcd Atom feed:
 .Bd -literal
-wget http://www.xkcd.com/atom.xml -q -O - | sfeed_xmlenc
+curl -s -L http://www.xkcd.com/atom.xml | sfeed_xmlenc
 .Ed
 .Sh SEE ALSO
 .Xr sfeed_update 1 ,

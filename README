@@ -87,7 +87,7 @@ are escaped with '\', so: '\n', '\t', and '\\'. Other whitespace characters
 except space are removed. Control characters are removed.
 
 The timestamp field is converted to a UNIX timestamp. The timestamp is also
-stored as formatted as a separate field.
+added as a formatted text text field.
 
 The order and format of the fields are:
 
@@ -101,8 +101,10 @@ item id                  - string
 item author              - string
 feed type                - string, "rss" or "atom".
 
-CAVEAT: if a timezone is not supported (non-RFC-822) the UNIX timestamp is
-        interpreted as UTC+0.
+CAVEATS:
+- if a timezone is not supported (non-RFC-822) the UNIX timestamp is
+  interpreted as UTC+0.
+- HTML in titles is not supported on purpose.
 
 
 Build and install

@@ -1,24 +1,26 @@
-.Dd December 25, 2014
+.Dd August 5, 2015
 .Dt SFEED_PLAIN 1
 .Os
 .Sh NAME
 .Nm sfeed_plain
-.Nd formats a feeds file to a plain-text list
+.Nd format feed data to a plain-text list
 .Sh SYNOPSIS
 .Nm
 .Op Ar file...
 .Sh DESCRIPTION
 .Nm
-formats one or more
-.Ar files
-to a plain-text list. Each plain-text item will contain the feed name which
-will be the filename. If no argument is given it will read a feed from stdin,
-but there will not be a feed name.
-The data read from
-.Ar files
-or stdin is in a TAB-separated-like format from
+formats feed data (TSV) from
 .Xr sfeed 1
-For a more detailed list of this format and its fields see
+from stdin or
+.Ar file
+to stdout as a plain-text list. If one or more
+.Ar file
+are specified, the basename of the
+.Ar file
+is used as the feed name in the output. If no
+.Ar file
+parameters are specified and so the data is read from stdin the feed name
+is empty.
 .Xr sfeed 1
 .Sh SEE ALSO
 .Xr sfeed 1 ,

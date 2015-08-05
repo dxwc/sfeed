@@ -1,4 +1,4 @@
-.Dd December 25, 2014
+.Dd August 5, 2015
 .Dt SFEED_UPDATE 1
 .Os
 .Sh NAME
@@ -6,7 +6,7 @@
 .Nd update feeds and merge with old feeds
 .Sh SYNOPSIS
 .Nm
-.Op Ar configfile
+.Op Ar sfeedrc
 .Sh DESCRIPTION
 .Nm
 updates feeds files and merges the new data with the previous files. These
@@ -15,8 +15,8 @@ are the files in the directory
 by default.
 .Sh OPTIONS
 .Bl -tag -width 17n
-.It Ar configfile
-config file, if not specified uses the path
+.It Ar sfeedrc
+Config file, if not specified uses the path
 .Pa $HOME/.sfeed/sfeedrc
 by default. See the
 .Sx FILES READ
@@ -40,7 +40,7 @@ speedup updating.
 .Sh FILES WRITTEN
 .Bl -tag -width 17n
 .It Ar feedname
-Tab-separated format containing all items per feed.
+TAB-separated format containing all items per feed.
 The sfeed_update script merges new items with this file.
 .It Ar feedname.new
 Temporary file used by sfeed_update to merge items.

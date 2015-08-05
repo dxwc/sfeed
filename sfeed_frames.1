@@ -1,40 +1,41 @@
-.Dd December 25, 2014
+.Dd August 5, 2015
 .Dt SFEED_FRAMES 1
 .Os
 .Sh NAME
 .Nm sfeed_frames
-.Nd formats a feeds file to HTML with frames
+.Nd format feed data to HTML with frames
 .Sh SYNOPSIS
 .Nm
-.Op Ar feed...
+.Op Ar file...
 .Sh DESCRIPTION
 .Nm
-formats a feeds file (TSV) from
+formats feed data (TSV) from
 .Xr sfeed 1
-to HTML. It reads TSV data from stdin and writes HTML to the current
-directory. For the exact TSV format see
-.Xr sfeed 1 .
-.Sh OPTIONS
-.Bl -tag -width 14n
-.It Ar directory path
-Path to write files to, default is ".". On success the specified directory will
-contain the files:
-.El
+to HTML. It reads TSV data from stdin or
+.Ar file
+and writes HTML files to the current directory.
+If no
+.Ar file
+parameters are specified and so the data is read from stdin the feed name
+is named "unnamed".
+.Sh FILES WRITTEN
 .Bl -tag -width 13n
-.It Ar index.html:
-this is the main HTML file referencing to the frames (items.html and
-menu.html).
-.It Ar items.html:
-this contains all the items as HTML links to the local content.
-.It Ar menu.html:
-menu frame which contains navigation "anchor" links to the feed names
-(in items.html).
+.It Ar index.html
+The main HTML file referencing to the frames items.html and
+menu.html.
+.It Ar items.html
+Contains all the items as HTML links to the local content.
+.It Ar menu.html
+Menu frame which contains navigation "anchor" links to the feed names
+in items.html.
 .El
 .Sh FILE STRUCTURE
-Directory for each feed category in the format: path/feedname/itemname.html.
+Items for each feed category is in the format: feedname/itemname.html.
 The feedname and item names are normalized, whitespace characters are replaced
 with a \-, multiple whitespaces are replaced by a single \- and trailing
-whitespace will be removed.
+whitespace will be removed. The itemname is based on the title of the items.
+The feedname and title is truncated to a maximum of 128 characters. The
+maximum length of the path is PATH_MAX or filesystem-specific.
 .Sh SEE ALSO
 .Xr sfeed 1 ,
 .Xr sfeed_plain 1

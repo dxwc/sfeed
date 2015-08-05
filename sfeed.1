@@ -10,36 +10,46 @@
 .Sh DESCRIPTION
 .Nm
 reads RSS or Atom feed data (XML) from stdin. It writes the feed data in a
-tab-separated format to stdout. A
+TAB-separated format to stdout. A
 .Ar baseurl
-can be specified if the links in the feed are relative urls and the baseurl of
-the content differs from the feed. It is generally recommended to always have
-absolute urls in your feeds, but the web sucks.
+can be specified if the links in the feed are relative urls. It is
+recommended to always have absolute urls in your feeds.
 .Sh TAB-SEPARATED FORMAT FIELDS
-The items are saved in a TSV-like format except newlines, tabs and
-backslash are escaped with \\ (\\n, \\t and \\\\). Carriage returns (\\r) are
+The items are saved in a TSV-like format.
+.Pp
+The fields: title, id, author are not allowed to have newlines and TABs. All
+whitespace is replaced by a single space character. Control characters are
 removed.
+.Pp
+The content field can contain newlines and is escaped. TABs, newlines and '\\'
+are escaped with '\\', so: '\\n', '\\t', and '\\\\'. Other whitespace
+characters except space are removed. Control characters are removed.
+.Pp
+The timestamp field is converted to a UNIX timestamp. The timestamp is also
+added as a formatted text field.
 .Pp
 The order and format of the fields are:
 .Bl -tag -width 17n
 .It Ar item timestamp
-string, UNIX timestamp in UTC+0
+UNIX timestamp in UTC+0.
 .It Ar item timestamp
-string, date and time in the format: YYYY-mm-dd HH:MM:SS (UTC[+-][HHMM])|tz
+Date and time in the format: YYYY-mm-dd HH:MM:SS (UTC[+-][HHMM])|tz.
 .It Ar item title
-string
+Title text, HTML in titles is treated as plain-text (on purpose).
 .It Ar item link
-string, made to absolute url, unsafe characters are encoded
+Absolute url, unsafe characters are encoded.
 .It Ar item content
-string
+Newlines and TABs are escaped. Control characters are removed. See the
+.Sx TAB-SEPARATED FORMAT FIELDS
+text.
 .It Ar item content\-type
-string, "html" or "plain"
+"html" or "plain".
 .It Ar item id
-string
+RSS item GUID or Atom id.
 .It Ar item author
-string
+Item author.
 .It Ar feed type
-string, "rss" or "atom"
+"rss" or "atom".
 .El
 .Sh SEE ALSO
 .Xr sfeed_plain 1 ,
@@ -50,3 +60,4 @@ string, "rss" or "atom"
 .Sh CAVEATS
 if a timezone is not supported (non-RFC-822) the UNIX timestamp is interpreted
 as UTC+0.
+HTML in titles is treated as plain-text (on purpose).

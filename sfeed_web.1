@@ -14,21 +14,25 @@ urls to stdout.
 .Sh OPTIONS
 .Bl -tag -width 8n
 .It Ar baseurl
-optional base url to use for found feed urls that are relative.
+Optional base url to use for found feed urls that are relative.
 .El
 .Sh OUTPUT FORMAT
-content\-type<space>url<newline>
-.Bl -tag -width 13n
+url<TAB>content\-type<newline>
+.Bl -tag -width Ds
+.It Ar url
+Found absolute url. If the url is relative and the
+.Ar baseurl
+option is
+specified then the url is made absolute. If the url is relative and no
+.Ar baseurl
+option is specified it is empty.
 .It Ar content\-type
 Usually application/atom+xml or application/rss+xml.
-.It Ar url
-Found url to the feed. If the url is relative and the baseurl option is
-specified then the url is changed accordingly.
 .El
 .Sh EXAMPLES
 Get urls from xkcd website:
 .Bd -literal
-wget http://www.xkcd.com -q -O - | sfeed_web "http://www.xkcd.com/"
+curl -s -L http://www.xkcd.com | sfeed_web "http://www.xkcd.com/"
 .Ed
 .Sh SEE ALSO
 .Xr sfeed_update 1 ,

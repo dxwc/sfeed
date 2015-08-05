@@ -3,17 +3,21 @@
 .Os
 .Sh NAME
 .Nm sfeed_opml_export
-.Nd generate an OPML file based on a sfeedrc config file
+.Nd export feeds in a sfeedrc file to OPML data
 .Sh SYNOPSIS
 .Nm
-.Op Ar config file
+.Op Ar sfeedrc
 .Sh DESCRIPTION
 .Nm
-parses the specified config file and output OPML XML data to stdout.
+reads the specified
+.Ar sfeedrc
+config file and output OPML XML data to stdout.
 .Sh OPTIONS
-.Bl -tag -width 17n
-.It Op config file
-default: "$HOME/.sfeed/sfeedrc", see the
+.Bl -tag -width Ds
+.It sfeedrc
+Default:
+.Pa $HOME/.sfeed/sfeedrc
+see the
 .Xr sfeed_update 1
 .Sx FILES READ
 section for more information.

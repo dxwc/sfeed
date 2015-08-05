@@ -1,17 +1,28 @@
-.Dd December 25, 2014
+.Dd August 5, 2015
 .Dt SFEED_HTML 1
 .Os
 .Sh NAME
 .Nm sfeed_html
-.Nd formats a feeds file to HTML
+.Nd format feed data to HTML
 .Sh SYNOPSIS
 .Nm
+.Op Ar file...
 .Sh DESCRIPTION
 .Nm
-formats a feeds file (TSV) from
-.Xr sfeed_update 1
-to HTML. It reads TSV data from stdin and writes HTML to stdout. For the exact TSV format see
-.Xr sfeed_update 1 .
+formats feed data (TSV) from
+.Xr sfeed 1
+from stdin or
+.Ar file
+to stdout in HTML.
+If one or more
+.Ar file
+are specified, the basename of the
+.Ar file
+is used as the feed name in the output.
+If no
+.Ar file
+parameters are specified and so the data is read from stdin the feed name
+is empty.
 .Sh SEE ALSO
 .Xr sfeed 1 ,
 .Xr sfeed_plain 1
