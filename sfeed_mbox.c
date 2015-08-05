@@ -77,11 +77,9 @@ printfeed(FILE *fp, const char *feedname)
 		errx(1, "can't format current time");
 
 	while (parseline(&line, &linesize, fields, fp) > 0) {
-		if ((r = strtotime(fields[FieldUnixTimestamp], &parsedtime)) == -1)
-			continue; /* invalid date */
-		if (!gmtime_r(&parsedtime, &tm))
-			continue; /* invalid date */
-		if (!strftime(timebuf, sizeof(timebuf),
+		if ((r = strtotime(fields[FieldUnixTimestamp], &parsedtime)) == -1 ||
+		    !gmtime_r(&parsedtime, &tm) ||
+		    !strftime(timebuf, sizeof(timebuf),
 		    "%a, %d %b %Y %H:%M +0000", &tm))
 			continue; /* invalid date */
 
