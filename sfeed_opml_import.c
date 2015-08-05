@@ -48,8 +48,7 @@ xml_handler_end_element(XMLParser *p, const char *tag, size_t taglen,
 	if (istag(tag, "outline")) {
 		printf("\tfeed \"%s\" \"%s\" \"%s\"\n",
 		       feedname[0] ? feedname : "unnamed",
-		       feedurl[0] ? feedurl : "",
-		       basesiteurl[0] ? basesiteurl : "");
+		       feedurl, basesiteurl);
 	}
 }
 
@@ -84,12 +83,11 @@ main(void)
 	    "# paths\n"
 	    "# NOTE: make sure to uncomment all these if you change it.\n"
 	    "#sfeedpath=\"$HOME/.sfeed\"\n"
-	    "#sfeedfile=\"$sfeedpath/feeds\"\n"
-	    "#sfeedfilenew=\"$sfeedfile.new\"\n"
+	    "#sfeeddir=\"${sfeedpath}/feeds\"\n"
 	    "\n"
 	    "# list of feeds to fetch:\n"
 	    "feeds() {\n"
-	    "	# feed <name> <feedurl> <basesiteurl> [encoding]\n", stdout);
+	    "	# feed <name> <feedurl> [basesiteurl] [encoding]\n", stdout);
 	xmlparser_parse_fd(&parser, 0);
 	fputs("}\n", stdout);
 
