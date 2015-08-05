@@ -39,17 +39,17 @@ Files
 
 sfeed             - Binary (from sfeed.c); read XML RSS or Atom feed data from
                     stdin. Write feed data in tab-separated format to stdout.
-sfeed_html        - Format feeds file (TSV) to HTML.
-sfeed_frames      - Format feeds file (TSV) to HTML file(s) with frames.
-sfeed_mbox        - Format feeds file (TSV) to mbox.
-sfeed_opml_import - Generate a sfeedrc config file based on an opml file.
-sfeed_opml_export - Generate an opml file based on a sfeedrc config file.
-sfeed_plain       - Format feeds file (TSV) to a plain-text list.
+sfeed_frames      - Format feed data (TSV) to HTML file(s) with frames.
+sfeed_html        - Format feed data (TSV) to HTML.
+sfeed_opml_export - Generate an OPML XML file from a sfeedrc config file.
+sfeed_opml_import - Generate a sfeedrc config file from an OPML XML file.
+sfeed_mbox        - Format feed data (TSV) to mbox.
+sfeed_plain       - Format feed data (TSV) to a plain-text list.
 sfeed_update      - Shellscript; update feeds and merge with old feeds in the
-                    file $HOME/.sfeed/feeds by default.
+                    directory $HOME/.sfeed/feeds by default.
 sfeed_web         - Find urls to RSS/Atom feed from a webpage.
 sfeed_xmlenc      - Detect character-set encoding from XML stream.
-sfeedrc.example   - Example config file.
+sfeedrc.example   - Example config file. Can be copied to $HOME/.sfeed/sfeedrc.
 style.css         - Example stylesheet to use with sfeed_html and sfeed_frames.
 
 
