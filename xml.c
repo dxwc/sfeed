@@ -66,7 +66,7 @@ xmlparser_getnext(XMLParser *x)
 	return x->getnext(x);
 }
 
-static __inline__ void
+static void
 xmlparser_parseattrs(XMLParser *x)
 {
 	size_t namelen = 0, valuelen;
@@ -163,7 +163,7 @@ xmlparser_parseattrs(XMLParser *x)
 	}
 }
 
-static __inline__ void
+static void
 xmlparser_parsecomment(XMLParser *x)
 {
 	static const char *end = "-->";
@@ -207,7 +207,7 @@ xmlparser_parsecomment(XMLParser *x)
 	}
 }
 
-static __inline__ void
+static void
 xmlparser_parsecdata(XMLParser *x)
 {
 	static const char *end = "]]>";
