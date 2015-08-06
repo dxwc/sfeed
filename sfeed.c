@@ -432,66 +432,6 @@ isattr(const char *name, size_t len, const char *name2, size_t len2)
 	return (len == len2 && !strcasecmp(name, name2));
 }
 
-/* NOTE: this handler can be called multiple times if the data in this
- * block is bigger than the buffer. */
-static void
-xml_handler_data(XMLParser *p, const char *s, size_t len)
-{
-	if (!ctx.field)
-		return;
-
-	/* add only data from <name> inside <author> tag
-	 * or any other non-<author> tag */
-	if (ctx.tagid != AtomTagAuthor || !strcmp(p->tag, "name"))
-		string_append(ctx.field, s, len);
-}
-
-static void
-xml_handler_cdata(XMLParser *p, const char *s, size_t len)
-{
-	(void)p;
-
-	if (!ctx.field)
-		return;
-
-	string_append(ctx.field, s, len);
-}
-
-static void
-xml_handler_attr_start(XMLParser *p, const char *tag, size_t taglen,
-	const char *name, size_t namelen)
-{
-	(void)tag;
-	(void)taglen;
-
-	if (!ISINCONTENT(ctx))
-		return;
-
-	/* handles transforming inline XML to data */
-	if (!ctx.attrcount)
-		xml_handler_data(p, " ", 1);
-	ctx.attrcount++;
-	xml_handler_data(p, name, namelen);
-	xml_handler_data(p, "=\"", 2);
-}
-
-static void
-xml_handler_attr_end(XMLParser *p, const char *tag, size_t taglen,
-	const char *name, size_t namelen)
-{
-	(void)tag;
-	(void)taglen;
-	(void)name;
-	(void)namelen;
-
-	if (!ISINCONTENT(ctx))
-		return;
-
-	/* handles transforming inline XML to data */
-	xml_handler_data(p, "\"", 1);
-	ctx.attrcount = 0;
-}
-
 static void
 xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 	const char *name, size_t namelen, const char *value,
@@ -525,6 +465,88 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 			string_append(&ctx.item.link, value, valuelen);
 		}
 	}
+}
+
+static void
+xml_handler_attr_end(XMLParser *p, const char *tag, size_t taglen,
+	const char *name, size_t namelen)
+{
+	(void)tag;
+	(void)taglen;
+	(void)name;
+	(void)namelen;
+
+	if (!ISINCONTENT(ctx))
+		return;
+
+	/* handles transforming inline XML to data */
+	xml_handler_data(p, "\"", 1);
+	ctx.attrcount = 0;
+}
+
+static void
+xml_handler_attr_start(XMLParser *p, const char *tag, size_t taglen,
+	const char *name, size_t namelen)
+{
+	(void)tag;
+	(void)taglen;
+
+	if (!ISINCONTENT(ctx))
+		return;
+
+	/* handles transforming inline XML to data */
+	if (!ctx.attrcount)
+		xml_handler_data(p, " ", 1);
+	ctx.attrcount++;
+	xml_handler_data(p, name, namelen);
+	xml_handler_data(p, "=\"", 2);
+}
+
+static void
+xml_handler_cdata(XMLParser *p, const char *s, size_t len)
+{
+	(void)p;
+
+	if (!ctx.field)
+		return;
+
+	string_append(ctx.field, s, len);
+}
+
+/* NOTE: this handler can be called multiple times if the data in this
+ * block is bigger than the buffer. */
+static void
+xml_handler_data(XMLParser *p, const char *s, size_t len)
+{
+	if (!ctx.field)
+		return;
+
+	/* add only data from <name> inside <author> tag
+	 * or any other non-<author> tag */
+	if (ctx.tagid != AtomTagAuthor || !strcmp(p->tag, "name"))
+		string_append(ctx.field, s, len);
+}
+
+static void
+xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
+{
+	char buffer[16];
+	int len;
+
+	if (!ctx.field)
+		return;
+
+	/* try to translate entity, else just pass as data to
+	 * xml_data_handler */
+	len = xml_entitytostr(data, buffer, sizeof(buffer));
+	/* this should never happen (buffer too small) */
+	if (len < 0)
+		return;
+
+	if (len > 0)
+		xml_handler_data(p, buffer, (size_t)len);
+	else
+		xml_handler_data(p, data, datalen);
 }
 
 static void
@@ -643,28 +665,6 @@ xml_handler_start_el_parsed(XMLParser *p, const char *tag, size_t taglen,
 		xml_handler_data(p, "/>", 2);
 	else
 		xml_handler_data(p, ">", 1);
-}
-
-static void
-xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
-{
-	char buffer[16];
-	int len;
-
-	if (!ctx.field)
-		return;
-
-	/* try to translate entity, else just pass as data to
-	 * xml_data_handler */
-	len = xml_entitytostr(data, buffer, sizeof(buffer));
-	/* this should never happen (buffer too small) */
-	if (len < 0)
-		return;
-
-	if (len > 0)
-		xml_handler_data(p, buffer, (size_t)len);
-	else
-		xml_handler_data(p, data, datalen);
 }
 
 static void

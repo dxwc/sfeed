@@ -332,6 +332,7 @@ xml_numericentitytostr(const char *e, char *buf, size_t bufsiz)
 	for (b = 0; b < len; b++)
 		buf[b] = (cp >> (8 * (len - 1 - b))) & 0xff;
 	buf[len] = '\0';
+
 	return (ssize_t)len;
 }
 
@@ -359,7 +360,8 @@ xmlparser_parse(XMLParser *x)
 	int c, ispi;
 	size_t datalen, tagdatalen, taglen;
 
-	while ((c = xmlparser_getnext(x)) != EOF && c != '<'); /* skip until < */
+	while ((c = xmlparser_getnext(x)) != EOF && c != '<')
+		; /* skip until < */
 
 	while (c != EOF) {
 		if (c == '<') { /* parse tag */
@@ -369,33 +371,28 @@ xmlparser_parse(XMLParser *x)
 			x->taglen = 0;
 			if (c == '!') { /* cdata and comments */
 				for (tagdatalen = 0; (c = xmlparser_getnext(x)) != EOF;) {
-					if (tagdatalen <= strlen("[CDATA[")) /* if (d < sizeof(x->data)) */
+					if (tagdatalen <= sizeof("[CDATA[") - 1) /* if (d < sizeof(x->data)) */
 						x->data[tagdatalen++] = c; /* TODO: prevent overflow */
 					if (c == '>')
 						break;
-					else if (c == '-' && tagdatalen == strlen("--") &&
+					else if (c == '-' && tagdatalen == sizeof("--") - 1 &&
 							(x->data[0] == '-')) { /* comment */
 						xmlparser_parsecomment(x);
 						break;
 					} else if (c == '[') {
-						if (tagdatalen == strlen("[CDATA[") &&
+						if (tagdatalen == sizeof("[CDATA[") - 1 &&
 							x->data[1] == 'C' && x->data[2] == 'D' &&
 							x->data[3] == 'A' && x->data[4] == 'T' &&
 							x->data[5] == 'A' && x->data[6] == '[') { /* CDATA */
 							xmlparser_parsecdata(x);
 							break;
-						#if 0
-						} else {
-							/* TODO ? */
-							/* markup declaration section */
-							while ((c = xmlparser_getnext(x)) != EOF && c != ']');
-						#endif
 						}
 					}
 				}
 			} else { /* normal tag (open, short open, close), processing instruction. */
 				if (isspace(c))
-					while ((c = xmlparser_getnext(x)) != EOF && isspace(c));
+					while ((c = xmlparser_getnext(x)) != EOF && isspace(c))
+						;
 				if (c == EOF)
 					return;
 				x->tag[0] = c;

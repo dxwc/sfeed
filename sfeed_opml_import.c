@@ -74,10 +74,9 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 int
 main(void)
 {
-	memset(&parser, 0, sizeof(parser));
-	parser.xmltagstart = xml_handler_start_element;
-	parser.xmltagend = xml_handler_end_element;
 	parser.xmlattr = xml_handler_attr;
+	parser.xmltagend = xml_handler_end_element;
+	parser.xmltagstart = xml_handler_start_element;
 
 	fputs(
 	    "# paths\n"

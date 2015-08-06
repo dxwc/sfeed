@@ -13,18 +13,15 @@ formats feed data (TSV) from
 .Xr sfeed 1
 from stdin or
 .Ar file
-to stdout in the mboxrd format.
-If one or more
+to stdout in the mboxrd format. If one or more
 .Ar file
 are specified, the basename of the
 .Ar file
-is used as the feed name in the output.
-If no
+is used as the feed name in the output. If no
 .Ar file
 parameters are specified and so the data is read from stdin the feed name
-is empty.
-Lines starting with "From " will be mangled in the mboxrd-style. The mbox
-data can be further processed by tools like
+is empty. Lines starting with "From " will be mangled in the mboxrd-style.
+The mbox data can be further processed by tools like
 .Xr procmail 1
 or
 .Xr fdm 1
