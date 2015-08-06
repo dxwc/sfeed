@@ -145,7 +145,7 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 	}
 	/* search */
 	for (i = 0; tags[i].name; i++) {
-		if (!(n = strncasecmp(tags[i].name, name, tags[i].len)))
+		if (!(n = strcasecmp(tags[i].name, name)))
 			return tags[i].id; /* found */
 		/* optimization: it's sorted so nothing after it matches. */
 		if (n > 0)
