@@ -233,6 +233,11 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 	int tzhour = 0, tzmin = 0, r;
 	size_t i;
 
+	/* skip milliseconds for: %Y-%m-%dT%H:%M:%S.000Z */
+	if (*s == '.') {
+		for (s++; *s && isdigit((int)*s); s++)
+			;
+	}
 	if (!*s || *s == 'Z' || *s == 'z')
 		goto time_ok;
 	/* skip whitespace */
