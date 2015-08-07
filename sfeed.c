@@ -442,7 +442,8 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 
 	/* handles transforming inline XML to data */
 	if (ISINCONTENT(ctx)) {
-		xml_handler_data(p, value, valuelen);
+		if (ctx.item.contenttype == ContentTypeHTML)
+			xml_handler_data(p, value, valuelen);
 		return;
 	}
 
@@ -455,8 +456,6 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 			    isattr(value, valuelen, STRP("text/html"))))
 			{
 				ctx.item.contenttype = ContentTypeHTML;
-				p->xmlattrstart = xml_handler_attr_start;
-				p->xmlattrend = xml_handler_attr_end;
 			}
 		} else if (ctx.tagid == AtomTagLink &&
 		          isattr(name, namelen, STRP("href")))
@@ -476,7 +475,7 @@ xml_handler_attr_end(XMLParser *p, const char *tag, size_t taglen,
 	(void)name;
 	(void)namelen;
 
-	if (!ISINCONTENT(ctx))
+	if (!ISINCONTENT(ctx) || ctx.item.contenttype != ContentTypeHTML)
 		return;
 
 	/* handles transforming inline XML to data */
@@ -491,7 +490,7 @@ xml_handler_attr_start(XMLParser *p, const char *tag, size_t taglen,
 	(void)tag;
 	(void)taglen;
 
-	if (!ISINCONTENT(ctx))
+	if (!ISINCONTENT(ctx) || ctx.item.contenttype != ContentTypeHTML)
 		return;
 
 	/* handles transforming inline XML to data */
@@ -556,8 +555,10 @@ xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
 
 	if (ISINCONTENT(ctx)) {
 		ctx.attrcount = 0;
-		xml_handler_data(p, "<", 1);
-		xml_handler_data(p, name, namelen);
+		if (ctx.item.contenttype == ContentTypeHTML) {
+			xml_handler_data(p, "<", 1);
+			xml_handler_data(p, name, namelen);
+		}
 		return;
 	}
 
@@ -658,7 +659,7 @@ xml_handler_start_el_parsed(XMLParser *p, const char *tag, size_t taglen,
 		return;
 	}
 
-	if (!ISINCONTENT(ctx))
+	if (!ISINCONTENT(ctx) || ctx.item.contenttype != ContentTypeHTML)
 		return;
 
 	if (isshort)
@@ -676,7 +677,7 @@ xml_handler_end_el(XMLParser *p, const char *name, size_t namelen, int isshort)
 	if (ISINCONTENT(ctx)) {
 		/* not close content field */
 		if (gettag(ctx.item.feedtype, name, namelen) != ctx.tagid) {
-			if (!isshort) {
+			if (!isshort && ctx.item.contenttype == ContentTypeHTML) {
 				xml_handler_data(p, "</", 2);
 				xml_handler_data(p, name, namelen);
 				xml_handler_data(p, ">", 1);
@@ -726,6 +727,8 @@ main(int argc, char *argv[])
 	string_buffer_init(&ctx.item.author, 256);
 
 	parser.xmlattr = xml_handler_attr;
+	parser.xmlattrend = xml_handler_attr_end;
+	parser.xmlattrstart = xml_handler_attr_start;
 	parser.xmlcdata = xml_handler_cdata;
 	parser.xmldata = xml_handler_data;
 	parser.xmldataentity = xml_handler_data_entity;
