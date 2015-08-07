@@ -63,19 +63,18 @@ convertencoding() {
 # fetch and parse feed.
 # feed(name, feedurl, [basesiteurl], [encoding])
 feed() {
-	(tmpfeedfile=$(mktemp -p "${sfeedtmpdir}")
-	name="$1"
+	(name="$1"
+	tmpfeedfile="${sfeedtmpdir}/${name}"
 	tmpencfile=""
 	encoding="$4"
 	sfeedfile="${sfeeddir}/$1"
 	if [ ! "${encoding}" = "" ]; then
 		fetchfeed "$2" "$1" "${sfeedfile}" | convertencoding "${encoding}" "utf-8"
 	else # detect encoding.
-		tmpencfile=$(mktemp -p "${sfeedtmpdir}")
+		tmpencfile="${tmpfeedfile}.enc"
 		fetchfeed "$2" "$1" "${sfeedfile}" > "${tmpencfile}"
 		detectenc=$(sfeed_xmlenc < "${tmpencfile}")
 		convertencoding "${detectenc}" "utf-8" < "${tmpencfile}"
-		rm -f "${tmpencfile}"
 	fi | sfeed "$3" > "${tmpfeedfile}"
 
 	# get new data and merge with old.
