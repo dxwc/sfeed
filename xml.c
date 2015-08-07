@@ -8,23 +8,6 @@
 
 #include "xml.h"
 
-static const struct {
-	char *entity;
-	size_t len;
-	int c;
-} entities[] = {
-	{ .entity = "&lt;",   .len = 4, .c = '<'  },
-	{ .entity = "&gt;",   .len = 4, .c = '>'  },
-	{ .entity = "&apos;", .len = 6, .c = '\'' },
-	{ .entity = "&amp;",  .len = 5, .c = '&'  },
-	{ .entity = "&quot;", .len = 6, .c = '"'  },
-	{ .entity = "&LT;",   .len = 4, .c = '<'  },
-	{ .entity = "&GT;",   .len = 4, .c = '>'  },
-	{ .entity = "&APOS;", .len = 6, .c = '\'' },
-	{ .entity = "&AMP;",  .len = 5, .c = '&'  },
-	{ .entity = "&QUOT;", .len = 6, .c = '"'  }
-};
-
 static int
 xmlparser_string_getnext(XMLParser *x)
 {
@@ -279,6 +262,21 @@ xml_codepointtoutf8(uint32_t cp, uint32_t *utf)
 ssize_t
 xml_namedentitytostr(const char *e, char *buf, size_t bufsiz)
 {
+	const struct {
+		char *entity;
+		int c;
+	} entities[] = {
+		{ .entity = "&amp;",  .c = '&'  },
+		{ .entity = "&lt;",   .c = '<'  },
+		{ .entity = "&gt;",   .c = '>'  },
+		{ .entity = "&apos;", .c = '\'' },
+		{ .entity = "&quot;", .c = '"'  },
+		{ .entity = "&AMP;",  .c = '&'  },
+		{ .entity = "&LT;",   .c = '<'  },
+		{ .entity = "&GT;",   .c = '>'  },
+		{ .entity = "&APOS;", .c = '\'' },
+		{ .entity = "&QUOT;", .c = '"'  }
+	};
 	size_t i;
 
 	/* buffer is too small */
@@ -290,8 +288,7 @@ xml_namedentitytostr(const char *e, char *buf, size_t bufsiz)
 		return 0;
 
 	for (i = 0; i < sizeof(entities) / sizeof(*entities); i++) {
-		/* NOTE: compares max 6 chars */
-		if (!strncmp(e, entities[i].entity, 6)) {
+		if (!strcmp(e, entities[i].entity)) {
 			buf[0] = entities[i].c;
 			buf[1] = '\0';
 			return 1;
