@@ -42,8 +42,10 @@ printfeed(FILE *fp, const char *feedname)
 	time_t parsedtime;
 
 	while (parseline(&line, &size, fields, fp) > 0) {
-		if (strtotime(fields[FieldUnixTimestamp], &parsedtime) != -1 &&
-		   parsedtime >= comparetime)
+		parsedtime = 0;
+		strtotime(fields[FieldUnixTimestamp], &parsedtime);
+
+		if (parsedtime >= comparetime)
 			fputs("N ", stdout);
 		else
 			fputs("  ", stdout);

@@ -81,7 +81,6 @@ printfeed(FILE *fp, const char *feedname)
 	char *fields[FieldLast], timebuf[32], mtimebuf[32];
 	char host[HOST_NAME_MAX + 1], *user;
 	time_t parsedtime;
-	int r;
 
 	if (!(user = getenv("USER")))
 		user = "you";
@@ -96,11 +95,13 @@ printfeed(FILE *fp, const char *feedname)
 		errx(1, "can't format current time");
 
 	while (parseline(&line, &linesize, fields, fp) > 0) {
-		if ((r = strtotime(fields[FieldUnixTimestamp], &parsedtime)) == -1 ||
-		    !gmtime_r(&parsedtime, &tm) ||
+		parsedtime = 0;
+		strtotime(fields[FieldUnixTimestamp], &parsedtime);
+		/* can't convert: default to formatted time for time_t 0. */
+		if (!gmtime_r(&parsedtime, &tm) ||
 		    !strftime(timebuf, sizeof(timebuf),
 		    "%a, %d %b %Y %H:%M +0000", &tm))
-			continue; /* invalid date */
+			strlcpy(timebuf, "Thu, 01 Jan 1970 00:00 +0000", sizeof(timebuf));
 
 		/* mbox + mail header */
 		printf("From MAILER-DAEMON %s\n"

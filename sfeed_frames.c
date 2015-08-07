@@ -105,8 +105,7 @@ static void
 printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 {
 	char dirpath[PATH_MAX], filepath[PATH_MAX];
-	char *fields[FieldLast], *feedname;
-	char name[128];
+	char *fields[FieldLast], *feedname, name[128];
 	size_t namelen;
 	struct stat st;
 	FILE *fpcontent = NULL;
@@ -177,14 +176,14 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		}
 
 		/* set modified and access time of file to time of item. */
-		r = strtotime(fields[FieldUnixTimestamp], &parsedtime);
-		if (r != -1) {
+		parsedtime = 0;
+		if (strtotime(fields[FieldUnixTimestamp], &parsedtime) != -1) {
 			contenttime.actime = parsedtime;
 			contenttime.modtime = parsedtime;
 			utime(filepath, &contenttime);
 		}
 
-		isnew = (r != -1 && parsedtime >= comparetime) ? 1 : 0;
+		isnew = (parsedtime >= comparetime) ? 1 : 0;
 		totalnew += isnew;
 		f->totalnew += isnew;
 		f->total++;

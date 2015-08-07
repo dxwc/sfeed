@@ -188,10 +188,11 @@ int
 strtotime(const char *s, time_t *t)
 {
 	long l;
+	char *e;
 
 	errno = 0;
-	l = strtol(s, NULL, 10);
-	if (errno != 0)
+	l = strtol(s, &e, 10);
+	if (*s == '\0' || *e != '\0')
 		return -1;
 	if (t)
 		*t = (time_t)l;
