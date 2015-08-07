@@ -28,7 +28,7 @@ parseuri(const char *s, struct uri *u, int rel)
 	const char *p = s;
 	size_t i;
 
-	memset(u, 0, sizeof(struct uri));
+	u->proto[0] = u->host[0] = u->path[0] = '\0';
 	if (!*s)
 		return 0;
 
