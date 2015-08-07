@@ -1,7 +1,9 @@
 #include <sys/types.h>
 
 #include <err.h>
+#include <inttypes.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +14,23 @@
 
 static char *line = NULL;
 static size_t linesize = 0;
+
+/* jenkins one-at-a-time hash, used for Message-Id */
+static uint32_t
+jenkins1(const char *s)
+{
+	uint32_t hash = 0;
+
+	for (; *s; s++) {
+		hash += (int)*s;
+		hash += (hash << 10);
+		hash ^= (hash >> 6);
+	}
+	hash += (hash << 3);
+	hash ^= (hash >> 11);
+
+	return hash + (hash << 15);
+}
 
 /* Unescape / decode fields printed by string_print_encoded()
  * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
@@ -89,14 +108,17 @@ printfeed(FILE *fp, const char *feedname)
 			"From: %s <sfeed@>\n"
 			"To: %s <%s@%s>\n"
 			"Subject: %s\n"
-			"Message-ID: <%s-%s-sfeed>\n"
+			"Message-ID: <%s%s%"PRIu32"@sfeed>\n"
 			"Content-Type: text/%s; charset=UTF-8\n"
 			"Content-Transfer-Encoding: binary\n"
 			"X-Feedname: %s\n"
 			"\n",
-			mtimebuf, timebuf, fields[FieldAuthor],
+			mtimebuf, timebuf,
+			fields[FieldAuthor][0] ? fields[FieldAuthor] : "anonymous",
 			user, user, host, fields[FieldTitle],
-			fields[FieldUnixTimestamp], fields[FieldId],
+			fields[FieldUnixTimestamp],
+			fields[FieldUnixTimestamp][0] ? "." : "",
+			jenkins1(fields[FieldTitle]),
 			fields[FieldContentType], feedname);
 
 		if (!strcmp(fields[FieldContentType], "html")) {
