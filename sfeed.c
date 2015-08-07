@@ -314,7 +314,7 @@ parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 		if (!(p = strptime(s, formats[i], &tm)))
 			continue;
 		tm.tm_isdst = -1; /* don't use DST */
-		if ((t = timegm(&tm)) == -1) /* error */
+		if ((t = mktime(&tm)) == -1) /* error */
 			return -1;
 		if (gettimetz(p, tz, sizeof(tz), &tzoffset) == -1)
 			return -1;
@@ -717,6 +717,11 @@ main(int argc, char *argv[])
 {
 	if (argc > 1)
 		baseurl = argv[1];
+
+	/* set time to UTC+0 for manual time conversion */
+	if (setenv("TZ", "UTC", 1) == -1)
+		err(1, "setenv");
+	tzset();
 
 	/* init strings and initial memory pool size */
 	string_buffer_init(&ctx.item.timestamp, 64);
