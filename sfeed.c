@@ -279,15 +279,16 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 time_ok:
 	/* timezone set but non-match */
 	if (tzbuf[0] && !tz[0]) {
-		r = snprintf(buf, bufsiz, "%s", tzbuf);
+		if (strlcpy(buf, tzbuf, bufsiz) >= bufsiz)
+			return -1; /* truncation */
 		tzhour = tzmin = 0;
 		c = '+';
 	} else {
 		r = snprintf(buf, bufsiz, "%s%c%02d:%02d",
 		             tz[0] ? tz : "UTC", c, tzhour, tzmin);
+		if (r < 0 || (size_t)r >= bufsiz)
+			return -1; /* truncation or error */
 	}
-	if (r < 0 || (size_t)r >= bufsiz)
-		return -1; /* truncation or error */
 	if (tzoffset)
 		*tzoffset = ((tzhour * 3600) + (tzmin * 60)) *
 		            (c == '-' ? -1 : 1);
