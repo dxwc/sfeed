@@ -73,8 +73,8 @@ feeds     - TAB-separated format containing all feeds. The sfeed_update script
 feeds.new - Temporary file used by sfeed_update to merge items.
 
 
-TAB-separated format
---------------------
+TAB-separated format fields
+---------------------------
 
 The items are saved in a TSV-like format.
 
@@ -91,15 +91,19 @@ added as a formatted text text field.
 
 The order and format of the fields are:
 
-item UNIX timestamp      - string UNIX timestamp (UTC+0).
-item formatted timestamp - string timestamp, YYYY-mm-dd HH:MM:SS (UTC[+-]HH:MM)|tz
-item title               - string
-item link                - string, absolute url, characters are uri encoded.
-item content             - string
-item contenttype         - string, "html" or "plain".
-item id                  - string
-item author              - string
-feed type                - string, "rss" or "atom".
+item UNIX timestamp      - UNIX timestamp (UTC+0), empty on parse failure.
+item formatted timestamp - Date and time in the format:
+                           YYYY-mm-dd HH:MM:SS (UTC[+-][HHMM])|tz.
+item title               - Title text, HTML in titles is treated as
+                           plain-text (on purpose).
+item link                - Absolute url, unsafe characters are encoded.
+item content             - Newlines and TABs are escaped. Control characters
+                           are removed. See the "TAB-separated format fields"
+                           text.
+item contenttype         - "html" or "plain".
+item id                  - RSS item GUID or Atom id.
+item author              - Item author.
+feed type                - "rss" or "atom".
 
 CAVEATS:
 - if a timezone is not supported (non-RFC-822) the UNIX timestamp is
