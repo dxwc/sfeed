@@ -109,7 +109,7 @@ printfeed(FILE *fp, const char *feedname)
 			"From: %s <sfeed@>\n"
 			"To: %s <%s@%s>\n"
 			"Subject: %s\n"
-			"Message-ID: <%s%s%"PRIu32"@sfeed>\n"
+			"Message-ID: <%s%s%"PRIu32"@%s>\n"
 			"Content-Type: text/%s; charset=UTF-8\n"
 			"Content-Transfer-Encoding: binary\n"
 			"X-Feedname: %s\n"
@@ -120,6 +120,7 @@ printfeed(FILE *fp, const char *feedname)
 			fields[FieldUnixTimestamp],
 			fields[FieldUnixTimestamp][0] ? "." : "",
 			jenkins1(fields[FieldTitle]),
+			feedname[0] ? feedname : "unnamed",
 			fields[FieldContentType], feedname);
 
 		if (!strcmp(fields[FieldContentType], "html")) {
