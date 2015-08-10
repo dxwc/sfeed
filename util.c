@@ -44,6 +44,7 @@ parseuri(const char *s, struct uri *u, int rel)
 			if (p - s + 1 >= (ssize_t)sizeof(u->proto))
 				return -1; /* protocol too long */
 			memcpy(u->proto, s, p - s);
+			u->proto[p - s] = '\0';
 			p += 3; /* skip "://" */
 		} else {
 			p = s; /* no protocol format, set to start */
@@ -57,6 +58,7 @@ parseuri(const char *s, struct uri *u, int rel)
 	if (i + 1 >= sizeof(u->host))
 		return -1; /* host too long */
 	memcpy(u->host, p, i);
+	u->host[i] = '\0';
 	p = &p[i];
 
 readpath:
