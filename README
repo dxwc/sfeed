@@ -29,7 +29,7 @@ Optional dependencies
 Platforms tested
 ----------------
 
-- Linux (glibc+gcc, musl-gcc, clang, tcc).
+- Linux (glibc+gcc, musl-gcc, clang).
 - OpenBSD
 - Windows (cygwin gcc, mingw).
 
@@ -95,7 +95,7 @@ item UNIX timestamp      - UNIX timestamp (UTC+0), empty on parse failure.
 item formatted timestamp - Date and time in the format:
                            YYYY-mm-dd HH:MM:SS (UTC[+-][HHMM])|tz.
 item title               - Title text, HTML in titles is treated as
-                           plain-text (on purpose).
+                           plain-text.
 item link                - Absolute url, unsafe characters are encoded.
 item content             - Newlines and TABs are escaped. Control characters
                            are removed. See the "TAB-separated format fields"
@@ -303,8 +303,8 @@ procmail_maildirs.sh file:
 Procmailrc file:
 
 	# Example for use with sfeed_maildir.
-	# The header X-Feedname is used to split into separate maildirs. It is assumes
-	# this name is sane.
+	# The header X-Feedname is used to split into separate maildirs. It is
+	# assumed this name is sane.
 
 	MAILDIR="$HOME/feeds/"
 
