@@ -21,12 +21,6 @@ struct xml_context_string {
 };
 
 static int
-xml_getnext_stdin(XMLParser *x)
-{
-	return getchar();
-}
-
-static int
 xml_getnext_string(XMLParser *x)
 {
 	struct xml_context_string *d = (struct xml_context_string *)x->getnext_data;
