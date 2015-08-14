@@ -83,8 +83,8 @@ sfeed_html: sfeed_html.o util.o
 sfeed_mbox: sfeed_mbox.o util.o
 	${CC} -o $@ sfeed_mbox.o util.o ${LDFLAGS}
 
-sfeed_opml_import: sfeed_opml_import.o xml.o util.o ${EXTRAOBJ}
-	${CC} -o $@ sfeed_opml_import.o xml.o util.o ${EXTRAOBJ}  ${LDFLAGS}
+sfeed_opml_import: sfeed_opml_import.o xml.o ${EXTRAOBJ}
+	${CC} -o $@ sfeed_opml_import.o xml.o ${EXTRAOBJ} ${LDFLAGS}
 
 sfeed_plain: sfeed_plain.o util.o
 	${CC} -o $@ sfeed_plain.o util.o ${LDFLAGS}
