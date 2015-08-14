@@ -105,8 +105,11 @@ install: all
 	for f in $(BIN) $(SCRIPTS); do chmod 755 ${DESTDIR}${PREFIX}/bin/$$f; done
 	# installing example files.
 	mkdir -p ${DESTDIR}${PREFIX}/share/${NAME}
-	cp -f sfeedrc.example ${DESTDIR}${PREFIX}/share/${NAME}
-	cp -f style.css ${DESTDIR}${PREFIX}/share/${NAME}
+	cp -f sfeedrc.example\
+		style.css\
+		README\
+		README.xml\
+		${DESTDIR}${PREFIX}/share/${NAME}
 	# installing manual pages.
 	mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	cp -f ${MAN1} ${DESTDIR}${MANPREFIX}/man1
@@ -117,8 +120,10 @@ uninstall:
 	for f in $(BIN) $(SCRIPTS); do rm -f ${DESTDIR}${PREFIX}/bin/$$f; done
 	# removing example files.
 	rm -f \
-		${DESTDIR}${PREFIX}/share/${NAME}/sfeedrc.example \
-		${DESTDIR}${PREFIX}/share/${NAME}/style.css
+		${DESTDIR}${PREFIX}/share/${NAME}/sfeedrc.example\
+		${DESTDIR}${PREFIX}/share/${NAME}/style.css\
+		${DESTDIR}${PREFIX}/share/${NAME}/README\
+		${DESTDIR}${PREFIX}/share/${NAME}/README.xml
 	-rmdir ${DESTDIR}${PREFIX}/share/${NAME}
 	# removing manual pages.
 	for m in $(MAN1); do rm -f ${DESTDIR}${MANPREFIX}/man1/$$m; done
