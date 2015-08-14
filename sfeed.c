@@ -737,7 +737,7 @@ main(int argc, char *argv[])
 	parser.xmltagstart = xml_handler_start_el;
 	parser.xmltagstartparsed = xml_handler_start_el_parsed;
 
-	xmlparser_parse_fd(&parser, 0);
+	xml_parse_fd(&parser, 0);
 
 	return 0;
 }

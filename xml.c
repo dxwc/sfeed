@@ -8,54 +8,75 @@
 
 #include "xml.h"
 
+struct xml_context_fd {
+	char   buf[BUFSIZ];
+	int    readerrno;
+	int    fd;
+	size_t nread;
+	size_t offset;
+};
+
+struct xml_context_string {
+	const char *str;
+};
+
 static int
-xmlparser_string_getnext(XMLParser *x)
+xml_getnext_stdin(XMLParser *x)
 {
-	if (!*(x->str))
+	return getchar();
+}
+
+static int
+xml_getnext_string(XMLParser *x)
+{
+	struct xml_context_string *d = (struct xml_context_string *)x->getnext_data;
+
+	if (!*(d->str))
 		return EOF;
-	return (int)*(x->str++);
+	return (int)*(d->str++);
 }
 
 static int /* like getc(), but do some smart buffering */
-xmlparser_fd_getnext(XMLParser *x)
+xml_getnext_fd(XMLParser *x)
 {
+	struct xml_context_fd *d = (struct xml_context_fd *)x->getnext_data;
 	ssize_t r;
 
 	/* previous read error was set */
-	if (x->readerrno)
+	if (d->readerrno)
 		return EOF;
 
-	if (x->readoffset >= x->readlastbytes) {
-		x->readoffset = 0;
+	if (d->offset >= d->nread) {
+		d->offset = 0;
 again:
-		r = read(x->fd, x->readbuf, sizeof(x->readbuf));
+		r = read(d->fd, d->buf, sizeof(d->buf));
 		if (r == -1) {
 			if (errno == EINTR)
 				goto again;
-			x->readerrno = errno;
-			x->readlastbytes = 0;
+			d->readerrno = errno;
+			d->nread = 0;
 			return EOF;
 		} else if (!r) {
 			return EOF;
 		}
-		x->readlastbytes = r;
+		d->nread = r;
 	}
-	return (int)x->readbuf[x->readoffset++];
+	return (int)d->buf[d->offset++];
 }
 
 static int
-xmlparser_getnext(XMLParser *x)
+xml_getnext(XMLParser *x)
 {
 	return x->getnext(x);
 }
 
 static void
-xmlparser_parseattrs(XMLParser *x)
+xml_parseattrs(XMLParser *x)
 {
 	size_t namelen = 0, valuelen;
 	int c, endsep, endname = 0;
 
-	while ((c = xmlparser_getnext(x)) != EOF) {
+	while ((c = xml_getnext(x)) != EOF) {
 		if (isspace(c)) { /* TODO: simplify endname ? */
 			if (namelen)
 				endname = 1;
@@ -82,7 +103,7 @@ xmlparser_parseattrs(XMLParser *x)
 			endsep = c; /* c is end separator */
 			if (x->xmlattrstart)
 				x->xmlattrstart(x, x->tag, x->taglen, x->name, namelen);
-			for (valuelen = 0; (c = xmlparser_getnext(x)) != EOF;) {
+			for (valuelen = 0; (c = xml_getnext(x)) != EOF;) {
 				if (c == '&') { /* entities */
 					x->data[valuelen] = '\0';
 					/* call data function with data before entity if there is data */
@@ -90,7 +111,7 @@ xmlparser_parseattrs(XMLParser *x)
 						x->xmlattr(x, x->tag, x->taglen, x->name, namelen, x->data, valuelen);
 					x->data[0] = c;
 					valuelen = 1;
-					while ((c = xmlparser_getnext(x)) != EOF) {
+					while ((c = xml_getnext(x)) != EOF) {
 						if (c == endsep)
 							break;
 						if (valuelen < sizeof(x->data) - 1)
@@ -147,7 +168,7 @@ xmlparser_parseattrs(XMLParser *x)
 }
 
 static void
-xmlparser_parsecomment(XMLParser *x)
+xml_parsecomment(XMLParser *x)
 {
 	static const char *end = "-->";
 	size_t datalen = 0, i = 0;
@@ -156,7 +177,7 @@ xmlparser_parsecomment(XMLParser *x)
 
 	if (x->xmlcommentstart)
 		x->xmlcommentstart(x);
-	while ((c = xmlparser_getnext(x)) != EOF) {
+	while ((c = xml_getnext(x)) != EOF) {
 		if (c == end[i]) {
 			if (end[++i] == '\0') { /* end */
 				x->data[datalen] = '\0';
@@ -191,7 +212,7 @@ xmlparser_parsecomment(XMLParser *x)
 }
 
 static void
-xmlparser_parsecdata(XMLParser *x)
+xml_parsecdata(XMLParser *x)
 {
 	static const char *end = "]]>";
 	size_t datalen = 0, i = 0;
@@ -200,7 +221,7 @@ xmlparser_parsecdata(XMLParser *x)
 
 	if (x->xmlcdatastart)
 		x->xmlcdatastart(x);
-	while ((c = xmlparser_getnext(x)) != EOF) {
+	while ((c = xml_getnext(x)) != EOF) {
 		if (c == end[i]) {
 			if (end[++i] == '\0') { /* end */
 				x->data[datalen] = '\0';
@@ -351,44 +372,44 @@ xml_entitytostr(const char *e, char *buf, size_t bufsiz)
 		return xml_numericentitytostr(e, buf, bufsiz);
 }
 
-static void
-xmlparser_parse(XMLParser *x)
+void
+xml_parse(XMLParser *x)
 {
 	int c, ispi;
 	size_t datalen, tagdatalen, taglen;
 
-	while ((c = xmlparser_getnext(x)) != EOF && c != '<')
+	while ((c = xml_getnext(x)) != EOF && c != '<')
 		; /* skip until < */
 
 	while (c != EOF) {
 		if (c == '<') { /* parse tag */
-			if ((c = xmlparser_getnext(x)) == EOF)
+			if ((c = xml_getnext(x)) == EOF)
 				return;
 			x->tag[0] = '\0';
 			x->taglen = 0;
 			if (c == '!') { /* cdata and comments */
-				for (tagdatalen = 0; (c = xmlparser_getnext(x)) != EOF;) {
+				for (tagdatalen = 0; (c = xml_getnext(x)) != EOF;) {
 					if (tagdatalen <= sizeof("[CDATA[") - 1) /* if (d < sizeof(x->data)) */
 						x->data[tagdatalen++] = c; /* TODO: prevent overflow */
 					if (c == '>')
 						break;
 					else if (c == '-' && tagdatalen == sizeof("--") - 1 &&
 							(x->data[0] == '-')) { /* comment */
-						xmlparser_parsecomment(x);
+						xml_parsecomment(x);
 						break;
 					} else if (c == '[') {
 						if (tagdatalen == sizeof("[CDATA[") - 1 &&
 							x->data[1] == 'C' && x->data[2] == 'D' &&
 							x->data[3] == 'A' && x->data[4] == 'T' &&
 							x->data[5] == 'A' && x->data[6] == '[') { /* CDATA */
-							xmlparser_parsecdata(x);
+							xml_parsecdata(x);
 							break;
 						}
 					}
 				}
 			} else { /* normal tag (open, short open, close), processing instruction. */
 				if (isspace(c))
-					while ((c = xmlparser_getnext(x)) != EOF && isspace(c))
+					while ((c = xml_getnext(x)) != EOF && isspace(c))
 						;
 				if (c == EOF)
 					return;
@@ -396,7 +417,7 @@ xmlparser_parse(XMLParser *x)
 				ispi = (c == '?') ? 1 : 0;
 				x->isshorttag = ispi;
 				taglen = 1;
-				while ((c = xmlparser_getnext(x)) != EOF) {
+				while ((c = xml_getnext(x)) != EOF) {
 					if (c == '/') /* TODO: simplify short tag? */
 						x->isshorttag = 1; /* short tag */
 					else if (c == '>' || isspace(c)) {
@@ -411,7 +432,7 @@ xmlparser_parse(XMLParser *x)
 							if (x->xmltagstart)
 								x->xmltagstart(x, x->tag, x->taglen);
 							if (isspace(c))
-								xmlparser_parseattrs(x);
+								xml_parseattrs(x);
 							if (x->xmltagstartparsed)
 								x->xmltagstartparsed(x, x->tag, x->taglen, x->isshorttag);
 						}
@@ -428,7 +449,7 @@ xmlparser_parse(XMLParser *x)
 			datalen = 0;
 			if (x->xmldatastart)
 				x->xmldatastart(x);
-			while ((c = xmlparser_getnext(x)) != EOF) {
+			while ((c = xml_getnext(x)) != EOF) {
 				if (c == '&') {
 					if (datalen) {
 						x->data[datalen] = '\0';
@@ -437,7 +458,7 @@ xmlparser_parse(XMLParser *x)
 					}
 					x->data[0] = c;
 					datalen = 1;
-					while ((c = xmlparser_getnext(x)) != EOF) {
+					while ((c = xml_getnext(x)) != EOF) {
 						if (c == '<')
 							break;
 						if (datalen < sizeof(x->data) - 1)
@@ -477,17 +498,24 @@ xmlparser_parse(XMLParser *x)
 }
 
 void
-xmlparser_parse_string(XMLParser *x, const char *s)
+xml_parse_string(XMLParser *x, const char *s)
 {
-	x->str = s;
-	x->getnext = xmlparser_string_getnext;
-	xmlparser_parse(x);
+	struct xml_context_string ctx = { .str = s };
+
+	x->getnext = xml_getnext_string;
+	x->getnext_data = (void *)&ctx;
+	xml_parse(x);
 }
 
 void
-xmlparser_parse_fd(XMLParser *x, int fd)
+xml_parse_fd(XMLParser *x, int fd)
 {
-	x->fd = fd;
-	x->getnext = xmlparser_fd_getnext;
-	xmlparser_parse(x);
+	struct xml_context_fd ctx;
+
+	memset(&ctx, 0, sizeof(ctx));
+	ctx.fd = fd;
+
+	x->getnext = xml_getnext_fd;
+	x->getnext_data = (void *)&ctx;
+	xml_parse(x);
 }

@@ -5,7 +5,7 @@ XML parser
 Dependencies
 ------------
 
-- C compiler (C99)
+- C compiler (C99).
 
 
 Features
@@ -25,19 +25,21 @@ Supports
 - Short attributes without an explicity set value (<input type="checkbox" checked />).
 - Comments
 - CDATA sections.
+- Helper function (xml_entitytostr) to convert XML 1.0 / HTML 2.0 named entities
+  and numeric entities to UTF-8.
+- Reading XML from a fd, string buffer or implement a custom reader:
+  see: XMLParser.getnext and XMLParser.getnext_data.
 
 
 Caveats
 -------
 
-- Internally static buffers are used, callbacks like XMLParser.xmldata are
+- Internally fixed-size buffers are used, callbacks like XMLParser.xmldata are
   called multiple times for the same tag if the data size is bigger than the
   internal buffer size (sizeof(XMLParser.data)). To differentiate between new
   calls for data you can use the xml*start and xml*end handlers.
-- There is no table of (HTML / XML) named entities you should handle this with
-  the XMLParser.xmldataentity handler yourself.
-- The XML is not checked for errors so it will continue parsing invalid XML
-  data, this is by design.
+- The XML is not checked for errors so it will continue parsing XML data, this
+  is by design.
 
 
 Files used
@@ -51,6 +53,20 @@ Interface / API
 
 Should be trivial, see xml.c and xml.h and the examples below.
 
+The most minimal implementation to read and parse from fd 0 (stdin) is:
+
+	#include "xml.h"
+
+	static XMLParser x;
+
+	int
+	main(void)
+	{
+		xml_parse_fd(&x, 0); /* xml_parse_string(&x, "<sup />"); */
+
+		return 0;
+	}
+
 
 Examples
 --------
@@ -60,5 +76,6 @@ sfeed_opml_import.c or sfeed_web.c or sfeed_xmlenc.c
 
 License
 -------
+
 See LICENSE file.
 

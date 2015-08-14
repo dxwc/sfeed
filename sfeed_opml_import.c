@@ -87,7 +87,7 @@ main(void)
 	    "# list of feeds to fetch:\n"
 	    "feeds() {\n"
 	    "	# feed <name> <feedurl> [basesiteurl] [encoding]\n", stdout);
-	xmlparser_parse_fd(&parser, 0);
+	xml_parse_fd(&parser, 0);
 	fputs("}\n", stdout);
 
 	return 0;

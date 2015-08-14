@@ -24,16 +24,7 @@ typedef struct xmlparser {
 	      size_t, int);
 
 	int (*getnext)(struct xmlparser *);
-
-	/* for use with xmlparser_parse_fd */
-	/* errno set from read(). */
-	int readerrno;
-	int fd;
-
-	/* for use with "read" from string: xmlparser_parse_string */
-	const char *str;
-
-	/* private; internal state */
+	void *getnext_data; /* custom data for getnext */
 
 	/* current tag */
 	char tag[1024];
@@ -44,11 +35,6 @@ typedef struct xmlparser {
 	char name[256];
 	/* data buffer used for tag data, cdata and attribute data */
 	char data[BUFSIZ];
-
-	size_t readoffset;
-	size_t readlastbytes;
-	/* read buffer used by xmlparser_parse_fd */
-	unsigned char readbuf[BUFSIZ];
 } XMLParser;
 
 int     xml_codepointtoutf8(uint32_t, uint32_t *);
@@ -56,5 +42,6 @@ ssize_t xml_entitytostr(const char *, char *, size_t);
 ssize_t xml_namedentitytostr(const char *, char *, size_t);
 ssize_t xml_numericetitytostr(const char *, char *, size_t);
 
-void xmlparser_parse_fd(XMLParser *, int);
-void xmlparser_parse_string(XMLParser *, const char *);
+void xml_parse(XMLParser *);
+void xml_parse_fd(XMLParser *, int);
+void xml_parse_string(XMLParser *, const char *);
