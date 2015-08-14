@@ -388,20 +388,19 @@ xml_parse(XMLParser *x)
 					if (c == '>')
 						break;
 					else if (c == '-' && tagdatalen == sizeof("--") - 1 &&
-							(x->data[0] == '-')) { /* comment */
+							(x->data[0] == '-')) {
 						xml_parsecomment(x);
 						break;
 					} else if (c == '[') {
 						if (tagdatalen == sizeof("[CDATA[") - 1 &&
-							x->data[1] == 'C' && x->data[2] == 'D' &&
-							x->data[3] == 'A' && x->data[4] == 'T' &&
-							x->data[5] == 'A' && x->data[6] == '[') { /* CDATA */
+						    !strncmp(x->data, "[CDATA[", tagdatalen)) {
 							xml_parsecdata(x);
 							break;
 						}
 					}
 				}
-			} else { /* normal tag (open, short open, close), processing instruction. */
+			} else {
+				/* normal tag (open, short open, close), processing instruction. */
 				if (isspace(c))
 					while ((c = xml_getnext(x)) != EOF && isspace(c))
 						;
