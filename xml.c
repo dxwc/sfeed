@@ -16,21 +16,23 @@ struct xml_context_fd {
 	size_t offset;
 };
 
-struct xml_context_string {
-	const char *str;
+struct xml_context_buf {
+	const char *buf;
+	size_t      len;
+	size_t      offset;
 };
 
 static int
-xml_getnext_string(XMLParser *x)
+xml_getnext_buf(XMLParser *x)
 {
-	struct xml_context_string *d = (struct xml_context_string *)x->getnext_data;
+	struct xml_context_buf *d = (struct xml_context_buf *)x->getnext_data;
 
-	if (!*(d->str))
+	if (d->offset >= d->len)
 		return EOF;
-	return (int)*(d->str++);
+	return (int)d->buf[d->offset++];
 }
 
-static int /* like getc(), but do some smart buffering */
+static int /* read from fd with some buffering */
 xml_getnext_fd(XMLParser *x)
 {
 	struct xml_context_fd *d = (struct xml_context_fd *)x->getnext_data;
@@ -491,11 +493,11 @@ xml_parse(XMLParser *x)
 }
 
 void
-xml_parse_string(XMLParser *x, const char *s)
+xml_parse_buf(XMLParser *x, const char *buf, size_t len)
 {
-	struct xml_context_string ctx = { .str = s };
+	struct xml_context_buf ctx = { .buf = buf, .len = len };
 
-	x->getnext = xml_getnext_string;
+	x->getnext = xml_getnext_buf;
 	x->getnext_data = (void *)&ctx;
 	xml_parse(x);
 }

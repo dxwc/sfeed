@@ -43,5 +43,5 @@ ssize_t xml_namedentitytostr(const char *, char *, size_t);
 ssize_t xml_numericetitytostr(const char *, char *, size_t);
 
 void xml_parse(XMLParser *);
+void xml_parse_buf(XMLParser *, const char *, size_t);
 void xml_parse_fd(XMLParser *, int);
-void xml_parse_string(XMLParser *, const char *);
