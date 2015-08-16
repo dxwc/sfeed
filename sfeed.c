@@ -16,10 +16,18 @@
 /* string and size */
 #define STRP(s)           s,sizeof(s)-1
 
-enum FeedType { FeedTypeNone = 0, FeedTypeRSS = 1, FeedTypeAtom = 2 };
+enum FeedType {
+	FeedTypeNone = 0,
+	FeedTypeRSS  = 1,
+	FeedTypeAtom = 2
+};
 static const char *feedtypes[] = { "", "rss", "atom" };
 
-enum ContentType { ContentTypeNone = 0, ContentTypePlain = 1, ContentTypeHTML = 2 };
+enum ContentType {
+	ContentTypeNone  = 0,
+	ContentTypePlain = 1,
+	ContentTypeHTML  = 2
+};
 static const char *contenttypes[] = { "", "plain", "html" };
 
 static const int FieldSeparator = '\t'; /* output field seperator character */
@@ -46,14 +54,14 @@ typedef struct string {
 
 /* Feed item */
 typedef struct feeditem {
-	String timestamp;
-	String title;
-	String link;
-	String content;
-	int    contenttype; /* ContentTypePlain or ContentTypeHTML */
-	String id;
-	String author;
-	int    feedtype;    /* FeedTypeRSS or FeedTypeAtom */
+	String           timestamp;
+	String           title;
+	String           link;
+	String           content;
+	enum ContentType contenttype;
+	String           id;
+	String           author;
+	enum FeedType    feedtype;
 } FeedItem;
 
 typedef struct feedtag {
@@ -552,7 +560,7 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
 static void
 xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
 {
-	int tagid;
+	enum TagId tagid;
 
 	if (ISINCONTENT(ctx)) {
 		ctx.attrcount = 0;
@@ -703,7 +711,8 @@ xml_handler_end_el(XMLParser *p, const char *name, size_t namelen, int isshort)
 
 		ctx.item.feedtype = FeedTypeNone;
 		ctx.item.contenttype = ContentTypeNone;
-	} else if (!ctx.tagid || gettag(ctx.item.feedtype, name, namelen) != ctx.tagid) {
+	} else if (!ctx.tagid ||
+	           gettag(ctx.item.feedtype, name, namelen) != ctx.tagid) {
 		/* not end of field */
 		return;
 	}

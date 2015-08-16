@@ -71,7 +71,9 @@ readpath:
 			return -1;
 	}
 	/* treat truncation as an error */
-	return strlcat(u->path, p, sizeof(u->path)) >= sizeof(u->path) ? -1 : 0;
+	if (strlcat(u->path, p, sizeof(u->path)) >= sizeof(u->path))
+		return -1;
+	return 0;
 }
 
 /* Get absolute uri; if `link` is relative use `base` to make it absolute.
@@ -115,9 +117,9 @@ absuri(const char *link, const char *base, char *buf, size_t bufsiz)
 				if (i >= sizeof(tmp))
 					return -1;
 			}
-		} else {
-			if (strlcat(tmp, ubase.path, sizeof(tmp)) >= sizeof(tmp))
-				return -1;
+		} else if (strlcat(tmp, ubase.path, sizeof(tmp)) >=
+		           sizeof(tmp)) {
+			return -1;
 		}
 	}
 	if (strlcat(tmp, ulink.path, sizeof(tmp)) >= sizeof(tmp))

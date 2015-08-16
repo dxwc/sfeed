@@ -148,21 +148,22 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		if (r == -1 || (size_t)r >= sizeof(filepath))
 			errx(1, "snprintf: path truncation");
 
-		/* file doesn't exist yet and has write access */
+		/* content file doesn't exist yet and has write access */
 		if (access(filepath, F_OK) != 0) {
 			if (!(fpcontent = fopen(filepath, "w+b")))
 				err(1, "fopen: %s", filepath);
-			fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
-			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>\n"
-			      "<body class=\"frame\"><div class=\"content\">"
-			      "<h2><a href=\"", fpcontent);
+			fputs("<html><head>"
+			      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
+			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />"
+			      "</head>\n<body class=\"frame\">"
+			      "<div class=\"content\"><h2><a href=\"", fpcontent);
 			xmlencode(fields[FieldLink], fpcontent);
 			fputs("\">", fpcontent);
 			xmlencode(fields[FieldTitle], fpcontent);
 			fputs("</a></h2>", fpcontent);
 			/* NOTE: this prints the raw HTML of the feed, this is
-			 * potentially dangerous, it is up to the user / browser
-			 * to trust a feed it's HTML content. */
+			 * potentially dangerous, it is left up to the
+			 * user / browser to trust a feed it's HTML content. */
 			if (!strcmp(fields[FieldContentType], "html")) {
 				printcontent(fields[FieldContent], fpcontent);
 			} else {

@@ -9,6 +9,9 @@
 #include "util.h"
 #include "xml.h"
 
+/* string and size */
+#define STRP(s) s,sizeof(s)-1
+
 static XMLParser parser;
 static unsigned int isbase, islink, isfeedlink, found;
 static char abslink[4096], feedlink[4096], basehref[4096], feedtype[256];
@@ -31,9 +34,9 @@ xmltagstart(XMLParser *p, const char *tag, size_t taglen)
 	if (taglen != 4) /* optimization */
 		return;
 
-	if (!strncasecmp(tag, "base", taglen))
+	if (!strcasecmp(tag, "base"))
 		isbase = 1;
-	else if (!strncasecmp(tag, "link", taglen))
+	else if (!strcasecmp(tag, "link"))
 		islink = 1;
 }
 
@@ -68,13 +71,13 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 	if (namelen != 4) /* optimization */
 		return;
 	if (isbase) {
-		if (!strncasecmp(name, "href", namelen))
+		if (!strcasecmp(name, "href"))
 			strlcpy(basehref, value, sizeof(basehref));
 	} else if (islink) {
-		if (!strncasecmp(name, "type", namelen)) {
-			if (!strncasecmp(value, "application/atom", strlen("application/atom")) ||
-			   !strncasecmp(value, "application/xml", strlen("application/xml")) ||
-			   !strncasecmp(value, "application/rss", strlen("application/rss"))) {
+		if (!strcasecmp(name, "type")) {
+			if (!strncasecmp(value, STRP("application/atom")) ||
+			   !strncasecmp(value, STRP("application/xml")) ||
+			   !strncasecmp(value, STRP("application/rss"))) {
 				isfeedlink = 1;
 				strlcpy(feedtype, value, sizeof(feedtype));
 			}
