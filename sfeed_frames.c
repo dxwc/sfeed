@@ -15,14 +15,12 @@
 
 #include "util.h"
 
-static char *line = NULL;
-size_t linesize = 0;
-
+static struct feed **feeds;
+static char *line;
+static size_t linesize;
 static struct utimbuf contenttime;
 static time_t comparetime;
-static unsigned long totalnew = 0;
-
-static struct feed **feeds = NULL;
+static unsigned long totalnew;
 
 /* Unescape / decode fields printed by string_print_encoded()
  * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences

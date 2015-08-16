@@ -8,7 +8,7 @@
 #include "xml.h"
 
 static XMLParser parser;
-static int isxmlpi = 0, tags = 0;
+static int isxmlpi, tags;
 
 static void
 xmltagstart(XMLParser *p, const char *tag, size_t taglen)
@@ -42,7 +42,7 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 	(void)taglen;
 	(void)valuelen;
 
-	if (isxmlpi && (!strncasecmp(name, "encoding", namelen))) {
+	if (isxmlpi && (!strcasecmp(name, "encoding"))) {
 		if (*value) {
 			/* output lowercase */
 			for (; *value; value++)
@@ -57,8 +57,8 @@ int
 main(void)
 {
 	parser.xmlattr = xmlattr;
-	parser.xmltagstart = xmltagstart;
 	parser.xmltagend = xmltagend;
+	parser.xmltagstart = xmltagstart;
 
 	xml_parse_fd(&parser, 0);
 

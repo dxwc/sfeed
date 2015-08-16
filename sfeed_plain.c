@@ -9,8 +9,8 @@
 #include "util.h"
 
 static time_t comparetime;
-static char *line = NULL;
-static size_t size = 0;
+static char *line;
+static size_t linesize;
 
 /* print `len' columns of characters. If string is shorter pad the rest
  * with characters `pad`. */
@@ -41,7 +41,7 @@ printfeed(FILE *fp, const char *feedname)
 	char *fields[FieldLast];
 	time_t parsedtime;
 
-	while (parseline(&line, &size, fields, fp) > 0) {
+	while (parseline(&line, &linesize, fields, fp) > 0) {
 		parsedtime = 0;
 		strtotime(fields[FieldUnixTimestamp], &parsedtime);
 

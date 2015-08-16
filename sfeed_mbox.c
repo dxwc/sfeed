@@ -12,8 +12,8 @@
 
 #include "util.h"
 
-static char *line = NULL;
-static size_t linesize = 0;
+static char *line;
+static size_t linesize;
 
 /* jenkins one-at-a-time hash, used for Message-Id */
 static uint32_t

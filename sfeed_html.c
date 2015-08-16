@@ -7,11 +7,11 @@
 
 #include "util.h"
 
-static struct feed **feeds = NULL;
-static int showsidebar = 0; /* show sidebar ? */
-static char *line = NULL;
-static size_t linesize = 0;
-static unsigned long totalnew = 0;
+static struct feed **feeds;
+static int showsidebar;
+static char *line;
+static size_t linesize;
+static unsigned long totalnew;
 static time_t comparetime;
 
 static void

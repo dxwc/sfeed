@@ -81,7 +81,7 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 				isfeedlink = 1;
 				strlcpy(feedtype, value, sizeof(feedtype));
 			}
-		} else if (!strncasecmp(name, "href", namelen)) {
+		} else if (!strcasecmp(name, "href")) {
 			strlcpy(feedlink, value, sizeof(feedlink));
 		}
 	}
