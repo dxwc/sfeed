@@ -127,17 +127,34 @@ Find RSS/Atom feed urls from a webpage:
 	url="codemadness.org"; curl -L -s "$url" | sfeed_web "$url"
 
 output:
-	application/rss+xml http://codemadness.org/blog/rss.xml
-	application/atom+xml http://codemadness.org/blog/atom.xml
+	http://codemadness.org/blog/rss.xml	application/rss+xml
+	http://codemadness.org/blog/atom.xml	application/atom+xml
 
 - - -
 
-To update feeds and format the feeds file (configfile argument is optional):
+Make sure your sfeedrc config file exists, see sfeedrc.example. To update
+your feeds (configfile argument is optional):
 
 	sfeed_update "configfile"
-	sfeed_html $HOME/.sfeed/feeds/* > $HOME/.sfeed/feeds.html
+
+Format the feeds files:
+
+	# Plain-text list.
 	sfeed_plain $HOME/.sfeed/feeds/* > $HOME/.sfeed/feeds.txt
+	# HTML view (no frames), copy style.css for a default style.
+	sfeed_html $HOME/.sfeed/feeds/* > $HOME/.sfeed/feeds.html
+	# HTML view with frames and content, copy style.css for a default style.
 	mkdir -p somedir && cd somedir && sfeed_frames $HOME/.sfeed/feeds/*
+
+View in your browser:
+
+	$BROWSER "$HOME/.sfeed/feeds.html"
+
+View in your editor:
+
+	$EDITOR "$HOME/.sfeed/feeds.txt"
+
+- - -
 
 Example script to view feeds with dmenu, opens selected url in $BROWSER:
 
@@ -146,25 +163,16 @@ Example script to view feeds with dmenu, opens selected url in $BROWSER:
 		sed 's@^.* \([a-zA-Z]*://\)\(.*\)$@\1\2@')
 	[ ! "$url" = "" ] && $BROWSER "$url"
 
+- - -
 
-or to view in your browser:
-
-	$BROWSER "$HOME/.sfeed/feeds.html"
-
-
-or to view in your editor:
-
-	$EDITOR "$HOME/.sfeed/feeds.txt"
-
-
-Generate a sfeedrc config file from your exported list of feeds in opml
+Generate a sfeedrc config file from your exported list of feeds in OPML
 format:
 
 	sfeed_opml_import < opmlfile.xml > $HOME/.sfeed/sfeedrc
 
 - - -
 
-Export an opml file of your feeds from a sfeedrc config file (configfile
+Export an OPML file of your feeds from a sfeedrc config file (configfile
 argument is optional):
 
 	sfeed_opml_export configfile > myfeeds.opml
