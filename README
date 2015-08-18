@@ -4,6 +4,56 @@ sfeed v0.9
 Simple RSS and Atom parser (and some format programs).
 
 
+Build and install
+-----------------
+
+Using make (respects $DESTDIR and $PREFIX):
+
+$ make
+# make install
+
+
+Usage
+-----
+
+Initial setup:
+
+	mkdir -p "$HOME/.sfeed/feeds"
+	cp sfeedrc.example "$HOME/.sfeed/sfeedrc"
+	cp style.css "$HOME/.sfeed/"
+
+Edit the feeds:
+
+	$EDITOR "$HOME/.sfeed/sfeedrc"
+
+or you you can use sfeed_opml_import to import your existing
+subscriptions from OPML format:
+
+	sfeed_opml_import < file.opml > "$HOME/sfeed/sfeedrc"
+
+Update feeds:
+
+	sfeed_update
+
+Format feeds, put this in some update script:
+Plain-text list:
+
+	sfeed_plain $HOME/.sfeed/feeds/* > "$HOME/.sfeed/feeds.txt"
+
+HTML view (no frames), copy style.css for a default style:
+
+	sfeed_html $HOME/.sfeed/feeds/* > "$HOME/.sfeed/feeds.html"
+
+HTML view with frames and content, copy style.css for a default style:
+
+	mkdir -p "$HOME/.sfeed/frames"
+	cd "$HOME/.sfeed/frames" && sfeed_frames $HOME/.sfeed/feeds/*
+
+
+See the section "Usage and examples" below and the man-pages for more
+information how to use sfeed and the additional tools.
+
+
 Dependencies
 ------------
 
@@ -38,7 +88,7 @@ Files
 -----
 
 sfeed             - Binary (from sfeed.c); read XML RSS or Atom feed data from
-                    stdin. Write feed data in tab-separated format to stdout.
+                    stdin. Write feed data in TAB-separated format to stdout.
 sfeed_frames      - Format feed data (TSV) to HTML file(s) with frames.
 sfeed_html        - Format feed data (TSV) to HTML.
 sfeed_opml_export - Generate an OPML XML file from a sfeedrc config file.
@@ -109,14 +159,6 @@ CAVEATS:
 - if a timezone is not supported (non-RFC-822) the UNIX timestamp is
   interpreted as UTC+0.
 - HTML in titles is not supported on purpose.
-
-
-Build and install
------------------
-
-Using make (respects $DESTDIR and $PREFIX):
-
-make install
 
 
 Usage and examples
