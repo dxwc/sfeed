@@ -539,7 +539,7 @@ static void
 xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
 {
 	char buffer[16];
-	int len;
+	ssize_t len;
 
 	if (!ctx.field)
 		return;
