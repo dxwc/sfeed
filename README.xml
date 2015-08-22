@@ -62,7 +62,7 @@ The most minimal implementation to read and parse from fd 0 (stdin) is:
 	int
 	main(void)
 	{
-		xml_parse_fd(&x, 0); /* xml_parse_string(&x, "<sup />"); */
+		xml_parse_fd(&x, 0); /* xml_parse_buf(&x, "<sup />", 7); */
 
 		return 0;
 	}
@@ -77,5 +77,5 @@ sfeed_opml_import.c or sfeed_web.c or sfeed_xmlenc.c
 License
 -------
 
-See LICENSE file.
+MIT, see LICENSE file.
 
