@@ -17,7 +17,7 @@ struct feed {
 /* uri */
 struct uri {
 	char proto[48];
-	char host[255];
+	char host[HOST_NAME_MAX];
 	char path[2048];
 	char port[6];     /* numeric port */
 };
