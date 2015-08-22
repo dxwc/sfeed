@@ -7,8 +7,6 @@ Simple RSS and Atom parser (and some format programs).
 Build and install
 -----------------
 
-Using make (respects $DESTDIR and $PREFIX):
-
 $ make
 # make install
 
@@ -31,11 +29,12 @@ subscriptions from OPML format:
 
 	sfeed_opml_import < file.opml > "$HOME/sfeed/sfeedrc"
 
-Update feeds:
+Update feeds, this scripts merges and sorts the items aswell:
 
 	sfeed_update
 
-Format feeds, put this in some update script:
+Format feeds:
+
 Plain-text list:
 
 	sfeed_plain $HOME/.sfeed/feeds/* > "$HOME/.sfeed/feeds.txt"
@@ -49,6 +48,9 @@ HTML view with frames and content, copy style.css for a default style:
 	mkdir -p "$HOME/.sfeed/frames"
 	cd "$HOME/.sfeed/frames" && sfeed_frames $HOME/.sfeed/feeds/*
 
+
+To automatically update your feeds periodically and format them in a view you
+like you can make a simple wrapper script and add it as a cronjob.
 
 See the section "Usage and examples" below and the man-pages for more
 information how to use sfeed and the additional tools.
