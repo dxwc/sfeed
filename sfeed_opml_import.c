@@ -90,10 +90,7 @@ main(void)
 	parser.xmltagend = xml_handler_end_element;
 
 	fputs(
-	    "# paths\n"
-	    "# NOTE: make sure to uncomment all these if you change it.\n"
-	    "#sfeedpath=\"$HOME/.sfeed\"\n"
-	    "#sfeeddir=\"${sfeedpath}/feeds\"\n"
+	    "#sfeedpath=\"$HOME/.sfeed/feeds\"\n"
 	    "\n"
 	    "# list of feeds to fetch:\n"
 	    "feeds() {\n"

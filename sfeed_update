@@ -3,8 +3,7 @@
 # NOTE: assumes "sfeed_*" executables are in $PATH.
 
 # defaults
-sfeedpath="$HOME/.sfeed"
-sfeeddir="${sfeedpath}/feeds"
+sfeedpath="$HOME/.sfeed/feeds"
 
 # load config (evaluate shellscript).
 # loadconfig(configfile)
@@ -18,8 +17,8 @@ loadconfig() {
 		config="$HOME/.sfeed/sfeedrc"
 	fi
 
-	# load config: config is loaded here to be able to override above variables
-	# (sfeedpath, sfeedfile, etc).
+	# load config: config is loaded here to be able to override $sfeedpath
+	# or functions.
 	if [ -r "${config}" ]; then
 		. "${config}"
 	else
@@ -67,7 +66,7 @@ feed() {
 	tmpfeedfile="${sfeedtmpdir}/${name}"
 	tmpencfile=""
 	encoding="$4"
-	sfeedfile="${sfeeddir}/$1"
+	sfeedfile="${sfeedpath}/$1"
 	if [ ! "${encoding}" = "" ]; then
 		fetchfeed "$2" "$1" "${sfeedfile}" | convertencoding "${encoding}" "utf-8"
 	else # detect encoding.
@@ -78,7 +77,7 @@ feed() {
 	fi | sfeed "$3" > "${tmpfeedfile}"
 
 	# get new data and merge with old.
-	sfeedfilenew="${sfeeddir}/${name}.new"
+	sfeedfilenew="${sfeedpath}/${name}.new"
 	# if file exists, merge
 	if [ -e "${sfeedfile}" ]; then
 		merge "${sfeedfile}" "${tmpfeedfile}" > "${sfeedfilenew}"
@@ -115,7 +114,7 @@ trap -- "terminated" "15"
 # SIGINT: kill all running childs >:D
 trap -- "kill -TERM -$$" "2"
 # make sure path exists.
-mkdir -p "${sfeeddir}"
+mkdir -p "${sfeedpath}"
 # fetch feeds specified in config file.
 feeds
 # wait till all feeds are fetched (concurrently).

@@ -1,7 +1,4 @@
-# paths
-# NOTE: make sure to uncomment all these if you change it.
-#sfeedpath="$HOME/.sfeed"
-#sfeeddir="${sfeedpath}/feeds"
+#sfeedpath="$HOME/.sfeed/feeds"
 
 # list of feeds to fetch:
 feeds() {
