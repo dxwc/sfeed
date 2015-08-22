@@ -41,7 +41,7 @@ enum TagId {
 	RSSTagDescription, RSSTagContentencoded,
 	RSSTagGuid, RSSTagLink, RSSTagDccreator, RSSTagAuthor,
 	/* Atom */
-	AtomTagPublished, AtomTagUpdated, AtomTagTitle, AtomTagMediaTitle,
+	AtomTagPublished, AtomTagUpdated, AtomTagTitle,
 	AtomTagMediaDescription, AtomTagSummary, AtomTagContent,
 	AtomTagId, AtomTagLink, AtomTagAuthor
 };
@@ -133,7 +133,6 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 		{ STRP("id"),                AtomTagId               },
 		{ STRP("link"),              AtomTagLink             },
 		{ STRP("media:description"), AtomTagMediaDescription },
-		{ STRP("media:title"),       AtomTagMediaTitle       },
 		{ STRP("published"),         AtomTagPublished        },
 		{ STRP("summary"),           AtomTagSummary          },
 		{ STRP("title"),             AtomTagTitle            },
@@ -611,11 +610,8 @@ xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
 	case RSSTagTitle:
 		ctx.field = &ctx.item.title;
 		break;
-	case AtomTagMediaTitle:
 	case AtomTagTitle:
-		/* prefer title over media:title if set */
-		if (ctx.tagid != AtomTagMediaTitle || !ctx.item.content.len)
-			ctx.field = &ctx.item.title;
+		ctx.field = &ctx.item.title;
 		break;
 	case RSSTagLink:
 	case AtomTagLink:
