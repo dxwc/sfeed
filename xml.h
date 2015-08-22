@@ -23,8 +23,7 @@ typedef struct xmlparser {
 	void (*xmltagstartparsed)(struct xmlparser *, const char *,
 	      size_t, int);
 
-	int (*getnext)(struct xmlparser *);
-	void *getnext_data; /* custom data for getnext */
+	int (*getnext)(void);
 
 	/* current tag */
 	char tag[1024];
@@ -43,5 +42,3 @@ ssize_t xml_namedentitytostr(const char *, char *, size_t);
 ssize_t xml_numericetitytostr(const char *, char *, size_t);
 
 void xml_parse(XMLParser *);
-void xml_parse_buf(XMLParser *, const char *, size_t);
-void xml_parse_fd(XMLParser *, int);

@@ -61,7 +61,8 @@ main(void)
 	parser.xmltagend = xmltagend;
 	parser.xmltagstart = xmltagstart;
 
-	xml_parse_fd(&parser, 0);
+	parser.getnext = getchar;
+	xml_parse(&parser);
 
 	return 1;
 }

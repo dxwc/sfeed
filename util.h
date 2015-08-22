@@ -31,5 +31,3 @@ int     parseuri(const char *, struct uri *, int);
 int     strtotime(const char *, time_t *);
 char *  xbasename(const char *);
 void    xmlencode(const char *, FILE *);
-
-

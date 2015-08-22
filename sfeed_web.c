@@ -98,7 +98,8 @@ main(int argc, char *argv[])
 	parser.xmltagstart = xmltagstart;
 	parser.xmltagstartparsed = xmltagstartparsed;
 
-	xml_parse_fd(&parser, 0);
+	parser.getnext = getchar;
+	xml_parse(&parser);
 
 	return found > 0 ? 0: 1;
 }

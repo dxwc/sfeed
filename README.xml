@@ -55,6 +55,8 @@ Should be trivial, see xml.c and xml.h and the examples below.
 
 The most minimal implementation to read and parse from fd 0 (stdin) is:
 
+	#include <stdio.h>
+
 	#include "xml.h"
 
 	static XMLParser x;
@@ -62,7 +64,8 @@ The most minimal implementation to read and parse from fd 0 (stdin) is:
 	int
 	main(void)
 	{
-		xml_parse_fd(&x, 0); /* xml_parse_buf(&x, "<sup />", 7); */
+		x.getnext = getchar;
+		xml_parse(&x);
 
 		return 0;
 	}
