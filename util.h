@@ -19,6 +19,7 @@ struct uri {
 	char proto[48];
 	char host[255];
 	char path[2048];
+	char port[6];     /* numeric port */
 };
 
 enum { FieldUnixTimestamp = 0, FieldTimeFormatted, FieldTitle, FieldLink,

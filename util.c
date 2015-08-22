@@ -25,10 +25,12 @@ encodehex(unsigned char c, char *s)
 int
 parseuri(const char *s, struct uri *u, int rel)
 {
-	const char *p = s;
+	const char *p = s, *b;
+	char *endptr = NULL;
 	size_t i;
+	unsigned long l;
 
-	u->proto[0] = u->host[0] = u->path[0] = '\0';
+	u->proto[0] = u->host[0] = u->path[0] = u->port[0] = '\0';
 	if (!*s)
 		return 0;
 
@@ -41,7 +43,7 @@ parseuri(const char *s, struct uri *u, int rel)
 			       *p == '+' || *p == '-' || *p == '.'); p++)
 			;
 		if (!strncmp(p, "://", 3)) {
-			if (p - s + 1 >= (ssize_t)sizeof(u->proto))
+			if (p - s >= (ssize_t)sizeof(u->proto))
 				return -1; /* protocol too long */
 			memcpy(u->proto, s, p - s);
 			u->proto[p - s] = '\0';
@@ -53,20 +55,41 @@ parseuri(const char *s, struct uri *u, int rel)
 				goto readpath;
 		}
 	}
-	/* domain / host part, skip until "/" or end. */
-	i = strcspn(p, "/");
-	if (i + 1 >= sizeof(u->host))
-		return -1; /* host too long */
-	memcpy(u->host, p, i);
-	u->host[i] = '\0';
-	p = &p[i];
-
+	/* IPv6 address */
+	if (*p == '[') {
+		/* bracket not found or host too long */
+		if (!(b = strchr(p, ']')) || b - p >= (ssize_t)sizeof(u->host))
+			return -1;
+		memcpy(u->host, p + 1, b - p - 1);
+		u->host[b - p] = '\0';
+		p = b + 1;
+	} else {
+		/* domain / host part, skip until port, path or end. */
+		if ((i = strcspn(p, ":/")) >= sizeof(u->host))
+			return -1; /* host too long */
+		memcpy(u->host, p, i);
+		u->host[i] = '\0';
+		p = &p[i];
+	}
+	/* port */
+	if (*p == ':') {
+		if ((i = strcspn(++p, "/")) >= sizeof(u->port))
+			return -1; /* port too long */
+		memcpy(u->port, p, i);
+		u->port[i] = '\0';
+		/* check for valid port */
+		errno = 0;
+		l = strtoul(u->port, &endptr, 10);
+		if (errno || *endptr != '\0' || !l || l > 65535)
+			return -1;
+		p = &p[i];
+	}
 readpath:
 	if (u->host[0]) {
 		p = &p[strspn(p, "/")];
 		strlcpy(u->path, "/", sizeof(u->path));
 	} else {
-		/* having no host is an error in this case */
+		/* absolute uri must have a host specified */
 		if (!rel)
 			return -1;
 	}
