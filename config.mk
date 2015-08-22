@@ -23,9 +23,9 @@ LDFLAGS = -s ${LIBS}
 #LDFLAGS = -static -s ${LIBS}
 
 # uncomment for compat
-#CFLAGS += -DCOMPAT
-# uncomment if your libc doesn't support strlcat and strlcpy
-#EXTRAOBJ = strlcat.o strlcpy.o
+CFLAGS += -DCOMPAT
+# uncomment if your libc doesn't support strlcat, strlcpy and strtonum.
+EXTRAOBJ = strlcat.o strlcpy.o
 
 # compiler and linker
 #CC = cc
