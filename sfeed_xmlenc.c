@@ -40,9 +40,10 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 	(void)p;
 	(void)tag;
 	(void)taglen;
+	(void)namelen;
 	(void)valuelen;
 
-	if (isxmlpi && (!strcasecmp(name, "encoding"))) {
+	if (isxmlpi && !strcasecmp(name, "encoding")) {
 		if (*value) {
 			/* output lowercase */
 			for (; *value; value++)
