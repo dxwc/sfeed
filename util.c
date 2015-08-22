@@ -105,7 +105,7 @@ int
 absuri(const char *link, const char *base, char *buf, size_t bufsiz)
 {
 	struct uri ulink, ubase;
-	char tmp[4096] = "", *p;
+	char tmp[4096] = "", *p, *port;
 	int r = -1, c;
 	size_t i;
 
@@ -117,13 +117,20 @@ absuri(const char *link, const char *base, char *buf, size_t bufsiz)
 	if (!ulink.host[0] && !ubase.host[0])
 		return -1;
 
-	r = snprintf(tmp, sizeof(tmp), "%s://%s",
+	if (!strncmp(link, "//", 2))
+		port = "";
+	else
+		port = ulink.port[0] ? ulink.port : ubase.port[0] ? ubase.port : "";
+
+	r = snprintf(tmp, sizeof(tmp), "%s://%s%s%s",
 		ulink.proto[0] ?
 			ulink.proto :
 			(ubase.proto[0] ? ubase.proto : "http"),
 		!strncmp(link, "//", 2) ?
 			ulink.host :
-			(ulink.host[0] ? ulink.host : ubase.host));
+			(ulink.host[0] ? ulink.host : ubase.host),
+		port[0] ? ":" : "",
+		port);
 	if (r == -1 || (size_t)r >= sizeof(tmp))
 		return -1;
 
