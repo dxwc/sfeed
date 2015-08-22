@@ -1,4 +1,4 @@
-/* convert an opml file to sfeedrc file */
+#include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,30 +9,14 @@
 #include "xml.h"
 
 static XMLParser parser; /* XML parser state */
-static char feedurl[2048], feedname[2048], basesiteurl[2048];
-
-static int
-istag(const char *s1, const char *s2)
-{
-	return !strcasecmp(s1, s2);
-}
-
-static int
-isattr(const char *s1, const char *s2)
-{
-	return !strcasecmp(s1, s2);
-}
+static char url[2048], text[256], title[256];
 
 static void
-xml_handler_start_element(XMLParser *p, const char *tag, size_t taglen)
+printsafe(const char *s)
 {
-	(void)p;
-	(void)taglen;
-
-	if (istag(tag, "outline")) {
-		feedurl[0] = '\0';
-		feedname[0] = '\0';
-		basesiteurl[0] = '\0';
+	for (; *s; s++) {
+		if (!iscntrl((int)*s) && *s != '\'' && *s != '\\')
+			putchar((int)*s);
 	}
 }
 
@@ -44,11 +28,22 @@ xml_handler_end_element(XMLParser *p, const char *tag, size_t taglen,
 	(void)taglen;
 	(void)isshort;
 
-	if (istag(tag, "outline")) {
-		printf("\tfeed \"%s\" \"%s\" \"%s\"\n",
-		       feedname[0] ? feedname : "unnamed",
-		       feedurl, basesiteurl);
+	if (strcasecmp(tag, "outline"))
+		return;
+
+	if (url[0]) {
+		fputs("\tfeed '", stdout);
+		if (title[0])
+			printsafe(title);
+		else if (text[0])
+			printsafe(text);
+		else
+			fputs("unnamed", stdout);
+		fputs("' '", stdout);
+		printsafe(url);
+		fputs("'\n", stdout);
 	}
+	url[0] = text[0] = title[0] = '\0';
 }
 
 static void
@@ -60,22 +55,38 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 	(void)namelen;
 	(void)valuelen;
 
-	if (istag(tag, "outline")) {
-		if (isattr(name, "text") || isattr(name, "title"))
-			strlcpy(feedname, value, sizeof(feedname));
-		else if (isattr(name, "htmlurl"))
-			strlcpy(basesiteurl, value, sizeof(basesiteurl));
-		else if (isattr(name, "xmlurl"))
-			strlcpy(feedurl, value, sizeof(feedurl));
-	}
+	if (strcasecmp(tag, "outline"))
+		return;
+
+	if (!strcasecmp(name, "title"))
+		strlcat(title, value, sizeof(title));
+	else if (!strcasecmp(name, "text"))
+		strlcat(text, value, sizeof(text));
+	else if (!strcasecmp(name, "xmlurl"))
+		strlcat(url, value, sizeof(url));
+}
+
+static void
+xml_handler_attrentity(XMLParser *p, const char *tag, size_t taglen,
+	const char *name, size_t namelen, const char *value, size_t valuelen)
+{
+	char buf[16];
+	ssize_t len;
+
+	if ((len = xml_entitytostr(value, buf, sizeof(buf))) < 0)
+		return;
+	if (len > 0)
+		xml_handler_attr(p, tag, taglen, name, namelen, buf, len);
+	else
+		xml_handler_attr(p, tag, taglen, name, namelen, value, valuelen);
 }
 
 int
 main(void)
 {
 	parser.xmlattr = xml_handler_attr;
+	parser.xmlattrentity = xml_handler_attrentity;
 	parser.xmltagend = xml_handler_end_element;
-	parser.xmltagstart = xml_handler_start_element;
 
 	fputs(
 	    "# paths\n"
