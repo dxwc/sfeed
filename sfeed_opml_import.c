@@ -6,6 +6,7 @@
 #include <strings.h>
 #include <time.h>
 
+#include "compat.h"
 #include "xml.h"
 
 static XMLParser parser; /* XML parser state */

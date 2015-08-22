@@ -1,6 +1,4 @@
-#ifdef COMPAT
 #include "compat.h"
-#endif
 
 #define ISUTF8(c) (((c) & 0xc0) != 0x80)
 #define LEN(x) (sizeof (x) / sizeof *(x))
