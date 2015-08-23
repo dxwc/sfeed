@@ -53,23 +53,6 @@ Interface / API
 
 Should be trivial, see xml.c and xml.h and the examples below.
 
-The most minimal implementation to read and parse from fd 0 (stdin) is:
-
-	#include <stdio.h>
-
-	#include "xml.h"
-
-	static XMLParser x;
-
-	int
-	main(void)
-	{
-		x.getnext = getchar;
-		xml_parse(&x);
-
-		return 0;
-	}
-
 
 Examples
 --------
