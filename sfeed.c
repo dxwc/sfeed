@@ -31,9 +31,6 @@ enum ContentType {
 };
 static const char *contenttypes[] = { "", "plain", "html" };
 
-static const int FieldSeparator = '\t'; /* output field seperator character */
-static const char *baseurl = "";
-
 /* String data / memory pool */
 typedef struct string {
 	char   *data;   /* data */
@@ -71,11 +68,16 @@ typedef struct feedtag {
 typedef struct field {
 	String     str;
 	enum TagId tagid; /* tagid set previously, used for tag priority */
-} ItemField;
+} FeedField;
+
+enum {
+	FeedFieldTime = 0, FeedFieldTitle, FeedFieldLink, FeedFieldContent,
+	FeedFieldId, FeedFieldAuthor, FeedFieldLast
+};
 
 typedef struct feedcontext {
 	String          *field;             /* current FeedItem field String */
-	ItemField        fields[FieldLast]; /* data for current feed item */
+	FeedField        fields[FeedFieldLast]; /* data for current feed item */
 	enum TagId       tagid;             /* unique number for parsed tag */
 	int              iscontent;         /* in content data */
 	int              iscontenttag;      /* in content tag */
@@ -109,33 +111,36 @@ static void   xml_handler_start_el(XMLParser *, const char *, size_t);
 static void   xml_handler_start_el_parsed(XMLParser *, const char *,
                                           size_t, int);
 
-static FeedContext ctx;
-static XMLParser parser; /* XML parser state */
-
 /* map tag type to field */
 static int fieldmap[TagLast] = {
 	/* RSS */
-	[RSSTagDcdate]            = FieldTimeFormatted,
-	[RSSTagPubdate]           = FieldTimeFormatted,
-	[RSSTagTitle]             = FieldTitle,
-	[RSSTagMediaDescription]  = FieldContent,
-	[RSSTagDescription]       = FieldContent,
-	[RSSTagContentEncoded]    = FieldContent,
-	[RSSTagGuid]              = FieldId,
-	[RSSTagLink]              = FieldLink,
-	[RSSTagAuthor]            = FieldAuthor,
-	[RSSTagDccreator]         = FieldAuthor,
+	[RSSTagDcdate]            = FeedFieldTime,
+	[RSSTagPubdate]           = FeedFieldTime,
+	[RSSTagTitle]             = FeedFieldTitle,
+	[RSSTagMediaDescription]  = FeedFieldContent,
+	[RSSTagDescription]       = FeedFieldContent,
+	[RSSTagContentEncoded]    = FeedFieldContent,
+	[RSSTagGuid]              = FeedFieldId,
+	[RSSTagLink]              = FeedFieldLink,
+	[RSSTagAuthor]            = FeedFieldAuthor,
+	[RSSTagDccreator]         = FeedFieldAuthor,
 	/* Atom */
-	[AtomTagUpdated]          = FieldTimeFormatted,
-	[AtomTagPublished]        = FieldTimeFormatted,
-	[AtomTagTitle]            = FieldTitle,
-	[AtomTagMediaDescription] = FieldContent,
-	[AtomTagSummary]          = FieldContent,
-	[AtomTagContent]          = FieldContent,
-	[AtomTagId]               = FieldId,
-	[AtomTagLink]             = FieldLink,
-	[AtomTagAuthor]           = FieldAuthor
+	[AtomTagUpdated]          = FeedFieldTime,
+	[AtomTagPublished]        = FeedFieldTime,
+	[AtomTagTitle]            = FeedFieldTitle,
+	[AtomTagMediaDescription] = FeedFieldContent,
+	[AtomTagSummary]          = FeedFieldContent,
+	[AtomTagContent]          = FeedFieldContent,
+	[AtomTagId]               = FeedFieldId,
+	[AtomTagLink]             = FeedFieldLink,
+	[AtomTagAuthor]           = FeedFieldAuthor
 };
+
+static const int FieldSeparator = '\t'; /* output field seperator character */
+static const char *baseurl = "";
+
+static FeedContext ctx;
+static XMLParser parser; /* XML parser state */
 
 /* Unique id for parsed tag. */
 static enum TagId
@@ -429,29 +434,30 @@ printfields(void)
 
 	/* parse time, timestamp and formatted timestamp field is empty
 	 * if the parsed time is invalid */
-	if (ctx.fields[FieldTimeFormatted].str.data)
-		r = parsetime(ctx.fields[FieldTimeFormatted].str.data, timebuf,
-		              sizeof(timebuf), &t);
+	if (ctx.fields[FeedFieldTime].str.data)
+		r = parsetime(ctx.fields[FeedFieldTime].str.data,
+		              timebuf, sizeof(timebuf), &t);
 	if (r != -1)
 		printf("%ld", (long)t);
 	putchar(FieldSeparator);
 	if (r != -1)
 		fputs(timebuf, stdout);
 	putchar(FieldSeparator);
-	string_print_trimmed(&ctx.fields[FieldTitle].str);
+	string_print_trimmed(&ctx.fields[FeedFieldTitle].str);
 	putchar(FieldSeparator);
 	/* always print absolute urls */
-	if (ctx.fields[FieldLink].str.data &&
-	    absuri(ctx.fields[FieldLink].str.data, baseurl, link, sizeof(link)) != -1)
+	if (ctx.fields[FeedFieldLink].str.data &&
+	    absuri(ctx.fields[FeedFieldLink].str.data, baseurl, link,
+	           sizeof(link)) != -1)
 		fputs(link, stdout);
 	putchar(FieldSeparator);
-	string_print_encoded(&ctx.fields[FieldContent].str);
+	string_print_encoded(&ctx.fields[FeedFieldContent].str);
 	putchar(FieldSeparator);
 	fputs(contenttypes[ctx.contenttype], stdout);
 	putchar(FieldSeparator);
-	string_print_trimmed(&ctx.fields[FieldId].str);
+	string_print_trimmed(&ctx.fields[FeedFieldId].str);
 	putchar(FieldSeparator);
-	string_print_trimmed(&ctx.fields[FieldAuthor].str);
+	string_print_trimmed(&ctx.fields[FeedFieldAuthor].str);
 	putchar(FieldSeparator);
 	fputs(feedtypes[ctx.feedtype], stdout);
 	putchar('\n');
@@ -498,7 +504,7 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 		          isattr(name, namelen, STRP("href")))
 		{
 			/* link href attribute */
-			string_append(&ctx.fields[FieldLink].str, value, valuelen);
+			string_append(&ctx.fields[FeedFieldLink].str, value, valuelen);
 		}
 	}
 }
@@ -628,7 +634,7 @@ xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
 		ctx.field = NULL;
 		return;
 	}
-	ctx.iscontenttag = (fieldmap[ctx.tagid] == FieldContent);
+	ctx.iscontenttag = (fieldmap[ctx.tagid] == FeedFieldContent);
 	ctx.field = &(ctx.fields[fieldmap[ctx.tagid]].str);
 	ctx.fields[fieldmap[ctx.tagid]].tagid = tagid;
 	/* clear field */
@@ -684,7 +690,7 @@ xml_handler_end_el(XMLParser *p, const char *name, size_t namelen, int isshort)
 		printfields();
 
 		/* clear strings */
-		for (i = 0; i < FieldLast; i++) {
+		for (i = 0; i < FeedFieldLast; i++) {
 			string_clear(&ctx.fields[i].str);
 			ctx.fields[i].tagid = TagUnknown;
 		}
