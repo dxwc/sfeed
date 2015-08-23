@@ -92,7 +92,7 @@ printfeed(FILE *fp, const char *feedname)
 	if (!gmtime_r(&parsedtime, &tm))
 		errx(1, "gmtime_r: can't get current time");
 	if (!strftime(mtimebuf, sizeof(mtimebuf), "%a %b %d %H:%M:%S %Y", &tm))
-		errx(1, "can't format current time");
+		errx(1, "strftime: can't format current time");
 
 	while (parseline(&line, &linesize, fields, fp) > 0) {
 		parsedtime = 0;
