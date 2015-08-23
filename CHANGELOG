@@ -17,6 +17,7 @@ Features:
   or stop parsing if it contains errors (which is good).
 * Changed to mandoc for documentation.
 
+
 Bug fixes:
 ----------
 
@@ -24,10 +25,10 @@ Bug fixes:
 * Parsing datetime strings containing timezone suffix to UNIX timestamps
   was wrong. UNIX timestamps are in UTC+0 time. For simplicity sake output
   parsed datetime strings in a formatted manner without converting the
-  time to the user selected timezone (YYYY-mm-dd HH:mm:ss TZ([-+]offset?).
-* Also when determining if an item is new (by comparing the UNIX
-  timestamp) don't take into account timezones, because setenv(TZ,...) is
-  just ugly and I don't use it.
+  time to the user selected timezone YYYY-mm-dd HH:MM:SS (UTC[+-][HHMM])|tz .
+* Also to determine if an item is new - by comparing the UNIX timestamp -
+  don't take into account timezones, because setenv(TZ,...) is just ugly and
+  I don't use it.
 * Lots of small fixes for compatibility with RSS / Atom feeds.
 * Many more improvements, I'll keep a more detailed list in the future.
 

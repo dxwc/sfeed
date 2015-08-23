@@ -120,9 +120,9 @@ sfeedrc   - Config file. This file is evaluated as a shellscript in
 Files written at runtime by sfeed_update
 ----------------------------------------
 
-feeds     - TAB-separated format containing all feeds. The sfeed_update script
-            merges new items with this file.
-feeds.new - Temporary file used by sfeed_update to merge items.
+feedname     - TAB-separated format containing all items per feed. The
+               sfeed_update script merges new items with this file.
+feedname.new - Temporary file used by sfeed_update to merge items.
 
 
 TAB-separated format fields
@@ -131,8 +131,7 @@ TAB-separated format fields
 The items are saved in a TSV-like format.
 
 The fields: title, id, author are not allowed to have newlines and TABs. All
-whitespace is replaced by a single space character. Control characters are
-removed.
+whitespace is replaced by a space character. Control characters are removed.
 
 The content field can contain newlines and is escaped. TABs, newlines and '\'
 are escaped with '\', so: '\n', '\t', and '\\'. Other whitespace characters
@@ -171,6 +170,7 @@ Find RSS/Atom feed urls from a webpage:
 	url="codemadness.org"; curl -L -s "$url" | sfeed_web "$url"
 
 output:
+
 	http://codemadness.org/blog/rss.xml	application/rss+xml
 	http://codemadness.org/blog/atom.xml	application/atom+xml
 
