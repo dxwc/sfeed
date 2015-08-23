@@ -149,8 +149,8 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 		{ STRP("dc:date"),           RSSTagDcdate            },
 		{ STRP("description"),       RSSTagDescription       },
 		{ STRP("guid"),              RSSTagGuid              },
-		{ STRP("media:description"), RSSTagMediaDescription  },
 		{ STRP("link"),              RSSTagLink              },
+		{ STRP("media:description"), RSSTagMediaDescription  },
 		{ STRP("pubdate"),           RSSTagPubdate           },
 		{ STRP("title"),             RSSTagTitle             },
 		{ NULL, 0, -1 }
@@ -622,15 +622,11 @@ xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
 	/* in item */
 	tagid = gettag(ctx.feedtype, name, namelen);
 	ctx.tagid = tagid;
-	if (tagid == TagUnknown) {
-		ctx.field = NULL;
-		return;
-	}
 
-	/* map tag type to field */
+	/* map tag type to field: unknown or less priority is ignored. */
 	if (tagid <= ctx.fields[fieldmap[ctx.tagid]].tagid) {
 		ctx.field = NULL;
-		return; /* priority */
+		return;
 	}
 	ctx.iscontenttag = (fieldmap[ctx.tagid] == FieldContent);
 	ctx.field = &(ctx.fields[fieldmap[ctx.tagid]].str);
