@@ -34,18 +34,6 @@ static const char *contenttypes[] = { "", "plain", "html" };
 static const int FieldSeparator = '\t'; /* output field seperator character */
 static const char *baseurl = "";
 
-enum TagId {
-	TagUnknown = 0,
-	/* RSS */
-	RSSTagDcdate, RSSTagPubdate, RSSTagTitle,
-	RSSTagDescription, RSSTagContentencoded,
-	RSSTagGuid, RSSTagLink, RSSTagDccreator, RSSTagAuthor,
-	/* Atom */
-	AtomTagPublished, AtomTagUpdated, AtomTagTitle,
-	AtomTagMediaDescription, AtomTagSummary, AtomTagContent,
-	AtomTagId, AtomTagLink, AtomTagAuthor
-};
-
 /* String data / memory pool */
 typedef struct string {
 	char   *data;   /* data */
@@ -53,17 +41,26 @@ typedef struct string {
 	size_t  bufsiz; /* allocated size */
 } String;
 
-/* Feed item */
-typedef struct feeditem {
-	String           timestamp;
-	String           title;
-	String           link;
-	String           content;
-	enum ContentType contenttype;
-	String           id;
-	String           author;
-	enum FeedType    feedtype;
-} FeedItem;
+/* NOTE: the order of these fields (content, date, author) indicate the
+ *       priority to used them, from low to high. */
+enum TagId {
+	TagUnknown = 0,
+	/* RSS */
+	RSSTagDcdate, RSSTagPubdate,
+	RSSTagTitle,
+	RSSTagMediaDescription, RSSTagDescription, RSSTagContentEncoded,
+	RSSTagGuid,
+	RSSTagLink,
+	RSSTagAuthor, RSSTagDccreator,
+	/* Atom */
+	AtomTagUpdated, AtomTagPublished,
+	AtomTagTitle,
+	AtomTagMediaDescription, AtomTagSummary, AtomTagContent,
+	AtomTagId,
+	AtomTagLink,
+	AtomTagAuthor,
+	TagLast,
+};
 
 typedef struct feedtag {
 	char       *name;        /* name of tag to match */
@@ -71,13 +68,20 @@ typedef struct feedtag {
 	enum TagId  id;          /* unique ID */
 } FeedTag;
 
+typedef struct field {
+	String     str;
+	enum TagId tagid; /* tagid set previously, used for tag priority */
+} ItemField;
+
 typedef struct feedcontext {
-	String    *field;        /* pointer to current FeedItem field String */
-	FeedItem   item;         /* data for current feed item */
-	enum TagId tagid;        /* unique number for parsed tag */
-	int        iscontent;    /* in content data */
-	int        iscontenttag; /* in content tag */
-	int        attrcount;
+	String          *field;             /* current FeedItem field String */
+	ItemField        fields[FieldLast]; /* data for current feed item */
+	enum TagId       tagid;             /* unique number for parsed tag */
+	int              iscontent;         /* in content data */
+	int              iscontenttag;      /* in content tag */
+	int              attrcount;
+	enum ContentType contenttype;       /* content-type for current item. */
+	enum FeedType    feedtype;
 } FeedContext;
 
 static enum TagId gettag(enum FeedType, const char *, size_t);
@@ -87,7 +91,6 @@ static int    istag(const char *, size_t, const char *, size_t);
 static int    parsetime(const char *, char *, size_t, time_t *);
 static void   printfields(void);
 static void   string_append(String *, const char *, size_t);
-static void   string_buffer_init(String *, size_t);
 static void   string_buffer_realloc(String *, size_t);
 static void   string_clear(String *);
 static void   string_print_encoded(String *);
@@ -109,21 +112,47 @@ static void   xml_handler_start_el_parsed(XMLParser *, const char *,
 static FeedContext ctx;
 static XMLParser parser; /* XML parser state */
 
+/* map tag type to field */
+static int fieldmap[TagLast] = {
+	/* RSS */
+	[RSSTagDcdate]            = FieldTimeFormatted,
+	[RSSTagPubdate]           = FieldTimeFormatted,
+	[RSSTagTitle]             = FieldTitle,
+	[RSSTagMediaDescription]  = FieldContent,
+	[RSSTagDescription]       = FieldContent,
+	[RSSTagContentEncoded]    = FieldContent,
+	[RSSTagGuid]              = FieldId,
+	[RSSTagLink]              = FieldLink,
+	[RSSTagAuthor]            = FieldAuthor,
+	[RSSTagDccreator]         = FieldAuthor,
+	/* Atom */
+	[AtomTagUpdated]          = FieldTimeFormatted,
+	[AtomTagPublished]        = FieldTimeFormatted,
+	[AtomTagTitle]            = FieldTitle,
+	[AtomTagMediaDescription] = FieldContent,
+	[AtomTagSummary]          = FieldContent,
+	[AtomTagContent]          = FieldContent,
+	[AtomTagId]               = FieldId,
+	[AtomTagLink]             = FieldLink,
+	[AtomTagAuthor]           = FieldAuthor
+};
+
 /* Unique id for parsed tag. */
 static enum TagId
 gettag(enum FeedType feedtype, const char *name, size_t namelen)
 {
 	/* RSS, alphabetical order */
 	static FeedTag rsstags[] = {
-		{ STRP("author"),          RSSTagAuthor         },
-		{ STRP("content:encoded"), RSSTagContentencoded },
-		{ STRP("dc:creator"),      RSSTagDccreator      },
-		{ STRP("dc:date"),         RSSTagDcdate         },
-		{ STRP("description"),     RSSTagDescription    },
-		{ STRP("guid"),            RSSTagGuid           },
-		{ STRP("link"),            RSSTagLink           },
-		{ STRP("pubdate"),         RSSTagPubdate        },
-		{ STRP("title"),           RSSTagTitle          },
+		{ STRP("author"),            RSSTagAuthor            },
+		{ STRP("content:encoded"),   RSSTagContentEncoded    },
+		{ STRP("dc:creator"),        RSSTagDccreator         },
+		{ STRP("dc:date"),           RSSTagDcdate            },
+		{ STRP("description"),       RSSTagDescription       },
+		{ STRP("guid"),              RSSTagGuid              },
+		{ STRP("media:description"), RSSTagMediaDescription  },
+		{ STRP("link"),              RSSTagLink              },
+		{ STRP("pubdate"),           RSSTagPubdate           },
+		{ STRP("title"),             RSSTagTitle             },
 		{ NULL, 0, -1 }
 	};
 	/* Atom, alphabetical order */
@@ -172,21 +201,12 @@ string_clear(String *s)
 }
 
 static void
-string_buffer_init(String *s, size_t len)
-{
-	if (!(s->data = malloc(len)))
-		err(1, "malloc");
-	s->bufsiz = len;
-	string_clear(s);
-}
-
-static void
 string_buffer_realloc(String *s, size_t newlen)
 {
 	char *p;
 	size_t alloclen;
 
-	for (alloclen = 16; alloclen <= newlen; alloclen *= 2)
+	for (alloclen = 64; alloclen <= newlen; alloclen *= 2)
 		;
 	if (!(p = realloc(s->data, alloclen)))
 		err(1, "realloc");
@@ -200,7 +220,7 @@ string_append(String *s, const char *data, size_t len)
 	if (!len || *data == '\0')
 		return;
 	/* check if allocation is necesary, don't shrink buffer,
-	   should be more than bufsiz ofcourse */
+	 * should be more than bufsiz ofcourse. */
 	if (s->len + len >= s->bufsiz)
 		string_buffer_realloc(s, s->len + len + 1);
 	memcpy(s->data + s->len, data, len);
@@ -350,6 +370,9 @@ string_print_encoded(String *s)
 {
 	const char *p, *e;
 
+	if (!s->data || !s->len)
+		return;
+
 	/* skip leading whitespace */
 	for (p = s->data; *p && isspace((int)*p); p++)
 		;
@@ -378,6 +401,9 @@ string_print_trimmed(String *s)
 {
 	const char *p, *e;
 
+	if (!s->data || !s->len)
+		return;
+
 	/* skip leading whitespace */
 	for (p = s->data; *p && isspace((int)*p); p++)
 		;
@@ -399,33 +425,35 @@ printfields(void)
 {
 	char link[4096], timebuf[64];
 	time_t t;
-	int r;
+	int r = -1;
 
 	/* parse time, timestamp and formatted timestamp field is empty
 	 * if the parsed time is invalid */
-	r = parsetime((&ctx.item.timestamp)->data, timebuf,
-	              sizeof(timebuf), &t);
+	if (ctx.fields[FieldTimeFormatted].str.data)
+		r = parsetime(ctx.fields[FieldTimeFormatted].str.data, timebuf,
+		              sizeof(timebuf), &t);
 	if (r != -1)
 		printf("%ld", (long)t);
 	putchar(FieldSeparator);
 	if (r != -1)
 		fputs(timebuf, stdout);
 	putchar(FieldSeparator);
-	string_print_trimmed(&ctx.item.title);
+	string_print_trimmed(&ctx.fields[FieldTitle].str);
 	putchar(FieldSeparator);
 	/* always print absolute urls */
-	if (absuri(ctx.item.link.data, baseurl, link, sizeof(link)) != -1)
+	if (ctx.fields[FieldLink].str.data &&
+	    absuri(ctx.fields[FieldLink].str.data, baseurl, link, sizeof(link)) != -1)
 		fputs(link, stdout);
 	putchar(FieldSeparator);
-	string_print_encoded(&ctx.item.content);
+	string_print_encoded(&ctx.fields[FieldContent].str);
 	putchar(FieldSeparator);
-	fputs(contenttypes[ctx.item.contenttype], stdout);
+	fputs(contenttypes[ctx.contenttype], stdout);
 	putchar(FieldSeparator);
-	string_print_trimmed(&ctx.item.id);
+	string_print_trimmed(&ctx.fields[FieldId].str);
 	putchar(FieldSeparator);
-	string_print_trimmed(&ctx.item.author);
+	string_print_trimmed(&ctx.fields[FieldAuthor].str);
 	putchar(FieldSeparator);
-	fputs(feedtypes[ctx.item.feedtype], stdout);
+	fputs(feedtypes[ctx.feedtype], stdout);
 	putchar('\n');
 }
 
@@ -451,12 +479,12 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 
 	/* handles transforming inline XML to data */
 	if (ISINCONTENT(ctx)) {
-		if (ctx.item.contenttype == ContentTypeHTML)
+		if (ctx.contenttype == ContentTypeHTML)
 			xml_handler_data(p, value, valuelen);
 		return;
 	}
 
-	if (ctx.item.feedtype == FeedTypeAtom) {
+	if (ctx.feedtype == FeedTypeAtom) {
 		if (ISCONTENTTAG(ctx)) {
 			if (isattr(name, namelen, STRP("type")) &&
 			   (isattr(value, valuelen, STRP("xhtml")) ||
@@ -464,13 +492,13 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 			    isattr(value, valuelen, STRP("html")) ||
 			    isattr(value, valuelen, STRP("text/html"))))
 			{
-				ctx.item.contenttype = ContentTypeHTML;
+				ctx.contenttype = ContentTypeHTML;
 			}
 		} else if (ctx.tagid == AtomTagLink &&
 		          isattr(name, namelen, STRP("href")))
 		{
 			/* link href attribute */
-			string_append(&ctx.item.link, value, valuelen);
+			string_append(&ctx.fields[FieldLink].str, value, valuelen);
 		}
 	}
 }
@@ -484,7 +512,7 @@ xml_handler_attr_end(XMLParser *p, const char *tag, size_t taglen,
 	(void)name;
 	(void)namelen;
 
-	if (!ISINCONTENT(ctx) || ctx.item.contenttype != ContentTypeHTML)
+	if (!ISINCONTENT(ctx) || ctx.contenttype != ContentTypeHTML)
 		return;
 
 	/* handles transforming inline XML to data */
@@ -499,7 +527,7 @@ xml_handler_attr_start(XMLParser *p, const char *tag, size_t taglen,
 	(void)tag;
 	(void)taglen;
 
-	if (!ISINCONTENT(ctx) || ctx.item.contenttype != ContentTypeHTML)
+	if (!ISINCONTENT(ctx) || ctx.contenttype != ContentTypeHTML)
 		return;
 
 	/* handles transforming inline XML to data */
@@ -522,7 +550,7 @@ xml_handler_cdata(XMLParser *p, const char *s, size_t len)
 }
 
 /* NOTE: this handler can be called multiple times if the data in this
- * block is bigger than the buffer. */
+ *       block is bigger than the buffer. */
 static void
 xml_handler_data(XMLParser *p, const char *s, size_t len)
 {
@@ -564,7 +592,7 @@ xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
 
 	if (ISINCONTENT(ctx)) {
 		ctx.attrcount = 0;
-		if (ctx.item.contenttype == ContentTypeHTML) {
+		if (ctx.contenttype == ContentTypeHTML) {
 			xml_handler_data(p, "<", 1);
 			xml_handler_data(p, name, namelen);
 		}
@@ -572,17 +600,17 @@ xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
 	}
 
 	/* start of RSS or Atom item / entry */
-	if (ctx.item.feedtype == FeedTypeNone) {
+	if (ctx.feedtype == FeedTypeNone) {
 		if (istag(name, namelen, STRP("entry"))) {
 			/* Atom */
-			ctx.item.feedtype = FeedTypeAtom;
+			ctx.feedtype = FeedTypeAtom;
 			/* default content type for Atom */
-			ctx.item.contenttype = ContentTypePlain;
+			ctx.contenttype = ContentTypePlain;
 		} else if (istag(name, namelen, STRP("item"))) {
 			/* RSS */
-			ctx.item.feedtype = FeedTypeRSS;
+			ctx.feedtype = FeedTypeRSS;
 			/* default content type for RSS */
-			ctx.item.contenttype = ContentTypeHTML;
+			ctx.contenttype = ContentTypeHTML;
 		}
 		return;
 	}
@@ -592,64 +620,23 @@ xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
 		return;
 
 	/* in item */
-	tagid = gettag(ctx.item.feedtype, name, namelen);
-	if (tagid != TagUnknown)
-		ctx.tagid = tagid;
-
-	switch (ctx.tagid) {
-	case RSSTagPubdate:
-	case RSSTagDcdate:
-		ctx.field = &ctx.item.timestamp;
-		break;
-	case AtomTagPublished:
-	case AtomTagUpdated:
-		/* prefer published over updated if set */
-		if (ctx.tagid != AtomTagUpdated || !ctx.item.timestamp.len)
-			ctx.field = &ctx.item.timestamp;
-		break;
-	case RSSTagTitle:
-		ctx.field = &ctx.item.title;
-		break;
-	case AtomTagTitle:
-		ctx.field = &ctx.item.title;
-		break;
-	case RSSTagLink:
-	case AtomTagLink:
-		ctx.field = &ctx.item.link;
-		break;
-	case RSSTagDescription:
-	case RSSTagContentencoded:
-		/* prefer content:encoded over description if set */
-		if (ctx.tagid != RSSTagDescription || !ctx.item.content.len) {
-			ctx.iscontenttag = 1;
-			ctx.field = &ctx.item.content;
-		}
-		break;
-	case AtomTagMediaDescription:
-	case AtomTagSummary:
-	case AtomTagContent:
-		/* prefer content over summary and media:description if set */
-		if ((ctx.tagid != AtomTagMediaDescription &&
-		    ctx.tagid != AtomTagSummary) || !ctx.item.content.len) {
-			ctx.iscontenttag = 1;
-			ctx.field = &ctx.item.content;
-		}
-		break;
-	case RSSTagGuid:
-	case AtomTagId:
-		ctx.field = &ctx.item.id;
-		break;
-	case RSSTagAuthor:
-	case RSSTagDccreator:
-	case AtomTagAuthor:
-		ctx.field = &ctx.item.author;
-		break;
-	default:
+	tagid = gettag(ctx.feedtype, name, namelen);
+	ctx.tagid = tagid;
+	if (tagid == TagUnknown) {
 		ctx.field = NULL;
+		return;
 	}
+
+	/* map tag type to field */
+	if (tagid <= ctx.fields[fieldmap[ctx.tagid]].tagid) {
+		ctx.field = NULL;
+		return; /* priority */
+	}
+	ctx.iscontenttag = (fieldmap[ctx.tagid] == FieldContent);
+	ctx.field = &(ctx.fields[fieldmap[ctx.tagid]].str);
+	ctx.fields[fieldmap[ctx.tagid]].tagid = tagid;
 	/* clear field */
-	if (ctx.field)
-		string_clear(ctx.field);
+	string_clear(ctx.field);
 }
 
 static void
@@ -665,7 +652,7 @@ xml_handler_start_el_parsed(XMLParser *p, const char *tag, size_t taglen,
 		return;
 	}
 
-	if (!ISINCONTENT(ctx) || ctx.item.contenttype != ContentTypeHTML)
+	if (!ISINCONTENT(ctx) || ctx.contenttype != ContentTypeHTML)
 		return;
 
 	if (isshort)
@@ -677,39 +664,39 @@ xml_handler_start_el_parsed(XMLParser *p, const char *tag, size_t taglen,
 static void
 xml_handler_end_el(XMLParser *p, const char *name, size_t namelen, int isshort)
 {
-	if (ctx.item.feedtype == FeedTypeNone)
+	size_t i;
+
+	if (ctx.feedtype == FeedTypeNone)
 		return;
 
 	if (ISINCONTENT(ctx)) {
 		/* not close content field */
-		if (gettag(ctx.item.feedtype, name, namelen) != ctx.tagid) {
-			if (!isshort && ctx.item.contenttype == ContentTypeHTML) {
+		if (gettag(ctx.feedtype, name, namelen) != ctx.tagid) {
+			if (!isshort && ctx.contenttype == ContentTypeHTML) {
 				xml_handler_data(p, "</", 2);
 				xml_handler_data(p, name, namelen);
 				xml_handler_data(p, ">", 1);
 			}
 			return;
 		}
-	} else if (!ctx.tagid && ((ctx.item.feedtype == FeedTypeAtom &&
+	} else if (!ctx.tagid && ((ctx.feedtype == FeedTypeAtom &&
 	   istag(name, namelen, STRP("entry"))) || /* Atom */
-	   (ctx.item.feedtype == FeedTypeRSS &&
+	   (ctx.feedtype == FeedTypeRSS &&
 	   istag(name, namelen, STRP("item"))))) /* RSS */
 	{
 		/* end of RSS or Atom entry / item */
 		printfields();
 
 		/* clear strings */
-		string_clear(&ctx.item.timestamp);
-		string_clear(&ctx.item.title);
-		string_clear(&ctx.item.link);
-		string_clear(&ctx.item.content);
-		string_clear(&ctx.item.id);
-		string_clear(&ctx.item.author);
-
-		ctx.item.feedtype = FeedTypeNone;
-		ctx.item.contenttype = ContentTypeNone;
+		for (i = 0; i < FieldLast; i++) {
+			string_clear(&ctx.fields[i].str);
+			ctx.fields[i].tagid = TagUnknown;
+		}
+		ctx.contenttype = ContentTypeNone;
+		/* allow parsing of Atom and RSS in one XML stream. */
+		ctx.feedtype = FeedTypeNone;
 	} else if (!ctx.tagid ||
-	           gettag(ctx.item.feedtype, name, namelen) != ctx.tagid) {
+	           gettag(ctx.feedtype, name, namelen) != ctx.tagid) {
 		/* not end of field */
 		return;
 	}
@@ -724,14 +711,6 @@ main(int argc, char *argv[])
 {
 	if (argc > 1)
 		baseurl = argv[1];
-
-	/* init strings and initial memory pool size */
-	string_buffer_init(&ctx.item.timestamp, 64);
-	string_buffer_init(&ctx.item.title, 256);
-	string_buffer_init(&ctx.item.link, 1024);
-	string_buffer_init(&ctx.item.content, 4096);
-	string_buffer_init(&ctx.item.id, 1024);
-	string_buffer_init(&ctx.item.author, 256);
 
 	parser.xmlattr = xml_handler_attr;
 	parser.xmlattrend = xml_handler_attr_end;

@@ -20,9 +20,11 @@ struct uri {
 	char port[6];     /* numeric port */
 };
 
-enum { FieldUnixTimestamp = 0, FieldTimeFormatted, FieldTitle, FieldLink,
-       FieldContent, FieldContentType, FieldId, FieldAuthor, FieldFeedType,
-       FieldLast };
+enum {
+	FieldUnixTimestamp = 0, FieldTimeFormatted, FieldTitle,
+	FieldLink, FieldContent, FieldContentType, FieldId, FieldAuthor,
+	FieldFeedType, FieldLast
+};
 
 int     absuri(const char *, const char *, char *, size_t);
 int     encodeuri(const char *, char *, size_t);
