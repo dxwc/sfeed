@@ -230,6 +230,8 @@ File sfeed_archive.c:
 
 	#include <sys/types.h>
 
+	#include <err.h>
+	#include <limits.h>
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include <string.h>
@@ -258,7 +260,7 @@ File sfeed_archive.c:
 		tm.tm_mon = m - 1;
 		tm.tm_mday = d;
 		if ((comparetime = mktime(&tm)) == -1)
-			usage();
+			err(1, "mktime");
 
 		while ((getline(&line, &size, stdin)) > 0) {
 			if (!(p = strchr(line, '\t')))
