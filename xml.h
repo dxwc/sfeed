@@ -39,6 +39,6 @@ typedef struct xmlparser {
 int     xml_codepointtoutf8(uint32_t, uint32_t *);
 ssize_t xml_entitytostr(const char *, char *, size_t);
 ssize_t xml_namedentitytostr(const char *, char *, size_t);
-ssize_t xml_numericetitytostr(const char *, char *, size_t);
+ssize_t xml_numericentitytostr(const char *, char *, size_t);
 
-void xml_parse(XMLParser *);
+void    xml_parse(XMLParser *);
