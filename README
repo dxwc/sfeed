@@ -52,6 +52,9 @@ HTML view with frames and content, copy style.css for a default style:
 To automatically update your feeds periodically and format them in a view you
 like you can make a simple wrapper script and add it as a cronjob.
 
+Because curl is used by default most protocols are supported and for example
+proxy settings ($http_proxy environment variable) are respected.
+
 See the section "Usage and examples" below and the man-pages for more
 information how to use sfeed and the additional tools.
 
@@ -108,13 +111,13 @@ style.css         - Example stylesheet to use with sfeed_html and sfeed_frames.
 Files read at runtime by sfeed_update
 -------------------------------------
 
-sfeedrc   - Config file. This file is evaluated as a shellscript in
-            sfeed_update. You can for example override the fetchfeed() function
-            to use wget, fetch or an other download program or you can override
-            the merge() function to change the merge logic. The function
-            feeds() is called to fetch the feeds. The function feed() can
-            safely be executed concurrently as a background job in your sfeedrc
-            config file to speed up updating.
+sfeedrc - Config file. This file is evaluated as a shellscript in sfeed_update.
+          You can for example override the fetchfeed() function to use wget,
+          fetch or an other download program or you can override the merge()
+          function to change the merge logic. The function feeds() is called to
+          fetch the feeds. The function feed() can safely be executed
+          concurrently as a background job in your sfeedrc config file to make
+          updating faster.
 
 
 Files written at runtime by sfeed_update
