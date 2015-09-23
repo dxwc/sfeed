@@ -30,25 +30,25 @@ added as a formatted text field.
 .Pp
 The order and format of the fields are:
 .Bl -tag -width 17n
-.It Ar item timestamp
+.It item timestamp
 UNIX timestamp in UTC+0, empty on parse failure.
-.It Ar item timestamp
+.It item timestamp
 Date and time in the format: YYYY-mm-dd HH:MM:SS (UTC[+-][HHMM])|tz.
-.It Ar item title
+.It item title
 Title text, HTML in titles is treated as plain-text (on purpose).
-.It Ar item link
+.It item link
 Absolute url, unsafe characters are encoded.
-.It Ar item content
+.It item content
 Newlines and TABs are escaped. Control characters are removed. See the
 .Sx TAB-SEPARATED FORMAT FIELDS
 text.
-.It Ar item content\-type
+.It item content\-type
 "html" or "plain".
-.It Ar item id
+.It item id
 RSS item GUID or Atom id.
-.It Ar item author
+.It item author
 Item author.
-.It Ar feed type
+.It feed type
 "rss" or "atom".
 .El
 .Sh SEE ALSO
