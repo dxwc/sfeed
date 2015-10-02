@@ -53,9 +53,9 @@ printfeed(FILE *fp, const char *feedname)
 
 		if (feedname[0])
 			printf("%-15.15s ", feedname);
-		printf(" %-30.30s  ", fields[FieldTimeFormatted]);
+		printf("%-30.30s ", fields[FieldTimeFormatted]);
 		printutf8pad(stdout, fields[FieldTitle], 70, ' ');
-		printf("  %s\n", fields[FieldLink]);
+		printf(" %s\n", fields[FieldLink]);
 	}
 }
 
