@@ -378,22 +378,22 @@ string_print_encoded(String *s)
 		return;
 
 	/* skip leading whitespace */
-	for (p = s->data; *p && isspace((int)*p); p++)
+	for (p = s->data; *p && ISSPACE((int)*p); p++)
 		;
 	/* seek offset of trailing whitespace */
-	for (e = p + strlen(p); e > p && isspace((int)*(e - 1)); e--)
+	for (e = p + strlen(p); e > p && ISSPACE((int)*(e - 1)); e--)
 		;
 
 	for (; *p && p != e; p++) {
-		if (isspace((int)*p) && *p != ' ') {
-			switch (*p) {
-			case '\n': fputs("\\n",  stdout); break;
-			case '\\': fputs("\\\\", stdout); break;
-			case '\t': fputs("\\t",  stdout); break;
-			default: break; /* ignore other whitespace chars */
-			}
-		} else if (!iscntrl((int)*p)) { /* ignore control chars */
-			putchar(*p);
+		switch (*p) {
+		case '\n': fputs("\\n",  stdout); break;
+		case '\\': fputs("\\\\", stdout); break;
+		case '\t': fputs("\\t",  stdout); break;
+		default:
+			/* ignore control chars */
+			if (!ISCONTROL((int)*p))
+				putchar(*p);
+			break;
 		}
 	}
 }
