@@ -1,7 +1,6 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -348,7 +347,7 @@ parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 		if (!(p = strptime(s, formats[i], &tm)))
 			continue;
 		tm.tm_isdst = -1; /* don't use DST */
-		if ((t = timegm(&tm)) == -1) /* error */
+		if ((t = mktime(&tm)) == -1) /* error */
 			return -1;
 		if (gettimetz(p, tz, sizeof(tz), &tzoffset) == -1)
 			return -1;
@@ -713,6 +712,10 @@ main(int argc, char *argv[])
 {
 	if (argc > 1)
 		baseurl = argv[1];
+
+	if (setenv("TZ", "UTC", 1) == -1)
+		err(1, "setenv");
+	tzset();
 
 	parser.xmlattr = xml_handler_attr;
 	parser.xmlattrend = xml_handler_attr_end;
