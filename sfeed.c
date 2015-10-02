@@ -14,7 +14,7 @@
 
 #define ISINCONTENT(ctx)  ((ctx).iscontent && !((ctx).iscontenttag))
 #define ISCONTENTTAG(ctx) (!((ctx).iscontent) && (ctx).iscontenttag)
-/* string and size */
+/* string and byte-length */
 #define STRP(s)           s,sizeof(s)-1
 
 enum FeedType {
@@ -39,7 +39,7 @@ typedef struct string {
 } String;
 
 /* NOTE: the order of these fields (content, date, author) indicate the
- *       priority to used them, from low to high. */
+ *       priority to use them, from least important to high. */
 enum TagId {
 	TagUnknown = 0,
 	/* RSS */
@@ -579,7 +579,7 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
 		return;
 
 	/* try to translate entity, else just pass as data to
-	 * xml_data_handler */
+	 * xml_data_handler. */
 	len = xml_entitytostr(data, buffer, sizeof(buffer));
 	/* this should never happen (buffer too small) */
 	if (len < 0)

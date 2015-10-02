@@ -48,12 +48,12 @@ HTML view with frames and content, copy style.css for a default style:
 	mkdir -p "$HOME/.sfeed/frames"
 	cd "$HOME/.sfeed/frames" && sfeed_frames $HOME/.sfeed/feeds/*
 
-
 To automatically update your feeds periodically and format them in a view you
 like you can make a simple wrapper script and add it as a cronjob.
 
-Because curl is used by default most protocols are supported and for example
-proxy settings ($http_proxy environment variable) are respected.
+Most protocols are supported because curl is used by default, also possible
+proxy settings from the environment ($http_proxy environment variable) are
+respected.
 
 See the section "Usage and examples" below and the man-pages for more
 information how to use sfeed and the additional tools.
@@ -86,6 +86,7 @@ Platforms tested
 
 - Linux (glibc+gcc, musl-gcc, clang).
 - OpenBSD
+- NetBSD
 - Windows (cygwin gcc, mingw).
 
 
@@ -141,7 +142,7 @@ are escaped with '\', so: '\n', '\t', and '\\'. Other whitespace characters
 except space are removed. Control characters are removed.
 
 The timestamp field is converted to a UNIX timestamp. The timestamp is also
-added as a formatted text text field.
+added as a formatted text field.
 
 The order and format of the fields are:
 
@@ -234,7 +235,6 @@ File sfeed_archive.c:
 	#include <sys/types.h>
 
 	#include <err.h>
-	#include <limits.h>
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include <string.h>
