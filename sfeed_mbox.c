@@ -13,6 +13,7 @@
 
 static char *line;
 static size_t linesize;
+static char host[256], *user, mtimebuf[32];
 
 /* jenkins one-at-a-time hash, used for Message-Id */
 static uint32_t
@@ -76,21 +77,8 @@ static void
 printfeed(FILE *fp, const char *feedname)
 {
 	struct tm tm;
-	char *fields[FieldLast], timebuf[32], mtimebuf[32];
-	char host[256], *user;
+	char *fields[FieldLast], timebuf[32];
 	time_t parsedtime;
-
-	if (!(user = getenv("USER")))
-		user = "you";
-	if (gethostname(host, sizeof(host)) == -1)
-		err(1, "gethostname");
-
-	if ((parsedtime = time(NULL)) == -1)
-		err(1, "time");
-	if (!gmtime_r(&parsedtime, &tm))
-		errx(1, "gmtime_r: can't get current time");
-	if (!strftime(mtimebuf, sizeof(mtimebuf), "%a %b %d %H:%M:%S %Y", &tm))
-		errx(1, "strftime: can't format current time");
 
 	while (parseline(&line, &linesize, fields, fp) > 0) {
 		parsedtime = 0;
@@ -140,9 +128,22 @@ printfeed(FILE *fp, const char *feedname)
 int
 main(int argc, char *argv[])
 {
+	struct tm tm;
+	time_t t;
 	FILE *fp;
 	char *name;
 	int i;
+
+	if (!(user = getenv("USER")))
+		user = "you";
+	if (gethostname(host, sizeof(host)) == -1)
+		err(1, "gethostname");
+	if ((t = time(NULL)) == -1)
+		err(1, "time");
+	if (!gmtime_r(&t, &tm))
+		errx(1, "gmtime_r: can't get current time");
+	if (!strftime(mtimebuf, sizeof(mtimebuf), "%a %b %d %H:%M:%S %Y", &tm))
+		errx(1, "strftime: can't format current time");
 
 	if (argc == 1) {
 		printfeed(stdin, "");
