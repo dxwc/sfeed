@@ -2,7 +2,6 @@
 
 #include <err.h>
 #include <inttypes.h>
-#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,7 +78,7 @@ printfeed(FILE *fp, const char *feedname)
 {
 	struct tm tm;
 	char *fields[FieldLast], timebuf[32], mtimebuf[32];
-	char host[HOST_NAME_MAX + 1], *user;
+	char host[256], *user;
 	time_t parsedtime;
 
 	if (!(user = getenv("USER")))
