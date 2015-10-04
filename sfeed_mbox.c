@@ -40,8 +40,8 @@ printcontent(const char *s, FILE *fp)
 	if (!strncmp(s, "From ", 5))
 		fputc('>', fp);
 
-	for (; *s; s++) {
 read:
+	for (; *s; s++) {
 		switch (*s) {
 		case '\\':
 			switch (*(++s)) {
@@ -58,7 +58,6 @@ read:
 				goto read;
 			}
 			break;
-		case '\0': return; /* ignore */
 		case '\n':
 			fputc((int)*s, fp);
 			for (s++; *s && *s == '>'; s++)
@@ -149,8 +148,7 @@ main(int argc, char *argv[])
 		printfeed(stdin, "");
 	} else {
 		for (i = 1; i < argc; i++) {
-			fp = fopen(argv[i], "r");
-			if (!fp)
+			if (!(fp = fopen(argv[i], "r")))
 				err(1, "fopen: %s", argv[i]);
 			name = xbasename(argv[i]);
 			printfeed(fp, name);
