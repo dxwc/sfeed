@@ -378,10 +378,10 @@ string_print_encoded(String *s)
 		return;
 
 	/* skip leading whitespace */
-	for (p = s->data; *p && ISSPACE((int)*p); p++)
+	for (p = s->data; *p && isspace((int)*p); p++)
 		;
 	/* seek offset of trailing whitespace */
-	for (e = p + strlen(p); e > p && ISSPACE((int)*(e - 1)); e--)
+	for (e = p + strlen(p); e > p && isspace((int)*(e - 1)); e--)
 		;
 
 	for (; *p && p != e; p++) {
@@ -391,7 +391,7 @@ string_print_encoded(String *s)
 		case '\t': fputs("\\t",  stdout); break;
 		default:
 			/* ignore control chars */
-			if (!ISCONTROL((int)*p))
+			if (!iscntrl((int)*p))
 				putchar(*p);
 			break;
 		}
