@@ -59,9 +59,9 @@ enum TagId {
 };
 
 typedef struct feedtag {
-	char       *name;        /* name of tag to match */
-	size_t      len;         /* len of `name` */
-	enum TagId  id;          /* unique ID */
+	char       *name; /* name of tag to match */
+	size_t      len;  /* len of `name` */
+	enum TagId  id;   /* unique ID */
 } FeedTag;
 
 typedef struct field {
@@ -76,13 +76,13 @@ enum {
 
 typedef struct feedcontext {
 	String          *field;             /* current FeedItem field String */
-	FeedField        fields[FeedFieldLast]; /* data for current feed item */
+	FeedField        fields[FeedFieldLast]; /* data for current item */
 	enum TagId       tagid;             /* unique number for parsed tag */
 	int              iscontent;         /* in content data */
 	int              iscontenttag;      /* in content tag */
-	int              attrcount;
-	enum ContentType contenttype;       /* content-type for current item. */
+	enum ContentType contenttype;       /* content-type for item */
 	enum FeedType    feedtype;
+	int              attrcount; /* count item HTML element attributes */
 } FeedContext;
 
 static enum TagId gettag(enum FeedType, const char *, size_t);
