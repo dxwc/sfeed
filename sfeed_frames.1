@@ -35,9 +35,15 @@ The feedname and item names are normalized, whitespace characters are replaced
 with a \-, multiple whitespaces are replaced by a single \- and trailing
 whitespace will be removed. The itemname is based on the title of the items.
 The feedname and title is truncated to a maximum of 128 characters. The
-maximum length of the path is PATH_MAX or filesystem-specific.
+maximum length of the path is PATH_MAX or filesystem-specific (truncated).
 .Sh SEE ALSO
 .Xr sfeed 1 ,
 .Xr sfeed_plain 1
 .Sh AUTHORS
 .An Hiltjo Posthuma Aq Mt hiltjo@codemadness.org
+.Sh SECURITY CONSIDERATIONS
+Each item file contain the item content formatted as HTML, if the original feed
+contains things like Javascripts, tracking cookies, custom styles and such
+these will also be displayed. Due to the nature of "the web" these things are
+complex to filter. Some security and privacy can be gained by using an
+adblocker, script blocker and to set your browser settings more strictly.
