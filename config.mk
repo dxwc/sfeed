@@ -2,7 +2,7 @@
 
 # paths
 PREFIX = /usr/local
-MANPREFIX = ${PREFIX}/share/man
+MANPREFIX = ${PREFIX}/man
 
 # includes and libs
 LIBS = -lc
@@ -21,11 +21,6 @@ LDFLAGS = -s ${LIBS}
 #CFLAGS = -static -O2 -std=c99 \
 #	-D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -D_BSD_SOURCE
 #LDFLAGS = -static -s ${LIBS}
-
-# uncomment for compat
-CFLAGS += -DCOMPAT
-# uncomment if your libc doesn't support strlcat, strlcpy and strtonum.
-EXTRAOBJ = strlcat.o strlcpy.o
 
 # compiler and linker
 #CC = cc

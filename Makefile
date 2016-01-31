@@ -12,8 +12,7 @@ SRC = \
 	sfeed_web.c\
 	sfeed_xmlenc.c\
 	util.c\
-	xml.c
-COMPATSRC = \
+	xml.c\
 	strlcat.c\
 	strlcpy.c
 BIN = \
@@ -48,11 +47,10 @@ DOC = \
 	README.xml\
 	TODO
 HDR = \
-	compat.h\
 	util.h\
 	xml.h
 
-OBJ = ${SRC:.c=.o} ${EXTRAOBJ}
+OBJ = ${SRC:.c=.o}
 
 all: $(BIN)
 
