@@ -78,14 +78,17 @@ feed() {
 
 	# get new data and merge with old.
 	sfeedfilenew="${sfeedpath}/${name}.new"
-	# if file exists, merge
-	if [ -e "${sfeedfile}" ]; then
-		merge "${sfeedfile}" "${tmpfeedfile}" > "${sfeedfilenew}"
-		# overwrite old file with updated file
-		mv "${sfeedfilenew}" "${sfeedfile}"
-	else
-		# else just copy
-		mv "${tmpfeedfile}" "${sfeedfile}"
+	# new feed data is non-empty.
+	if [ -s "${tmpfeedfile}" ]; then
+		# if file exists, merge
+		if [ -e "${sfeedfile}" ]; then
+			merge "${sfeedfile}" "${tmpfeedfile}" > "${sfeedfilenew}"
+			# overwrite old file with updated file
+			mv "${sfeedfilenew}" "${sfeedfile}"
+		else
+			# else just copy
+			mv "${tmpfeedfile}" "${sfeedfile}"
+		fi
 	fi) &
 }
 
