@@ -6,7 +6,7 @@
 #include <strings.h>
 #include <time.h>
 
-#include "compat.h"
+#include "util.h"
 #include "xml.h"
 
 static XMLParser parser; /* XML parser state */
@@ -15,10 +15,9 @@ static char url[2048], text[256], title[256];
 static void
 printsafe(const char *s)
 {
-	for (; *s; s++) {
+	for (; *s; s++)
 		if (!iscntrl((int)*s) && *s != '\'' && *s != '\\')
 			putchar((int)*s);
-	}
 }
 
 static void
