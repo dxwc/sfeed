@@ -1,0 +1,104 @@
+.Dd January 30, 2016
+.Dt SFEEDRC 5
+.Os
+.Sh NAME
+.Nm sfeedrc
+.Nd sfeed_update(1) configuration file
+.Sh DESCRIPTION
+.Nm
+is the configuration file for
+.Xr sfeed_update 1 .
+.Pp
+The variable
+.Va sfeedpath
+can be set for the directory to store the feeds files,
+by default this is
+.Pa $HOME/.sfeed/feeds .
+.
+.Sh FUNCTIONS
+The following functions must be defined in a
+.Xr sfeedrc 5
+file:
+.Bl -tag -width Ds
+.It feeds
+This function is like a "main" function called from
+.Xr sfeed_update 1 .
+.It feed
+Function to process the feed, its arguments are in order:
+.Bl -tag -width Ds
+.It name
+Name of the feed, this is also used as the filename for the feeds file.
+.It feedurl
+Uri to fetch the RSS/Atom data from, generally a HTTP or HTTPS uri.
+.It Op basesiteurl
+According to the RSS and Atom specification feeds should always have absolute
+urls, however this is not always the case in practise. This option allows to
+specify the base url to fix the relative urls.
+.It Op encoding
+Feeds are decoded from this name to utf-8, the name should be a usable
+character-set for the
+.Xr iconv 1
+tool.
+.El
+.El
+.Sh OVERRIDE FUNCTIONS
+Each function of
+.Xr sfeed_update 1
+can be overridden to change its behaviour, notable functions are:
+.Bl -tag -width Ds
+.It fetchfeed
+Fetch feed from url and writes data to stdout, its arguments are:
+.Bl -tag -width Ds
+.It uri
+Uri to fetch.
+.It name
+Specified name in configuration file (useful for logging).
+.It feedfile
+Used feedfile (useful for checking modification times).
+.El
+.It merge
+Merge data of oldfile with newfile and writes it to stdout, its arguments are:
+.Bl -tag -width Ds
+.It oldfile
+Old file.
+.It newfile
+New file.
+.El
+.It convertencoding
+Convert from text-encoding to another and writes it to stdout, its arguments
+are:
+.Bl -tag -width Ds
+.It from
+From text-encoding.
+.It to
+To text-encoding.
+.El
+.El
+.Pp
+See the contents of
+.Xr sfeed_update 1
+for more.
+.Sh EXAMPLES
+An example configuration file is included named sfeedrc.example and also
+shown below:
+.Bd -literal
+#sfeedpath="$HOME/.sfeed/feeds"
+
+# list of feeds to fetch:
+feeds() {
+	# feed <name> <feedurl> [basesiteurl] [encoding]
+	feed "codemadness" "http://www.codemadness.nl/rss.xml"
+	feed "explosm" "http://feeds.feedburner.com/Explosm"
+	feed "linux kernel" "http://kernel.org/kdist/rss.xml" "http://kernel.org"
+	feed "slashdot" "http://rss.slashdot.org/Slashdot/slashdot" "http://slashdot.org"
+	feed "tweakers" "http://feeds.feedburner.com/tweakers/mixed" "http://tweakers.net" "iso-8859-1"
+	# get youtube Atom feed: curl -s -L 'https://www.youtube.com/user/gocoding/videos' | sfeed_web | cut -f 1
+	feed "yt golang" "https://www.youtube.com/feeds/videos.xml?channel_id=UCO3LEtymiLrgvpb59cNsb8A"
+	feed "xkcd" "http://xkcd.com/atom.xml" "http://xkcd.com"
+}
+.Ed
+.Sh SEE ALSO
+.Xr sfeed_update 1 ,
+.Xr sh 1
+.Sh AUTHORS
+.An Hiltjo Posthuma Aq Mt hiltjo@codemadness.org

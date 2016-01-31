@@ -39,6 +39,8 @@ MAN1 = \
 	sfeed_update.1\
 	sfeed_web.1\
 	sfeed_xmlenc.1
+MAN5 = \
+	sfeedrc.5
 DOC = \
 	CHANGELOG\
 	LICENSE\
@@ -60,7 +62,7 @@ all: $(BIN)
 dist: $(BIN)
 	rm -rf release/${VERSION}
 	mkdir -p release/${VERSION}
-	cp -f ${MAN1} ${HDR} ${SCRIPTS} ${SRC} ${COMPATSRC} ${DOC} \
+	cp -f ${MAN1} ${MAN5} ${HDR} ${SCRIPTS} ${SRC} ${DOC} \
 		Makefile config.mk \
 		sfeedrc.example style.css \
 		release/${VERSION}/
@@ -110,10 +112,14 @@ install: all
 		README\
 		README.xml\
 		${DESTDIR}${PREFIX}/share/${NAME}
-	# installing manual pages.
+	# installing manual pages for tools.
 	mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	cp -f ${MAN1} ${DESTDIR}${MANPREFIX}/man1
 	for m in $(MAN1); do chmod 644 ${DESTDIR}${MANPREFIX}/man1/$$m; done
+	# installing manual pages for sfeedrc(5).
+	mkdir -p ${DESTDIR}${MANPREFIX}/man5
+	cp -f ${MAN5} ${DESTDIR}${MANPREFIX}/man5
+	for m in $(MAN5); do chmod 644 ${DESTDIR}${MANPREFIX}/man5/$$m; done
 
 uninstall:
 	# removing executable files and scripts.
@@ -127,5 +133,6 @@ uninstall:
 	-rmdir ${DESTDIR}${PREFIX}/share/${NAME}
 	# removing manual pages.
 	for m in $(MAN1); do rm -f ${DESTDIR}${MANPREFIX}/man1/$$m; done
+	for m in $(MAN5); do rm -f ${DESTDIR}${MANPREFIX}/man5/$$m; done
 
 .PHONY: all clean dist install uninstall
