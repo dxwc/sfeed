@@ -32,9 +32,9 @@ loadconfig() {
 # merge(oldfile, newfile)
 merge() {
 	# unique sort by id, link, title.
-	# order by feedname (asc), timestamp (desc).
+	# order by timestamp (desc).
 	(sort -t '	' -u -k7,7 -k4,4 -k3,3 "$1" "$2" 2>/dev/null) |
-	sort -t '	' -k10,10 -k1r,1
+	sort -t '	' -k1r,1
 }
 
 # fetch a feed via HTTP/HTTPS etc.
