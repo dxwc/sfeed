@@ -207,15 +207,22 @@ string_clear(String *s)
 static void
 string_buffer_realloc(String *s, size_t newlen)
 {
-	char *p;
-	size_t alloclen;
+	uint32_t v;
+	/* check if allocation is necessary, don't shrink buffer,
+	 * should be more than bufsiz ofcourse. */
+	if (newlen <= s->bufsiz)
+		return;
 
-	for (alloclen = 64; alloclen <= newlen; alloclen *= 2)
-		;
-	if (!(p = realloc(s->data, alloclen)))
+	v = (uint32_t)newlen;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+	v++;
+	if (!(s->data = realloc(s->data, (size_t)v)))
 		err(1, "realloc");
-	s->bufsiz = alloclen;
-	s->data = p;
+	s->bufsiz = (size_t)v;
 }
 
 static void
@@ -223,10 +230,8 @@ string_append(String *s, const char *data, size_t len)
 {
 	if (!len || *data == '\0')
 		return;
-	/* check if allocation is necesary, don't shrink buffer,
-	 * should be more than bufsiz ofcourse. */
-	if (s->len + len >= s->bufsiz)
-		string_buffer_realloc(s, s->len + len + 1);
+
+	string_buffer_realloc(s, s->len + len + 1);
 	memcpy(s->data + s->len, data, len);
 	s->len += len;
 	s->data[s->len] = '\0';
