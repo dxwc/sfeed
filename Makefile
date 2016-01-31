@@ -9,6 +9,7 @@ SRC = \
 	sfeed_mbox.c\
 	sfeed_opml_import.c\
 	sfeed_plain.c\
+	sfeed_tail.c\
 	sfeed_web.c\
 	sfeed_xmlenc.c\
 	util.c\
@@ -22,6 +23,7 @@ BIN = \
 	sfeed_mbox\
 	sfeed_opml_import\
 	sfeed_plain\
+	sfeed_tail\
 	sfeed_web\
 	sfeed_xmlenc
 SCRIPTS = \
@@ -35,6 +37,7 @@ MAN1 = \
 	sfeed_opml_export.1\
 	sfeed_opml_import.1\
 	sfeed_plain.1\
+	sfeed_tail.1\
 	sfeed_update.1\
 	sfeed_web.1\
 	sfeed_xmlenc.1
@@ -71,26 +74,29 @@ dist: $(BIN)
 
 ${OBJ}: config.mk ${HDR}
 
-sfeed: sfeed.o xml.o util.o ${EXTRAOBJ}
-	${CC} -o $@ sfeed.o xml.o util.o ${EXTRAOBJ} ${LDFLAGS}
+sfeed: sfeed.o xml.o util.o
+	${CC} -o $@ sfeed.o xml.o util.o ${LDFLAGS}
 
-sfeed_frames: sfeed_frames.o util.o ${EXTRAOBJ}
-	${CC} -o $@ sfeed_frames.o util.o ${EXTRAOBJ} ${LDFLAGS}
+sfeed_frames: sfeed_frames.o util.o
+	${CC} -o $@ sfeed_frames.o util.o ${LDFLAGS}
 
-sfeed_html: sfeed_html.o util.o ${EXTRAOBJ}
-	${CC} -o $@ sfeed_html.o util.o ${EXTRAOBJ} ${LDFLAGS}
+sfeed_html: sfeed_html.o util.o
+	${CC} -o $@ sfeed_html.o util.o ${LDFLAGS}
 
-sfeed_mbox: sfeed_mbox.o util.o ${EXTRAOBJ}
-	${CC} -o $@ sfeed_mbox.o util.o ${EXTRAOBJ} ${LDFLAGS}
+sfeed_mbox: sfeed_mbox.o util.o
+	${CC} -o $@ sfeed_mbox.o util.o ${LDFLAGS}
 
-sfeed_opml_import: sfeed_opml_import.o xml.o ${EXTRAOBJ}
-	${CC} -o $@ sfeed_opml_import.o xml.o ${EXTRAOBJ} ${LDFLAGS}
+sfeed_opml_import: sfeed_opml_import.o xml.o
+	${CC} -o $@ sfeed_opml_import.o xml.o ${LDFLAGS}
 
-sfeed_plain: sfeed_plain.o util.o ${EXTRAOBJ}
-	${CC} -o $@ sfeed_plain.o util.o ${EXTRAOBJ} ${LDFLAGS}
+sfeed_plain: sfeed_plain.o util.o
+	${CC} -o $@ sfeed_plain.o util.o ${LDFLAGS}
 
-sfeed_web: sfeed_web.o xml.o util.o ${EXTRAOBJ}
-	${CC} -o $@ sfeed_web.o xml.o util.o ${EXTRAOBJ} ${LDFLAGS}
+sfeed_tail: sfeed_tail.o util.o
+	${CC} -o $@ sfeed_tail.o util.o ${LDFLAGS}
+
+sfeed_web: sfeed_web.o xml.o util.o
+	${CC} -o $@ sfeed_web.o xml.o util.o ${LDFLAGS}
 
 sfeed_xmlenc: sfeed_xmlenc.o xml.o
 	${CC} -o $@ sfeed_xmlenc.o xml.o ${LDFLAGS}
