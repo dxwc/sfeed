@@ -1,7 +1,7 @@
 sfeed v0.9
 ----------
 
-Simple RSS and Atom parser (and some format programs).
+RSS and Atom parser (and some format programs).
 
 
 Build and install
@@ -18,18 +18,18 @@ Initial setup:
 
 	mkdir -p "$HOME/.sfeed/feeds"
 	cp sfeedrc.example "$HOME/.sfeed/sfeedrc"
-	cp style.css "$HOME/.sfeed/"
+	cp style.css "$HOME/.sfeed/style.css"
 
-Edit the feeds:
+Edit the configuration file containing your feed to update:
 
 	$EDITOR "$HOME/.sfeed/sfeedrc"
 
-or you you can use sfeed_opml_import to import your existing
-subscriptions from OPML format:
+or you you can use sfeed_opml_import(1) to import your existing
+subscriptions from the OPML format:
 
 	sfeed_opml_import < file.opml > "$HOME/sfeed/sfeedrc"
 
-Update feeds, this scripts merges and sorts the items aswell:
+Update feeds, this script merges and sorts the items aswell:
 
 	sfeed_update
 
@@ -49,14 +49,14 @@ HTML view with frames and content, copy style.css for a default style:
 	cd "$HOME/.sfeed/frames" && sfeed_frames $HOME/.sfeed/feeds/*
 
 To automatically update your feeds periodically and format them in a view you
-like you can make a simple wrapper script and add it as a cronjob.
+like you can make a wrapper script and add it as a cronjob.
 
-Most protocols are supported because curl is used by default, also possible
-proxy settings from the environment ($http_proxy environment variable) are
-respected.
+Most protocols are supported because curl(1) is used by default, therefore
+proxy settings from the environment (such as $http_proxy environment variable)
+are used.
 
 See the section "Usage and examples" below and the man-pages for more
-information how to use sfeed and the additional tools.
+information how to use sfeed(1) and the additional tools.
 
 
 Dependencies
@@ -69,13 +69,14 @@ Dependencies
 Optional dependencies
 ---------------------
 
-- make (for Makefile).
-- POSIX shell
-  used by sfeed_update and sfeed_opml_export.
-- curl binary: http://curl.haxx.se/
-  used by sfeed_update, can be replaced with any tool like wget, fetch.
-- iconv command-line utilities: http://www.gnu.org/software/libiconv/
-  used by sfeed_update. If the text in your RSS/Atom feeds are already UTF-8
+- make(1) (for Makefile).
+- POSIX sh(1),
+  used by sfeed_update(1) and sfeed_opml_export(1).
+- curl(1) binary: http://curl.haxx.se/ ,
+  used by sfeed_update(1), can be replaced with any tool like wget(1),
+  OpenBSD ftp(1).
+- iconv(1) command-line utilities,
+  used by sfeed_update(1). If the text in your RSS/Atom feeds are already UTF-8
   encoded then you don't need this. For an alternative minimal iconv
   implementation: http://git.etalabs.net/cgit/noxcuse/tree/src/iconv.c
 - mandoc for documentation: http://mdocml.bsd.lv/ .
@@ -85,48 +86,49 @@ Platforms tested
 ----------------
 
 - Linux (glibc+gcc, musl-gcc, clang).
-- OpenBSD
 - NetBSD
+- OpenBSD
 - Windows (cygwin gcc, mingw).
 
 
 Files
 -----
 
-sfeed             - Binary (from sfeed.c); read XML RSS or Atom feed data from
-                    stdin. Write feed data in TAB-separated format to stdout.
+sfeed             - Read XML RSS or Atom feed data from stdin. Write feed data
+                    in TAB-separated format to stdout.
 sfeed_frames      - Format feed data (TSV) to HTML file(s) with frames.
 sfeed_html        - Format feed data (TSV) to HTML.
 sfeed_opml_export - Generate an OPML XML file from a sfeedrc config file.
 sfeed_opml_import - Generate a sfeedrc config file from an OPML XML file.
 sfeed_mbox        - Format feed data (TSV) to mbox.
 sfeed_plain       - Format feed data (TSV) to a plain-text list.
-sfeed_update      - Shellscript; update feeds and merge with old feeds in the
-                    directory $HOME/.sfeed/feeds by default.
+sfeed_update      - Update feeds and merge with old feeds in the directory
+                    $HOME/.sfeed/feeds by default.
 sfeed_web         - Find urls to RSS/Atom feed from a webpage.
 sfeed_xmlenc      - Detect character-set encoding from XML stream.
 sfeedrc.example   - Example config file. Can be copied to $HOME/.sfeed/sfeedrc.
-style.css         - Example stylesheet to use with sfeed_html and sfeed_frames.
+style.css         - Example stylesheet to use with sfeed_html(1) and
+                    sfeed_frames(1).
 
 
-Files read at runtime by sfeed_update
--------------------------------------
-
-sfeedrc - Config file. This file is evaluated as a shellscript in sfeed_update.
-          You can for example override the fetchfeed() function to use wget,
-          fetch or an other download program or you can override the merge()
-          function to change the merge logic. The function feeds() is called to
-          fetch the feeds. The function feed() can safely be executed
-          concurrently as a background job in your sfeedrc config file to make
-          updating faster.
-
-
-Files written at runtime by sfeed_update
+Files read at runtime by sfeed_update(1)
 ----------------------------------------
 
+sfeedrc - Config file. This file is evaluated as a shellscript in
+          sfeed_update(1). You can for example override the fetchfeed()
+          function to use wget(1), OpenBSD ftp(1) an other download program or
+          you can override the merge() function to change the merge logic. The
+          function feeds() is called to fetch the feeds. The function feed()
+          can safely be executed concurrently as a background job in your
+          sfeedrc(5) config file to make updating faster.
+
+
+Files written at runtime by sfeed_update(1)
+-------------------------------------------
+
 feedname     - TAB-separated format containing all items per feed. The
-               sfeed_update script merges new items with this file.
-feedname.new - Temporary file used by sfeed_update to merge items.
+               sfeed_update(1) script merges new items with this file.
+feedname.new - Temporary file used by sfeed_update(1) to merge items.
 
 
 TAB-separated format fields
@@ -137,9 +139,9 @@ The items are saved in a TSV-like format.
 The fields: title, id, author are not allowed to have newlines and TABs. All
 whitespace is replaced by a space character. Control characters are removed.
 
-The content field can contain newlines and is escaped. TABs, newlines and '\'
-are escaped with '\', so: '\n', '\t', and '\\'. Other whitespace characters
-except space are removed. Control characters are removed.
+The content field can contain newlines and TABS and are escaped. TABs, newlines
+and '\' are escaped with '\', so: '\n', '\t', and '\\'. Other whitespace
+characters except space are removed. Control characters are removed.
 
 The timestamp field is converted to a UNIX timestamp. The timestamp is also
 added as a formatted text field.
@@ -204,7 +206,7 @@ View in your editor:
 
 - - -
 
-Example script to view feeds with dmenu, opens selected url in $BROWSER:
+Example script to view feeds with dmenu(1), opens selected url in $BROWSER:
 
 	#!/bin/sh
 	url=$(sfeed_plain $HOME/.sfeed/feeds/* | dmenu -l 35 -i |
@@ -289,7 +291,7 @@ Now compile and run:
 - - -
 
 Convert mbox to separate maildirs per feed and filter duplicate messages
-using fdm: https://github.com/nicm/fdm .
+using fdm(1): https://github.com/nicm/fdm .
 
 fdm config file (~/.sfeed/fdm.conf):
 
@@ -330,7 +332,7 @@ Now you can view feeds in mutt(1) for example.
 - - -
 
 Convert mbox to separate maildirs per feed and filter duplicate messages
-using procmail.
+using procmail(1).
 
 procmail_maildirs.sh file:
 
@@ -357,9 +359,9 @@ procmail_maildirs.sh file:
 	done
 	wait
 
-Procmailrc file:
+Procmailrc(5) file:
 
-	# Example for use with sfeed_maildir.
+	# Example for use with sfeed_mbox(1).
 	# The header X-Feedname is used to split into separate maildirs. It is
 	# assumed this name is sane.
 
