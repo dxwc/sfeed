@@ -20,7 +20,7 @@ struct line {
 };
 
 /* ofcourse: bigger bucket size uses more memory, but has less collisions. */
-#define BUCKET_SIZE 65535
+#define BUCKET_SIZE 16384
 struct bucket {
 	struct line cols[BUCKET_SIZE];
 };
