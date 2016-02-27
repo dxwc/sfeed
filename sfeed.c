@@ -342,7 +342,6 @@ parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
 	size_t i;
 	int tzoffset, r;
 
-	memset(&tm, 0, sizeof(tm));
 	for (i = 0; formats[i]; i++) {
 		if (!(p = strptime(s, formats[i], &tm)))
 			continue;

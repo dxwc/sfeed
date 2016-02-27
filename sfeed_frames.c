@@ -120,8 +120,8 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 	if (!(namelen = normalizepath(feedname, name, sizeof(name))))
 		return;
 
-	if (strlcpy(dirpath, name, sizeof(dirpath)) >= sizeof(dirpath))
-		errx(1, "strlcpy: path truncation");
+	strlcpy(dirpath, name, sizeof(dirpath));
+
 	/* directory doesn't exist: try to create it. */
 	if (stat(dirpath, &st) == -1 && mkdir(dirpath, S_IRWXU) == -1)
 		err(1, "mkdir: %s", dirpath);
