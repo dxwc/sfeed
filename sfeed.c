@@ -318,7 +318,7 @@ time_ok:
 	} else {
 		r = snprintf(buf, bufsiz, "%s%c%02d:%02d",
 		             tz[0] ? tz : "UTC", c, tzhour, tzmin);
-		if (r < 0 || (size_t)r >= bufsiz)
+		if (r == -1 || (size_t)r >= bufsiz)
 			return -1; /* truncation or error */
 	}
 	if (tzoffset)
