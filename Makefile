@@ -2,20 +2,6 @@ include config.mk
 
 NAME = sfeed
 VERSION = 0.9
-SRC = \
-	sfeed.c\
-	sfeed_frames.c\
-	sfeed_html.c\
-	sfeed_mbox.c\
-	sfeed_opml_import.c\
-	sfeed_plain.c\
-	sfeed_tail.c\
-	sfeed_web.c\
-	sfeed_xmlenc.c\
-	util.c\
-	xml.c\
-	strlcat.c\
-	strlcpy.c
 BIN = \
 	sfeed\
 	sfeed_frames\
@@ -29,18 +15,25 @@ BIN = \
 SCRIPTS = \
 	sfeed_opml_export\
 	sfeed_update
-MAN1 = \
-	sfeed.1\
-	sfeed_frames.1\
-	sfeed_html.1\
-	sfeed_mbox.1\
-	sfeed_opml_export.1\
-	sfeed_opml_import.1\
-	sfeed_plain.1\
-	sfeed_tail.1\
-	sfeed_update.1\
-	sfeed_web.1\
-	sfeed_xmlenc.1
+
+SRC = ${BIN:=.c}
+
+LIBUTIL = libutil.a
+LIBUTILSRC = \
+	strlcat.c\
+	strlcpy.c\
+	util.c
+LIBUTILOBJ = ${LIBUTILSRC:.c=.o}
+
+LIBXML = libxml.a
+LIBXMLSRC = \
+	xml.c
+LIBXMLOBJ = ${LIBXMLSRC:.c=.o}
+
+LIB = ${LIBUTIL} ${LIBXML}
+
+MAN1 = ${BIN:=.1}\
+	${SCRIPTS:=.1}
 MAN5 = \
 	sfeedrc.5
 DOC = \
@@ -53,17 +46,33 @@ HDR = \
 	util.h\
 	xml.h
 
-OBJ = ${SRC:.c=.o}
-
 all: $(BIN)
 
+${BIN}: ${LIB} ${@:=.o}
+
+OBJ = ${SRC:.c=.o}
+
+${OBJ}: config.mk ${HDR}
+
+.o:
+	${CC} ${LDFLAGS} -o $@ $< ${LIB}
+
 .c.o:
-	${CC} -c ${CFLAGS} $<
+	${CC} -c ${CFLAGS} ${CPPFLAGS} -o $@ -c $<
+
+${LIBUTIL}: ${LIBUTILOBJ}
+	${AR} rc $@ $?
+	${RANLIB} $@
+
+${LIBXML}: ${LIBXMLOBJ}
+	${AR} rc $@ $?
+	${RANLIB} $@
 
 dist: $(BIN)
 	rm -rf release/${VERSION}
 	mkdir -p release/${VERSION}
-	cp -f ${MAN1} ${MAN5} ${HDR} ${SCRIPTS} ${SRC} ${DOC} \
+	cp -f ${MAN1} ${MAN5} ${DOC} ${HDR} \
+		${SRC} ${LIBXMLSRC} ${LIBUTILSRC} ${SCRIPTS} \
 		Makefile config.mk \
 		sfeedrc.example style.css \
 		release/${VERSION}/
@@ -72,37 +81,8 @@ dist: $(BIN)
 	(cd release/${VERSION}; \
 	tar -czf ../../sfeed-${VERSION}.tar.gz .)
 
-${OBJ}: config.mk ${HDR}
-
-sfeed: sfeed.o xml.o util.o
-	${CC} -o $@ sfeed.o xml.o util.o ${LDFLAGS}
-
-sfeed_frames: sfeed_frames.o util.o
-	${CC} -o $@ sfeed_frames.o util.o ${LDFLAGS}
-
-sfeed_html: sfeed_html.o util.o
-	${CC} -o $@ sfeed_html.o util.o ${LDFLAGS}
-
-sfeed_mbox: sfeed_mbox.o util.o
-	${CC} -o $@ sfeed_mbox.o util.o ${LDFLAGS}
-
-sfeed_opml_import: sfeed_opml_import.o util.o xml.o
-	${CC} -o $@ sfeed_opml_import.o util.o xml.o ${LDFLAGS}
-
-sfeed_plain: sfeed_plain.o util.o
-	${CC} -o $@ sfeed_plain.o util.o ${LDFLAGS}
-
-sfeed_tail: sfeed_tail.o util.o
-	${CC} -o $@ sfeed_tail.o util.o ${LDFLAGS}
-
-sfeed_web: sfeed_web.o xml.o util.o
-	${CC} -o $@ sfeed_web.o xml.o util.o ${LDFLAGS}
-
-sfeed_xmlenc: sfeed_xmlenc.o util.o xml.o
-	${CC} -o $@ sfeed_xmlenc.o util.o xml.o ${LDFLAGS}
-
 clean:
-	rm -f ${BIN} ${OBJ}
+	rm -f ${BIN} ${OBJ} ${LIB}
 
 install: all
 	# installing executable files and scripts.
