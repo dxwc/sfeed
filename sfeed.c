@@ -563,7 +563,7 @@ xml_handler_data(XMLParser *p, const char *s, size_t len)
 
 	/* add only data from <name> inside <author> tag
 	 * or any other non-<author> tag */
-	if (ctx.tagid != AtomTagAuthor || !strcmp(p->tag, "name"))
+	if (ctx.tagid != AtomTagAuthor || !strcasecmp(p->tag, "name"))
 		string_append(ctx.field, s, len);
 }
 
