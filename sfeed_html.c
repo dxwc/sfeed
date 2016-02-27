@@ -31,7 +31,9 @@ printfeed(FILE *fp, struct feed *f)
 	}
 	fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", stdout);
 
-	while (parseline(&line, &linesize, fields, fp) > 0) {
+	while (getline(&line, &linesize, fp) > 0) {
+		if (!parseline(line, fields))
+			break;
 		parsedtime = 0;
 		strtotime(fields[FieldUnixTimestamp], &parsedtime);
 
@@ -72,6 +74,9 @@ main(int argc, char *argv[])
 	struct feed *f;
 	FILE *fp;
 	int i;
+
+	if (pledge(argc == 1 ? "stdio" : "stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	if (!(feeds = calloc(argc, sizeof(struct feed *))))
 		err(1, "calloc");

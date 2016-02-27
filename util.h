@@ -31,8 +31,18 @@ enum {
 
 int     absuri(const char *, const char *, char *, size_t);
 int     encodeuri(const char *, char *, size_t);
-ssize_t parseline(char **, size_t *, char *[FieldLast], FILE *);
+size_t  parseline(char *, char *[FieldLast]);
 int     parseuri(const char *, struct uri *, int);
+void    printutf8pad(FILE *, const char *, size_t, int);
 int     strtotime(const char *, time_t *);
 char *  xbasename(const char *);
 void    xmlencode(const char *, FILE *);
+
+#ifdef USE_PLEDGE
+#include <unistd.h>
+#else
+int     pledge(const char *, const char *[]);
+#endif
+
+#define ROT32(x, y) ((x << y) | (x >> (32 - y)))
+uint32_t murmur3_32(const char *, uint32_t, uint32_t);

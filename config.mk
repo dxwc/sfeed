@@ -22,5 +22,8 @@ LDFLAGS = -s ${LIBS}
 #	-D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -D_BSD_SOURCE
 #LDFLAGS = -static -s ${LIBS}
 
+# OpenBSD 5.9+: use pledge(2)
+#CFLAGS += -DUSE_PLEDGE
+
 # compiler and linker
 #CC = cc

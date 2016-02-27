@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <err.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,10 +20,9 @@ static char abslink[4096], feedlink[4096], basehref[4096], feedtype[256];
 static void
 printfeedtype(const char *s, FILE *fp)
 {
-	for (; *s; s++) {
+	for (; *s; s++)
 		if (!isspace((int)*s))
 			fputc(*s, fp);
-	}
 }
 
 static void
@@ -90,6 +90,9 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 int
 main(int argc, char *argv[])
 {
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	if (argc > 1)
 		strlcpy(basehref, argv[1], sizeof(basehref));
 

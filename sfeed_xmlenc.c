@@ -1,10 +1,12 @@
 #include <ctype.h>
+#include <err.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 
+#include "util.h"
 #include "xml.h"
 
 static XMLParser parser;
@@ -57,6 +59,9 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 int
 main(void)
 {
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	parser.xmlattr = xmlattr;
 	parser.xmltagend = xmltagend;
 	parser.xmltagstart = xmltagstart;

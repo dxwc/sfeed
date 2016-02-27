@@ -138,13 +138,15 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 	}
 
 	fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", fpitems);
-	while (parseline(&line, &linesize, fields, fpin) > 0) {
+	while (getline(&line, &linesize, fpin) > 0) {
+		if (!parseline(line, fields))
+			break;
 		/* write content */
 		if (!(namelen = normalizepath(fields[FieldTitle], name, sizeof(name))))
 			continue;
 		r = snprintf(filepath, sizeof(filepath), "%s/%s.html", dirpath, name);
 		if (r == -1 || (size_t)r >= sizeof(filepath))
-			errx(1, "snprintf: path truncation");
+			errx(1, "snprintf: path truncation: '%s/%s.html'", dirpath, name);
 
 		/* content file doesn't exist yet and has write access */
 		if (access(filepath, F_OK) != 0) {
@@ -214,6 +216,9 @@ main(int argc, char *argv[])
 	int showsidebar = (argc > 1);
 	int i;
 	struct feed *f;
+
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
 
 	if (!(feeds = calloc(argc, sizeof(struct feed *))))
 		err(1, "calloc");

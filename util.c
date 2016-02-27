@@ -7,11 +7,24 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <wchar.h>
 
 #include "util.h"
+
+#ifndef USE_PLEDGE
+int
+pledge(const char *promises, const char *paths[])
+{
+	(void)promises;
+	(void)paths;
+
+	return 0;
+}
+#endif
 
 static void
 encodehex(unsigned char c, char *s)
@@ -130,7 +143,7 @@ absuri(const char *link, const char *base, char *buf, size_t bufsiz)
 		port[0] ? ":" : "",
 		port);
 	if (r == -1 || (size_t)r >= sizeof(tmp))
-		return -1;
+		return -1; /* error or truncation */
 
 	/* relative to root */
 	if (!ulink.host[0] && ulink.path[0] != '/') {
@@ -191,16 +204,13 @@ encodeuri(const char *s, char *buf, size_t bufsiz)
  * 'line' buffer is allocated using malloc, 'size' will contain the allocated
  * buffer size.
  * returns: amount of fields read (>0) or -1 on error. */
-ssize_t
-parseline(char **line, size_t *size, char *fields[FieldLast], FILE *fp)
+size_t
+parseline(char *line, char *fields[FieldLast])
 {
 	char *prev, *s;
 	size_t i;
 
-	if (getline(line, size, fp) <= 0)
-		return -1;
-
-	for (prev = *line, i = 0;
+	for (prev = line, i = 0;
 	    (s = strchr(prev, '\t')) && i < FieldLast - 1;
 	    i++) {
 		*s = '\0';
@@ -212,7 +222,7 @@ parseline(char **line, size_t *size, char *fields[FieldLast], FILE *fp)
 	for (; i < FieldLast; i++)
 		fields[i] = "";
 
-	return (ssize_t)i;
+	return i;
 }
 
 /* Parse time to time_t, assumes time_t is signed. */
@@ -266,4 +276,79 @@ xbasename(const char *path)
 		err(1, "strdup");
 	free(p);
 	return b;
+}
+
+/* print `len' columns of characters. If string is shorter pad the rest
+ * with characters `pad`. */
+void
+printutf8pad(FILE *fp, const char *s, size_t len, int pad)
+{
+	wchar_t w;
+	size_t n = 0, i;
+	int r;
+
+	for (i = 0; *s && n < len; i++, s++) {
+		if (ISUTF8(*s)) {
+			if ((r = mbtowc(&w, s, 4)) == -1)
+				break;
+			if ((r = wcwidth(w)) == -1)
+				r = 1;
+			n += (size_t)r;
+		}
+		putc(*s, fp);
+	}
+	for (; n < len; n++)
+		putc(pad, fp);
+}
+
+uint32_t
+murmur3_32(const char *key, uint32_t len, uint32_t seed)
+{
+	static const uint32_t c1 = 0xcc9e2d51;
+	static const uint32_t c2 = 0x1b873593;
+	static const uint32_t r1 = 15;
+	static const uint32_t r2 = 13;
+	static const uint32_t m = 5;
+	static const uint32_t n = 0xe6546b64;
+	uint32_t hash = seed;
+	const int nblocks = len / 4;
+	const uint32_t *blocks = (const uint32_t *) key;
+	int i;
+	uint32_t k, k1;
+	const uint8_t *tail;
+
+	for (i = 0; i < nblocks; i++) {
+		k = blocks[i];
+		k *= c1;
+		k = ROT32(k, r1);
+		k *= c2;
+
+		hash ^= k;
+		hash = ROT32(hash, r2) * m + n;
+	}
+	tail = (const uint8_t *) (key + nblocks * 4);
+
+	k1 = 0;
+	switch (len & 3) {
+	case 3:
+		k1 ^= tail[2] << 16;
+	case 2:
+		k1 ^= tail[1] << 8;
+	case 1:
+		k1 ^= tail[0];
+
+		k1 *= c1;
+		k1 = ROT32(k1, r1);
+		k1 *= c2;
+		hash ^= k1;
+	}
+
+	hash ^= len;
+	hash ^= (hash >> 16);
+	hash *= 0x85ebca6b;
+	hash ^= (hash >> 13);
+	hash *= 0xc2b2ae35;
+	hash ^= (hash >> 16);
+
+	return hash;
 }

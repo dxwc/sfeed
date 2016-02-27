@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <err.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,6 +85,9 @@ xml_handler_attrentity(XMLParser *p, const char *tag, size_t taglen,
 int
 main(void)
 {
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	parser.xmlattr = xml_handler_attr;
 	parser.xmlattrentity = xml_handler_attrentity;
 	parser.xmltagend = xml_handler_end_element;

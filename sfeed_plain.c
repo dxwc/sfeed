@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <wchar.h>
 
 #include "util.h"
 
@@ -12,36 +11,15 @@ static time_t comparetime;
 static char *line;
 static size_t linesize;
 
-/* print `len' columns of characters. If string is shorter pad the rest
- * with characters `pad`. */
-static void
-printutf8pad(FILE *fp, const char *s, size_t len, int pad)
-{
-	wchar_t w;
-	size_t n = 0, i;
-	int r;
-
-	for (i = 0; *s && n < len; i++, s++) {
-		if (ISUTF8(*s)) {
-			if ((r = mbtowc(&w, s, 4)) == -1)
-				break;
-			if ((r = wcwidth(w)) == -1)
-				r = 1;
-			n += (size_t)r;
-		}
-		putc(*s, fp);
-	}
-	for (; n < len; n++)
-		putc(pad, fp);
-}
-
 static void
 printfeed(FILE *fp, const char *feedname)
 {
 	char *fields[FieldLast];
 	time_t parsedtime;
 
-	while (parseline(&line, &linesize, fields, fp) > 0) {
+	while (getline(&line, &linesize, fp) > 0) {
+		if (!parseline(line, fields))
+			break;
 		parsedtime = 0;
 		strtotime(fields[FieldUnixTimestamp], &parsedtime);
 
@@ -64,6 +42,9 @@ main(int argc, char *argv[])
 	FILE *fp;
 	char *name;
 	int i;
+
+	if (pledge(argc == 1 ? "stdio" : "stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	if ((comparetime = time(NULL)) == -1)
 		err(1, "time");

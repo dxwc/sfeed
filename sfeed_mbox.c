@@ -15,22 +15,7 @@ static char *line;
 static size_t linesize;
 static char host[256], *user, mtimebuf[32];
 
-/* jenkins one-at-a-time hash, used for Message-Id */
-static uint32_t
-jenkins1(const char *s)
-{
-	uint32_t hash = 0;
-
-	for (; *s; s++) {
-		hash += (int)*s;
-		hash += (hash << 10);
-		hash ^= (hash >> 6);
-	}
-	hash += (hash << 3);
-	hash ^= (hash >> 11);
-
-	return hash + (hash << 15);
-}
+static const uint32_t seed = 0x45931287;
 
 /* Unescape / decode fields printed by string_print_encoded()
  * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
@@ -79,8 +64,11 @@ printfeed(FILE *fp, const char *feedname)
 	struct tm tm;
 	char *fields[FieldLast], timebuf[32];
 	time_t parsedtime;
+	ssize_t linelen;
 
-	while (parseline(&line, &linesize, fields, fp) > 0) {
+	while ((linelen = getline(&line, &linesize, fp)) > 0) {
+		if (!parseline(line, fields))
+			break;
 		parsedtime = 0;
 		strtotime(fields[FieldUnixTimestamp], &parsedtime);
 		/* can't convert: default to formatted time for time_t 0. */
@@ -106,7 +94,7 @@ printfeed(FILE *fp, const char *feedname)
 			user, user, host, fields[FieldTitle],
 			fields[FieldUnixTimestamp],
 			fields[FieldUnixTimestamp][0] ? "." : "",
-			jenkins1(fields[FieldTitle]),
+			murmur3_32(line, (size_t)linelen, seed),
 			feedname[0] ? feedname : "unnamed",
 			fields[FieldContentType], feedname);
 
@@ -133,6 +121,9 @@ main(int argc, char *argv[])
 	FILE *fp;
 	char *name;
 	int i;
+
+	if (pledge(argc == 1 ? "stdio" : "stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	if (!(user = getenv("USER")))
 		user = "you";
