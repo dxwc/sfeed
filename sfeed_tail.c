@@ -14,8 +14,8 @@ static char *line;
 static size_t linesize;
 
 struct line {
-	char *timestamp;
-	char *id;
+	char *s;
+	size_t len;
 	struct line *next;
 };
 

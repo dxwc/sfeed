@@ -33,6 +33,10 @@ Unseen items are printed per line in a similar format to
 .Xr sfeed_plain 1 ,
 duplicate items are ignored. The list of unique items is determined by the
 fields: feedname, item id and UNIX timestamp of the item date.
+.Sh IMPLEMENTATION NOTES
+Keep in mind that because
+.Nm
+keeps a list of all the items it can consume much memory.
 .Sh SEE ALSO
 .Xr sfeed 1 ,
 .Xr sfeed_plain 1 ,
