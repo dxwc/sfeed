@@ -86,8 +86,8 @@ sfeed_html: sfeed_html.o util.o
 sfeed_mbox: sfeed_mbox.o util.o
 	${CC} -o $@ sfeed_mbox.o util.o ${LDFLAGS}
 
-sfeed_opml_import: sfeed_opml_import.o xml.o
-	${CC} -o $@ sfeed_opml_import.o xml.o ${LDFLAGS}
+sfeed_opml_import: sfeed_opml_import.o util.o xml.o
+	${CC} -o $@ sfeed_opml_import.o util.o xml.o ${LDFLAGS}
 
 sfeed_plain: sfeed_plain.o util.o
 	${CC} -o $@ sfeed_plain.o util.o ${LDFLAGS}
@@ -98,8 +98,8 @@ sfeed_tail: sfeed_tail.o util.o
 sfeed_web: sfeed_web.o xml.o util.o
 	${CC} -o $@ sfeed_web.o xml.o util.o ${LDFLAGS}
 
-sfeed_xmlenc: sfeed_xmlenc.o xml.o
-	${CC} -o $@ sfeed_xmlenc.o xml.o ${LDFLAGS}
+sfeed_xmlenc: sfeed_xmlenc.o util.o xml.o
+	${CC} -o $@ sfeed_xmlenc.o util.o xml.o ${LDFLAGS}
 
 clean:
 	rm -f ${BIN} ${OBJ}
