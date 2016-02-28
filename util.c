@@ -26,15 +26,6 @@ pledge(const char *promises, const char *paths[])
 }
 #endif
 
-static void
-encodehex(unsigned char c, char *s)
-{
-	static const char *table = "0123456789ABCDEF";
-
-	s[0] = table[((c - (c % 16)) / 16) % 16];
-	s[1] = table[c % 16];
-}
-
 int
 parseuri(const char *s, struct uri *u, int rel)
 {
@@ -172,6 +163,7 @@ absuri(const char *link, const char *base, char *buf, size_t bufsiz)
 int
 encodeuri(const char *s, char *buf, size_t bufsiz)
 {
+	static const char *table = "0123456789ABCDEF";
 	size_t i, b;
 
 	if (!bufsiz)
@@ -183,8 +175,8 @@ encodeuri(const char *s, char *buf, size_t bufsiz)
 			if (b + 3 >= bufsiz)
 				return -1;
 			buf[b++] = '%';
-			encodehex(s[i], &buf[b]);
-			b += 2;
+			buf[b++] = table[((uint8_t)s[i] >> 4) & 15];
+			buf[b++] = table[(uint8_t)s[i] & 15];
 		} else {
 			if (b >= bufsiz)
 				return -1;
