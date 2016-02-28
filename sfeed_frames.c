@@ -232,7 +232,7 @@ main(int argc, char *argv[])
 	int i;
 	struct feed *f;
 
-	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
 		err(1, "pledge");
 
 	if (!(feeds = calloc(argc, sizeof(struct feed *))))
