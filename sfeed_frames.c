@@ -155,11 +155,11 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		strtotime(fields[FieldUnixTimestamp], &parsedtime);
 
 		/* content file doesn't exist yet and has write access */
-		if ((fd = open(filepath, O_CREAT | O_EXCL)) == -1) {
-			if (errno == EACCES)
+		if ((fd = open(filepath, O_CREAT | O_EXCL | O_WRONLY)) == -1) {
+			if (errno != EEXIST)
 				err(1, "open: %s", filepath);
 		} else {
-			if (!(fpcontent = fdopen(fd, "w+b")))
+			if (!(fpcontent = fdopen(fd, "wb")))
 				err(1, "fdopen: %s", filepath);
 			fputs("<html><head>"
 			      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
@@ -185,6 +185,11 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 
 			/* set modified and access time of file to time of item. */
 			if (parsedtime) {
+				/* flush writes before setting atime and mtime
+				   else the remaining (buffered) write can occur at
+				   fclose() and overwrite our time again. */
+				fflush(fpcontent);
+
 				times[0].tv_sec = parsedtime;
 				times[1].tv_sec = parsedtime;
 
