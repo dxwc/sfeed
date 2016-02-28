@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -18,7 +19,7 @@
 static struct feed **feeds;
 static char *line;
 static size_t linesize;
-static struct utimbuf contenttime;
+static struct timespec times[2];
 static time_t comparetime;
 static unsigned long totalnew;
 
@@ -109,7 +110,7 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 	FILE *fpcontent = NULL;
 	unsigned int isnew;
 	time_t parsedtime;
-	int r;
+	int fd, r;
 
 	if (f->name[0])
 		feedname = f->name;
@@ -117,7 +118,7 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		feedname = "unnamed";
 
 	/* make directory for feedname */
-	if (!(namelen = normalizepath(feedname, name, sizeof(name))))
+	if (!normalizepath(feedname, name, sizeof(name)))
 		return;
 
 	strlcpy(dirpath, name, sizeof(dirpath));
@@ -144,16 +145,22 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		if (!parseline(line, fields))
 			break;
 		/* write content */
-		if (!(namelen = normalizepath(fields[FieldTitle], name, sizeof(name))))
+		if (!normalizepath(fields[FieldTitle], name, sizeof(name)))
 			continue;
 		r = snprintf(filepath, sizeof(filepath), "%s/%s.html", dirpath, name);
 		if (r == -1 || (size_t)r >= sizeof(filepath))
 			errx(1, "snprintf: path truncation: '%s/%s.html'", dirpath, name);
 
+		parsedtime = 0;
+		strtotime(fields[FieldUnixTimestamp], &parsedtime);
+
 		/* content file doesn't exist yet and has write access */
-		if (access(filepath, F_OK) != 0) {
-			if (!(fpcontent = fopen(filepath, "w+b")))
-				err(1, "fopen: %s", filepath);
+		if ((fd = open(filepath, O_CREAT | O_EXCL)) == -1) {
+			if (errno == EACCES)
+				err(1, "open: %s", filepath);
+		} else {
+			if (!(fpcontent = fdopen(fd, "w+b")))
+				err(1, "fdopen: %s", filepath);
 			fputs("<html><head>"
 			      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
 			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />"
@@ -175,15 +182,16 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 				fputs("</pre>", fpcontent);
 			}
 			fputs("</div></body></html>", fpcontent);
-			fclose(fpcontent);
-		}
 
-		/* set modified and access time of file to time of item. */
-		parsedtime = 0;
-		if (strtotime(fields[FieldUnixTimestamp], &parsedtime) != -1) {
-			contenttime.actime = parsedtime;
-			contenttime.modtime = parsedtime;
-			utime(filepath, &contenttime);
+			/* set modified and access time of file to time of item. */
+			if (parsedtime) {
+				times[0].tv_sec = parsedtime;
+				times[1].tv_sec = parsedtime;
+
+				if (futimens(fd, times) == -1)
+					err(1, "futimens");
+			}
+			fclose(fpcontent);
 		}
 
 		isnew = (parsedtime >= comparetime) ? 1 : 0;
