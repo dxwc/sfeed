@@ -14,8 +14,7 @@
 static char *line;
 static size_t linesize;
 static char host[256], *user, mtimebuf[32];
-
-static const uint32_t seed = 0x45931287;
+static const uint32_t seed = 1167266473;
 
 /* Unescape / decode fields printed by string_print_encoded()
  * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences

@@ -25,8 +25,7 @@ struct bucket {
 };
 static struct bucket *buckets;
 static struct bucket *bucket;
-
-static const uint32_t seed = 0x45931287;
+static const uint32_t seed = 1167266473;
 
 static void
 printfeed(FILE *fp, const char *feedname)
