@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <wchar.h>
 
 #include "util.h"
 
@@ -36,18 +35,18 @@ printfeed(FILE *fp, const char *feedname)
 	char *fields[FieldLast];
 	uint32_t hash;
 	int uniq;
-	ssize_t n;
+	ssize_t linelen;
 
-	while ((n = getline(&line, &linesize, fp)) > 0) {
-		if (line[n] == '\n')
-			line[--n] = '\0';
-		hash = murmur3_32(line, n, seed) % BUCKET_SIZE;
+	while ((linelen = getline(&line, &linesize, fp)) > 0) {
+		if (line[linelen - 1] == '\n')
+			line[--linelen] = '\0';
+		hash = murmur3_32(line, (size_t)linelen, seed) % BUCKET_SIZE;
 
 		for (uniq = 1, match = &(bucket->cols[hash]);
 		     match;
 		     match = match->next) {
 			/* check for collision, can still be unique. */
-			if (match->s && match->len == (size_t)n &&
+			if (match->s && match->len == (size_t)linelen &&
 			    !strcmp(line, match->s)) {
 				uniq = 0;
 				break;
@@ -58,7 +57,7 @@ printfeed(FILE *fp, const char *feedname)
 					err(1, "calloc");
 				if (!(match->s = strdup(line)))
 					err(1, "strdup");
-				match->len = (size_t)n;
+				match->len = (size_t)linelen;
 				break;
 			}
 		}
