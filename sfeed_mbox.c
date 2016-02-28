@@ -67,6 +67,8 @@ printfeed(FILE *fp, const char *feedname)
 	ssize_t linelen;
 
 	while ((linelen = getline(&line, &linesize, fp)) > 0) {
+		if (line[linelen - 1] == '\n')
+			line[--linelen] = '\0';
 		if (!parseline(line, fields))
 			break;
 		parsedtime = 0;

@@ -19,6 +19,7 @@ printfeed(FILE *fp, struct feed *f)
 	char *fields[FieldLast];
 	time_t parsedtime;
 	unsigned int islink, isnew;
+	ssize_t linelen;
 
 	if (f->name[0] != '\0') {
 		fputs("<h2 id=\"", stdout);
@@ -31,7 +32,9 @@ printfeed(FILE *fp, struct feed *f)
 	}
 	fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", stdout);
 
-	while (getline(&line, &linesize, fp) > 0) {
+	while ((linelen = getline(&line, &linesize, fp)) > 0) {
+		if (line[linelen - 1] == '\n')
+			line[--linelen] = '\0';
 		if (!parseline(line, fields))
 			break;
 		parsedtime = 0;

@@ -16,10 +16,14 @@ printfeed(FILE *fp, const char *feedname)
 {
 	char *fields[FieldLast];
 	time_t parsedtime;
+	ssize_t linelen;
 
-	while (getline(&line, &linesize, fp) > 0) {
+	while ((linelen = getline(&line, &linesize, fp)) > 0) {
+		if (line[linelen - 1] == '\n')
+			line[--linelen] = '\0';
 		if (!parseline(line, fields))
 			break;
+
 		parsedtime = 0;
 		strtotime(fields[FieldUnixTimestamp], &parsedtime);
 

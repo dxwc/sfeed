@@ -104,7 +104,7 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 {
 	char dirpath[PATH_MAX], filepath[PATH_MAX];
 	char *fields[FieldLast], *feedname, name[128];
-	size_t namelen;
+	ssize_t linelen;
 	struct stat st;
 	FILE *fpcontent = NULL;
 	unsigned int isnew;
@@ -138,7 +138,9 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 	}
 
 	fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", fpitems);
-	while (getline(&line, &linesize, fpin) > 0) {
+	while ((linelen = getline(&line, &linesize, fpin)) > 0) {
+		if (line[linelen - 1] == '\n')
+			line[--linelen] = '\0';
 		if (!parseline(line, fields))
 			break;
 		/* write content */
