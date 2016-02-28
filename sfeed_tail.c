@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 	FILE *fp;
 	int i;
 
-	if (pledge("stdio", NULL) == -1)
+	if (pledge(argc == 1 ? "stdio" : "stdio rpath", NULL) == -1)
 		err(1, "pledge");
 
 	if (!(bucket = buckets = calloc(argc, sizeof(struct bucket))))
