@@ -155,7 +155,7 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		strtotime(fields[FieldUnixTimestamp], &parsedtime);
 
 		/* content file doesn't exist yet and has write access */
-		if ((fd = open(filepath, O_CREAT | O_EXCL | O_WRONLY)) == -1) {
+		if ((fd = open(filepath, O_CREAT | O_EXCL | O_WRONLY, 0644)) == -1) {
 			if (errno != EEXIST)
 				err(1, "open: %s", filepath);
 		} else {
