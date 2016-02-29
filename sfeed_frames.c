@@ -244,11 +244,11 @@ main(int argc, char *argv[])
 	comparetime -= 86400;
 
 	/* write main index page */
-	if (!(fpindex = fopen("index.html", "w+b")))
+	if (!(fpindex = fopen("index.html", "wb")))
 		err(1, "fopen: index.html");
-	if (!(fpmenu = fopen("menu.html", "w+b")))
+	if (!(fpmenu = fopen("menu.html", "wb")))
 		err(1, "fopen: menu.html");
-	if (!(fpitems = fopen("items.html", "w+b")))
+	if (!(fpitems = fopen("items.html", "wb")))
 		err(1, "fopen: items.html");
 	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
 	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>"
