@@ -106,7 +106,6 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 	char dirpath[PATH_MAX], filepath[PATH_MAX];
 	char *fields[FieldLast], *feedname, name[128];
 	ssize_t linelen;
-	struct stat st;
 	FILE *fpcontent = NULL;
 	unsigned int isnew;
 	time_t parsedtime;
@@ -123,8 +122,8 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 
 	strlcpy(dirpath, name, sizeof(dirpath));
 
-	/* directory doesn't exist: try to create it. */
-	if (stat(dirpath, &st) == -1 && mkdir(dirpath, S_IRWXU) == -1)
+	/* error creating directory and it doesn't exist. */
+	if (mkdir(dirpath, S_IRWXU | S_IRWXG | S_IRWXO) == -1 && errno != EEXIST)
 		err(1, "mkdir: %s", dirpath);
 
 	/* menu if not unnamed */
