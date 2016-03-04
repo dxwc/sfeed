@@ -173,7 +173,7 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 		{ NULL, 0, -1 }
 	};
 	const FeedTag *tags;
-	int i, n;
+	int i;
 
 	/* optimization: these are always non-matching */
 	if (namelen < 2 || namelen > 17)
@@ -184,15 +184,12 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 	case FeedTypeAtom: tags = &atomtags[0]; break;
 	default:           return TagUnknown;
 	}
-	/* search */
-	for (i = 0; tags[i].name; i++) {
-		if (!(n = strcasecmp(tags[i].name, name)))
-			return tags[i].id; /* found */
-		/* optimization: tags are sorted so nothing after matches. */
-		if (n > 0)
-			return TagUnknown;
-	}
-	return TagUnknown; /* NOTREACHED */
+
+	for (i = 0; tags[i].name; i++)
+		if (istag(tags[i].name, tags[i].len, name, namelen))
+			return tags[i].id;
+
+	return TagUnknown;
 }
 
 /* Clear string only; don't free, prevents unnecessary reallocation. */
@@ -563,7 +560,7 @@ xml_handler_data(XMLParser *p, const char *s, size_t len)
 
 	/* add only data from <name> inside <author> tag
 	 * or any other non-<author> tag */
-	if (ctx.tagid != AtomTagAuthor || !strcasecmp(p->tag, "name"))
+	if (ctx.tagid != AtomTagAuthor || istag(p->tag, p->taglen, "name", 4))
 		string_append(ctx.field, s, len);
 }
 
