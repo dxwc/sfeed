@@ -50,7 +50,7 @@ all: $(BIN)
 
 ${BIN}: ${LIB} ${@:=.o}
 
-OBJ = ${SRC:.c=.o}
+OBJ = ${SRC:.c=.o} ${LIBXMLOBJ} ${LIBUTILOBJ}
 
 ${OBJ}: config.mk ${HDR}
 
