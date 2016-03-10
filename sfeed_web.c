@@ -28,8 +28,6 @@ printfeedtype(const char *s, FILE *fp)
 static void
 xmltagstart(XMLParser *p, const char *tag, size_t taglen)
 {
-	(void)p;
-
 	isbase = islink = isfeedlink = 0;
 	if (taglen != 4) /* optimization */
 		return;
@@ -43,11 +41,6 @@ xmltagstart(XMLParser *p, const char *tag, size_t taglen)
 static void
 xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort)
 {
-	(void)p;
-	(void)tag;
-	(void)taglen;
-	(void)isshort;
-
 	if (!isfeedlink)
 		return;
 
@@ -63,11 +56,6 @@ static void
 xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
         size_t namelen, const char *value, size_t valuelen)
 {
-	(void)p;
-	(void)tag;
-	(void)taglen;
-	(void)valuelen;
-
 	if (namelen != 4) /* optimization */
 		return;
 	if (isbase) {

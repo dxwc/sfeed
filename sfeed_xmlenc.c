@@ -15,8 +15,6 @@ static int isxmlpi, tags;
 static void
 xmltagstart(XMLParser *p, const char *tag, size_t taglen)
 {
-	(void)p;
-
 	/* optimization: try to find processing instruction at start */
 	if (tags > 3)
 		exit(1);
@@ -27,11 +25,6 @@ xmltagstart(XMLParser *p, const char *tag, size_t taglen)
 static void
 xmltagend(XMLParser *p, const char *tag, size_t taglen, int isshort)
 {
-	(void)p;
-	(void)tag;
-	(void)taglen;
-	(void)isshort;
-
 	isxmlpi = 0;
 }
 
@@ -39,12 +32,6 @@ static void
 xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 	size_t namelen, const char *value, size_t valuelen)
 {
-	(void)p;
-	(void)tag;
-	(void)taglen;
-	(void)namelen;
-	(void)valuelen;
-
 	if (isxmlpi && !strcasecmp(name, "encoding")) {
 		if (*value) {
 			/* output lowercase */

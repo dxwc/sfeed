@@ -25,10 +25,6 @@ static void
 xml_handler_end_element(XMLParser *p, const char *tag, size_t taglen,
 	int isshort)
 {
-	(void)p;
-	(void)taglen;
-	(void)isshort;
-
 	if (strcasecmp(tag, "outline"))
 		return;
 
@@ -51,11 +47,6 @@ static void
 xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 	const char *name, size_t namelen, const char *value, size_t valuelen)
 {
-	(void)p;
-	(void)taglen;
-	(void)namelen;
-	(void)valuelen;
-
 	if (strcasecmp(tag, "outline"))
 		return;
 

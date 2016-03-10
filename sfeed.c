@@ -475,9 +475,6 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 	const char *name, size_t namelen, const char *value,
 	size_t valuelen)
 {
-	(void)tag;
-	(void)taglen;
-
 	/* handles transforming inline XML to data */
 	if (ISINCONTENT(ctx)) {
 		if (ctx.contenttype == ContentTypeHTML)
@@ -508,11 +505,6 @@ static void
 xml_handler_attr_end(XMLParser *p, const char *tag, size_t taglen,
 	const char *name, size_t namelen)
 {
-	(void)tag;
-	(void)taglen;
-	(void)name;
-	(void)namelen;
-
 	if (!ISINCONTENT(ctx) || ctx.contenttype != ContentTypeHTML)
 		return;
 
@@ -525,9 +517,6 @@ static void
 xml_handler_attr_start(XMLParser *p, const char *tag, size_t taglen,
 	const char *name, size_t namelen)
 {
-	(void)tag;
-	(void)taglen;
-
 	if (!ISINCONTENT(ctx) || ctx.contenttype != ContentTypeHTML)
 		return;
 
@@ -542,8 +531,6 @@ xml_handler_attr_start(XMLParser *p, const char *tag, size_t taglen,
 static void
 xml_handler_cdata(XMLParser *p, const char *s, size_t len)
 {
-	(void)p;
-
 	if (!ctx.field)
 		return;
 
@@ -640,9 +627,6 @@ static void
 xml_handler_start_el_parsed(XMLParser *p, const char *tag, size_t taglen,
 	int isshort)
 {
-	(void)tag;
-	(void)taglen;
-
 	if (ctx.iscontenttag) {
 		ctx.iscontent = 1;
 		ctx.iscontenttag = 0;
