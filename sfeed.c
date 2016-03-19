@@ -204,15 +204,13 @@ string_clear(String *s)
 static void
 string_buffer_realloc(String *s, size_t newlen)
 {
-	char *p;
 	size_t alloclen;
 
 	for (alloclen = 64; alloclen <= newlen; alloclen *= 2)
 		;
-	if (!(p = realloc(s->data, alloclen)))
+	if (!(s->data = realloc(s->data, alloclen)))
 		err(1, "realloc");
 	s->bufsiz = alloclen;
-	s->data = p;
 }
 
 static void
@@ -376,7 +374,7 @@ string_print_encoded(String *s)
 	/* skip leading whitespace */
 	for (p = s->data; *p && isspace((int)*p); p++)
 		;
-	/* seek offset of trailing whitespace */
+	/* seek location of trailing whitespace */
 	for (e = s->data + s->len; e > p && isspace((int)*(e - 1)); e--)
 		;
 
@@ -407,7 +405,7 @@ string_print_trimmed(String *s)
 	/* skip leading whitespace */
 	for (p = s->data; *p && isspace((int)*p); p++)
 		;
-	/* seek offset of trailing whitespace */
+	/* seek location of trailing whitespace */
 	for (e = s->data + s->len; e > p && isspace((int)*(e - 1)); e--)
 		;
 
