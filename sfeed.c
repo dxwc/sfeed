@@ -491,10 +491,11 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 				ctx.contenttype = ContentTypeHTML;
 			}
 		} else if (ctx.tagid == AtomTagLink &&
-		          isattr(name, namelen, STRP("href")))
+			   isattr(name, namelen, STRP("href")) &&
+			   ctx.field)
 		{
 			/* link href attribute */
-			string_append(&ctx.fields[FeedFieldLink].str, value, valuelen);
+			string_append(ctx.field, value, valuelen);
 		}
 	}
 }
@@ -601,7 +602,7 @@ xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
 		return;
 	}
 
-	/* field tagid already set: return */
+	/* field tagid already set, nested tags are not allowed: return */
 	if (ctx.tagid)
 		return;
 
@@ -609,7 +610,8 @@ xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
 	tagid = gettag(ctx.feedtype, name, namelen);
 	ctx.tagid = tagid;
 
-	/* map tag type to field: unknown or less priority is ignored. */
+	/* map tag type to field: unknown or lesser priority is ignored,
+	   when tags of the same type are repeated only the first is used. */
 	if (tagid <= ctx.fields[fieldmap[ctx.tagid]].tagid) {
 		ctx.field = NULL;
 		return;
