@@ -208,7 +208,7 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		else
 			fputs("<tr>", fpitems);
 		fputs("<td nowrap valign=\"top\">", fpitems);
-		fputs(fields[FieldTimeFormatted], fpitems);
+		xmlencode(fields[FieldTimeFormatted], fpitems);
 		fputs("</td><td nowrap valign=\"top\">", fpitems);
 		if (isnew)
 			fputs("<b><u>", fpitems);
