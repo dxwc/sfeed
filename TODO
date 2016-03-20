@@ -1,1 +1,4 @@
 [ ] cleanup xml.{c,h}
+[?] faster UTC time parsing: Musl libc timegm() function (deprecated), is
+    much faster than our current time parsing. Keep in mind we have to be
+    portable and don't bloat/complicate the code, so it's a maybe.

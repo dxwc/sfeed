@@ -7,20 +7,48 @@ Features:
 * sfeed_update: feeds are now by default updated concurrently for an increase
   in performance.
 * sfeed_update: Auto-detect XML character set encoding (sfeed_xmlenc).
-* Add sfeed_mbox: format feeds to mbox.
-* Add sfeed_web: find RSS/Atom feeds from web-pages.
-* Add sfeed_frames, a formatting program to output feeds as a HTML file with
-  frames. It's optimized to look good in older browsers that don't necesarily
-  support CSS or modern HTML, like links. See the man page for more details.
+* sfeed_update: don't send user-agent by default (used to send: curl+version).
 * Removed the dependency on libexpat, using a custom XML parser (xml.*),
   this parser is also non-validating, it will not check the XML for errors
   or stop parsing if it contains errors (which is good).
-* Changed to mandoc for documentation.
+* On OpenBSD 5.9+ the sfeed tools can now use pledge(2) as a security
+  mitigation. Most tools only require "stdio" and read-only filesystem access.
+  To enable it the CPPFLAGS -DUSE_PLEDGE can be used, see the file: config.mk.
+* Added (optional) format tools:
+  * Add sfeed_frames, a formatting program to output feeds as a HTML file with
+    frames. It's optimized to look good in older browsers that don't necesarily
+    support CSS or modern HTML, like links. See the man page for more details.
+  * Add sfeed_mbox: format feeds to mbox format.
+  * Add sfeed_tail: poll files or stdin and print unique/unseen items to
+    stdout, this is inspired from RSSTail.
+  * Add sfeed_web: find RSS/Atom feeds from web-pages.
+
+
+Documentation:
+--------------
+
+* Changed to mandoc (semantic) for the documentation format, for older systems
+  man pages can be created with mandoc -Tman.
+* Major improvements to the documentation quality.
+
+
+License:
+--------
+
+* Changed license from MIT to ISC (simpler wording).
 
 
 Bug fixes:
 ----------
 
+* sfeed_update: fix issue with merging failed feeds, the date from the last
+  (possibly failed) request would be used and passed as HTTP If-Modified-Since,
+  so data would be missed, see commit 77a603a904087dd9fd3350da029f279f076e4f4b
+  for more info.
+* Fix possible TOCTOU in sfeed_frames.
+* Fix crash with repeated tags: <link href="" /> in Atom feeds.
+* Path truncations are now treated as fatal errors.
+* Remove use of deprecated (POSIX) functions: timegm, utime.
 * Fix off-by-one in string_append when reallocating buffer.
 * Parsing datetime strings containing timezone suffix to UNIX timestamps
   was wrong. UNIX timestamps are in UTC+0 time. For simplicity sake output
