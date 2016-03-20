@@ -1,7 +1,7 @@
 include config.mk
 
 NAME = sfeed
-VERSION = 0.9
+VERSION = 0.9.1
 BIN = \
 	sfeed\
 	sfeed_frames\
@@ -68,18 +68,18 @@ ${LIBXML}: ${LIBXMLOBJ}
 	${AR} rc $@ $?
 	${RANLIB} $@
 
-dist: $(BIN)
-	rm -rf release/${VERSION}
-	mkdir -p release/${VERSION}
+dist:
+	rm -rf ${NAME}-${VERSION}
+	mkdir -p ${NAME}-${VERSION}
 	cp -f ${MAN1} ${MAN5} ${DOC} ${HDR} \
 		${SRC} ${LIBXMLSRC} ${LIBUTILSRC} ${SCRIPTS} \
 		Makefile config.mk \
 		sfeedrc.example style.css \
-		release/${VERSION}/
+		${NAME}-${VERSION}
 	# make tarball
-	rm -f sfeed-${VERSION}.tar.gz
-	(cd release/${VERSION}; \
-	tar -czf ../../sfeed-${VERSION}.tar.gz .)
+	tar -cf - ${NAME}-${VERSION} | \
+		gzip -c > ${NAME}-${VERSION}.tar.gz
+	rm -rf ${NAME}-${VERSION}
 
 clean:
 	rm -f ${BIN} ${OBJ} ${LIB}

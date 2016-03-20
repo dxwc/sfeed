@@ -1,3 +1,11 @@
+v0.9.1
+======
+
+* Improved `make dist` rule in Makefile: don't build binaries before packaging
+  the source files. Package the source files in the relative path
+  sfeed-VERSION/.
+
+
 v0.9
 ====
 
