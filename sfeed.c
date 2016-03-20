@@ -110,7 +110,38 @@ static void   xml_handler_start_el(XMLParser *, const char *, size_t);
 static void   xml_handler_start_el_parsed(XMLParser *, const char *,
                                           size_t, int);
 
-/* map tag type to field */
+/* map tag name to tagid */
+/* RSS, alphabetical order */
+static FeedTag rsstags[] = {
+	{ STRP("author"),            RSSTagAuthor            },
+	{ STRP("content:encoded"),   RSSTagContentEncoded    },
+	{ STRP("dc:creator"),        RSSTagDccreator         },
+	{ STRP("dc:date"),           RSSTagDcdate            },
+	{ STRP("description"),       RSSTagDescription       },
+	{ STRP("guid"),              RSSTagGuid              },
+	{ STRP("link"),              RSSTagLink              },
+	{ STRP("media:description"), RSSTagMediaDescription  },
+	{ STRP("pubdate"),           RSSTagPubdate           },
+	{ STRP("title"),             RSSTagTitle             },
+	{ NULL, 0, -1 }
+};
+/* Atom, alphabetical order */
+static FeedTag atomtags[] = {
+	/* <author><name></name></author> */
+	{ STRP("author"),            AtomTagAuthor           },
+	{ STRP("content"),           AtomTagContent          },
+	{ STRP("id"),                AtomTagId               },
+	/* <link href="" /> */
+	{ STRP("link"),              AtomTagLink             },
+	{ STRP("media:description"), AtomTagMediaDescription },
+	{ STRP("published"),         AtomTagPublished        },
+	{ STRP("summary"),           AtomTagSummary          },
+	{ STRP("title"),             AtomTagTitle            },
+	{ STRP("updated"),           AtomTagUpdated          },
+	{ NULL, 0, -1 }
+};
+
+/* map tagid type to RSS/Atom field */
 static int fieldmap[TagLast] = {
 	/* RSS */
 	[RSSTagDcdate]            = FeedFieldTime,
@@ -141,39 +172,12 @@ static const char *baseurl = "";
 static FeedContext ctx;
 static XMLParser parser; /* XML parser state */
 
-/* Unique id for parsed tag. */
+/* Unique tagid for parsed tag name. */
 static enum TagId
 gettag(enum FeedType feedtype, const char *name, size_t namelen)
 {
-	/* RSS, alphabetical order */
-	static FeedTag rsstags[] = {
-		{ STRP("author"),            RSSTagAuthor            },
-		{ STRP("content:encoded"),   RSSTagContentEncoded    },
-		{ STRP("dc:creator"),        RSSTagDccreator         },
-		{ STRP("dc:date"),           RSSTagDcdate            },
-		{ STRP("description"),       RSSTagDescription       },
-		{ STRP("guid"),              RSSTagGuid              },
-		{ STRP("link"),              RSSTagLink              },
-		{ STRP("media:description"), RSSTagMediaDescription  },
-		{ STRP("pubdate"),           RSSTagPubdate           },
-		{ STRP("title"),             RSSTagTitle             },
-		{ NULL, 0, -1 }
-	};
-	/* Atom, alphabetical order */
-	static FeedTag atomtags[] = {
-		{ STRP("author"),            AtomTagAuthor           },
-		{ STRP("content"),           AtomTagContent          },
-		{ STRP("id"),                AtomTagId               },
-		{ STRP("link"),              AtomTagLink             },
-		{ STRP("media:description"), AtomTagMediaDescription },
-		{ STRP("published"),         AtomTagPublished        },
-		{ STRP("summary"),           AtomTagSummary          },
-		{ STRP("title"),             AtomTagTitle            },
-		{ STRP("updated"),           AtomTagUpdated          },
-		{ NULL, 0, -1 }
-	};
 	const FeedTag *tags;
-	int i;
+	size_t i;
 
 	/* optimization: these are always non-matching */
 	if (namelen < 2 || namelen > 17)
