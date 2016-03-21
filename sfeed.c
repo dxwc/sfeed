@@ -616,7 +616,7 @@ xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
 
 	/* map tag type to field: unknown or lesser priority is ignored,
 	   when tags of the same type are repeated only the first is used. */
-	if (tagid <= ctx.fields[fieldmap[ctx.tagid]].tagid) {
+	if (tagid == TagUnknown || tagid <= ctx.fields[fieldmap[tagid]].tagid) {
 		ctx.field = NULL;
 		return;
 	}
