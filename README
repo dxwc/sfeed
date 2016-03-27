@@ -150,8 +150,6 @@ added as a formatted text field.
 The order and format of the fields are:
 
 item UNIX timestamp      - UNIX timestamp (UTC+0), empty on parse failure.
-item formatted timestamp - Date and time in the format:
-                           YYYY-mm-dd HH:MM:SS (UTC[+-][HHMM])|tz.
 item title               - Title text, HTML in titles is treated as
                            plain-text.
 item link                - Absolute url, unsafe characters are encoded.

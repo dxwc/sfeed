@@ -86,10 +86,10 @@ typedef struct feedcontext {
 } FeedContext;
 
 static enum TagId gettag(enum FeedType, const char *, size_t);
-static int    gettimetz(const char *, char *, size_t, int *);
+static int    gettimetz(const char *, int *);
 static int    isattr(const char *, size_t, const char *, size_t);
 static int    istag(const char *, size_t, const char *, size_t);
-static int    parsetime(const char *, char *, size_t, time_t *);
+static int    parsetime(const char *, time_t *);
 static void   printfields(void);
 static void   string_append(String *, const char *, size_t);
 static void   string_buffer_realloc(String *, size_t);
@@ -236,7 +236,7 @@ string_append(String *s, const char *data, size_t len)
  * NOTE: only parses timezones in RFC-822, other timezones are ambiguous
  * anyway. If needed you can add some yourself, like "cest", "cet" etc. */
 static int
-gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
+gettimetz(const char *s, int *tzoffset)
 {
 	static struct tzone {
 		char *name;
@@ -295,7 +295,7 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 		c = '+';
 
 	/* compare tz and adjust offset relative to UTC */
-	for (i = 0; i < LEN(tzones); i++) {
+	for (i = 0; i < sizeof(tzones) / sizeof(*tzones); i++) {
 		if (!strcmp(tzbuf, tzones[i].name)) {
 			tz = "UTC";
 			tzhour = tzones[i].offhour;
@@ -310,15 +310,8 @@ gettimetz(const char *s, char *buf, size_t bufsiz, int *tzoffset)
 time_ok:
 	/* timezone set but non-match */
 	if (tzbuf[0] && !tz[0]) {
-		if (strlcpy(buf, tzbuf, bufsiz) >= bufsiz)
-			return -1; /* truncation */
 		tzhour = tzmin = 0;
 		c = '+';
-	} else {
-		r = snprintf(buf, bufsiz, "%s%c%02d:%02d",
-		             tz[0] ? tz : "UTC", c, tzhour, tzmin);
-		if (r == -1 || (size_t)r >= bufsiz)
-			return -1; /* truncation or error */
 	}
 	if (tzoffset)
 		*tzoffset = ((tzhour * 3600) + (tzmin * 60)) *
@@ -326,43 +319,51 @@ time_ok:
 	return 0;
 }
 
-static int
-parsetime(const char *s, char *buf, size_t bufsiz, time_t *tp)
+static char *
+parseformat(const char *s, struct tm *tm)
 {
-	time_t t;
-	struct tm tm;
 	const char *formats[] = {
 		"%a, %d %b %Y %H:%M:%S",
 		"%Y-%m-%d %H:%M:%S",
 		"%Y-%m-%dT%H:%M:%S",
 		NULL
 	};
-	char tz[16], *p;
+	char *p;
 	size_t i;
+
+	for (i = 0; formats[i]; i++)
+		if ((p = strptime(s, formats[i], tm)))
+			return p;
+
+	return NULL;
+}
+
+static int
+parsetime(const char *s, time_t *tp)
+{
+	time_t t;
+	struct tm tm;
+	char *p;
 	int tzoffset, r;
 
-	for (i = 0; formats[i]; i++) {
-		if (!(p = strptime(s, formats[i], &tm)))
-			continue;
-		tm.tm_isdst = -1; /* don't use DST */
-		if ((t = mktime(&tm)) == -1) /* error */
-			return -1;
-		if (gettimetz(p, tz, sizeof(tz), &tzoffset) == -1)
-			return -1;
-		t -= tzoffset;
-		if (buf) {
-			r = snprintf(buf, bufsiz,
-			         "%04d-%02d-%02d %02d:%02d:%02d %s",
-			         tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-			         tm.tm_hour, tm.tm_min, tm.tm_sec, tz);
-			if (r == -1 || (size_t)r >= bufsiz)
-				return -1; /* truncation */
-		}
-		if (tp)
-			*tp = t;
-		return 0;
-	}
-	return -1;
+	if (!(p = parseformat(s, &tm)))
+		return -1;
+
+	/* TODO
+	parse time format to tm
+	get timezone offset
+	convert tm to UNIX timestamp (timegm)
+	*/
+
+	if (gettimetz(p, &tzoffset) == -1)
+		return -1;
+	tm.tm_isdst = -1; /* don't use DST */
+	if ((t = mktime(&tm)) == -1) /* error */
+		return -1;
+	t -= tzoffset;
+	if (tp)
+		*tp = t;
+	return 0;
 }
 
 /* Print text, encode TABs, newlines and '\', remove other whitespace.
@@ -432,13 +433,9 @@ printfields(void)
 	/* parse time, timestamp and formatted timestamp field is empty
 	 * if the parsed time is invalid */
 	if (ctx.fields[FeedFieldTime].str.data)
-		r = parsetime(ctx.fields[FeedFieldTime].str.data,
-		              timebuf, sizeof(timebuf), &t);
+		r = parsetime(ctx.fields[FeedFieldTime].str.data, &t);
 	if (r != -1)
 		printf("%ld", (long)t);
-	putchar(FieldSeparator);
-	if (r != -1)
-		fputs(timebuf, stdout);
 	putchar(FieldSeparator);
 	string_print_trimmed(&ctx.fields[FeedFieldTitle].str);
 	putchar(FieldSeparator);

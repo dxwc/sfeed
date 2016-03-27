@@ -25,15 +25,10 @@ The content field can contain newlines and is escaped. TABs, newlines and '\\'
 are escaped with '\\', so: '\\n', '\\t', and '\\\\'. Other whitespace
 characters except space are removed. Control characters are removed.
 .Pp
-The timestamp field is converted to a UNIX timestamp. The timestamp is also
-added as a formatted text field.
-.Pp
 The order and format of the fields are:
 .Bl -tag -width 17n
 .It item timestamp
 UNIX timestamp in UTC+0, empty on parse failure.
-.It item timestamp
-Date and time in the format: YYYY-mm-dd HH:MM:SS (UTC[+-][HHMM])|tz.
 .It item title
 Title text, HTML in titles is treated as plain-text (on purpose).
 .It item link
