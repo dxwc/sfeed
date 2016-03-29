@@ -7,7 +7,6 @@ size_t strlcat(char *, const char *, size_t);
 size_t strlcpy(char *, const char *, size_t);
 
 #define ISUTF8(c) (((c) & 0xc0) != 0x80)
-#define LEN(x) (sizeof (x) / sizeof *(x))
 
 /* feed info */
 struct feed {
@@ -27,7 +26,7 @@ struct uri {
 };
 
 enum {
-	FieldUnixTimestamp = 0, FieldTimeFormatted, FieldTitle,
+	FieldUnixTimestamp = 0, FieldTitle,
 	FieldLink, FieldContent, FieldContentType, FieldId, FieldAuthor,
 	FieldFeedType, FieldLast
 };
