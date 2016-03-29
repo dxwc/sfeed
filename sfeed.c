@@ -85,30 +85,31 @@ typedef struct feedcontext {
 	int              attrcount; /* count item HTML element attributes */
 } FeedContext;
 
+static long long datetounix(long long, int, int, int, int, int);
 static enum TagId gettag(enum FeedType, const char *, size_t);
-static int    gettimetz(const char *, int *);
-static int    isattr(const char *, size_t, const char *, size_t);
-static int    istag(const char *, size_t, const char *, size_t);
-static int    parsetime(const char *, time_t *);
-static void   printfields(void);
-static void   string_append(String *, const char *, size_t);
-static void   string_buffer_realloc(String *, size_t);
-static void   string_clear(String *);
-static void   string_print_encoded(String *);
-static void   string_print_trimmed(String *);
-static void   xml_handler_attr(XMLParser *, const char *, size_t,
-                               const char *, size_t, const char *, size_t);
-static void   xml_handler_attr_end(XMLParser *, const char *, size_t,
+static long long  gettzoffset(const char *);
+static int  isattr(const char *, size_t, const char *, size_t);
+static int  istag(const char *, size_t, const char *, size_t);
+static int  parsetime(const char *, time_t *);
+static void printfields(void);
+static void string_append(String *, const char *, size_t);
+static void string_buffer_realloc(String *, size_t);
+static void string_clear(String *);
+static void string_print_encoded(String *);
+static void string_print_trimmed(String *);
+static void xml_handler_attr(XMLParser *, const char *, size_t,
+                             const char *, size_t, const char *, size_t);
+static void xml_handler_attr_end(XMLParser *, const char *, size_t,
+                                 const char *, size_t);
+static void xml_handler_attr_start(XMLParser *, const char *, size_t,
                                    const char *, size_t);
-static void   xml_handler_attr_start(XMLParser *, const char *, size_t,
-                                     const char *, size_t);
-static void   xml_handler_cdata(XMLParser *, const char *, size_t);
-static void   xml_handler_data(XMLParser *, const char *, size_t);
-static void   xml_handler_data_entity(XMLParser *, const char *, size_t);
-static void   xml_handler_end_el(XMLParser *, const char *, size_t, int);
-static void   xml_handler_start_el(XMLParser *, const char *, size_t);
-static void   xml_handler_start_el_parsed(XMLParser *, const char *,
-                                          size_t, int);
+static void xml_handler_cdata(XMLParser *, const char *, size_t);
+static void xml_handler_data(XMLParser *, const char *, size_t);
+static void xml_handler_data_entity(XMLParser *, const char *, size_t);
+static void xml_handler_end_el(XMLParser *, const char *, size_t, int);
+static void xml_handler_start_el(XMLParser *, const char *, size_t);
+static void xml_handler_start_el_parsed(XMLParser *, const char *,
+                                        size_t, int);
 
 /* map tag name to tagid */
 /* RSS, alphabetical order */
@@ -166,7 +167,7 @@ static int fieldmap[TagLast] = {
 	[AtomTagAuthor]           = FeedFieldAuthor
 };
 
-static const int FieldSeparator = '\t'; /* output field seperator character */
+static const int FieldSeparator = '\t';
 static const char *baseurl = "";
 
 static FeedContext ctx;
@@ -189,6 +190,7 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 	default:           return TagUnknown;
 	}
 
+	/* TODO: test if checking for sort order matters performance-wise */
 	for (i = 0; tags[i].name; i++)
 		if (istag(tags[i].name, tags[i].len, name, namelen))
 			return tags[i].id;
@@ -220,7 +222,7 @@ string_buffer_realloc(String *s, size_t newlen)
 static void
 string_append(String *s, const char *data, size_t len)
 {
-	if (!len || *data == '\0')
+	if (!len)
 		return;
 	/* check if allocation is necesary, don't shrink buffer,
 	 * should be more than bufsiz ofcourse. */
@@ -229,141 +231,6 @@ string_append(String *s, const char *data, size_t len)
 	memcpy(s->data + s->len, data, len);
 	s->len += len;
 	s->data[s->len] = '\0';
-}
-
-/* Get timezone from string, return as formatted string and time offset,
- * for the offset it assumes UTC.
- * NOTE: only parses timezones in RFC-822, other timezones are ambiguous
- * anyway. If needed you can add some yourself, like "cest", "cet" etc. */
-static int
-gettimetz(const char *s, int *tzoffset)
-{
-	static struct tzone {
-		char *name;
-		int offhour;
-		int offmin;
-	} tzones[] = {
-		{ "CDT", -5, 0 },
-		{ "CST", -6, 0 },
-		{ "EDT", -4, 0 },
-		{ "EST", -5, 0 },
-		{ "GMT",  0, 0 },
-		{ "MDT", -6, 0 },
-		{ "MST", -7, 0 },
-		{ "PDT", -7, 0 },
-		{ "PST", -8, 0 },
-		{ "UT",   0, 0 },
-		{ "UTC",  0, 0 },
-		{ "A",   -1, 0 },
-		{ "M",  -12, 0 },
-		{ "N",    1, 0 },
-		{ "Y",   12, 0 },
-		{ "Z",    0, 0 }
-	};
-	char tzbuf[5] = "", *tz = "", c = '+';
-	int tzhour = 0, tzmin = 0, r;
-	size_t i;
-
-	/* skip milliseconds for: %Y-%m-%dT%H:%M:%S.000Z */
-	if (*s == '.') {
-		for (s++; *s && isdigit((int)*s); s++)
-			;
-	}
-	if (!*s || *s == 'Z' || *s == 'z')
-		goto time_ok;
-	/* skip whitespace */
-	s = &s[strspn(s, " \t")];
-
-	/* look until some common timezone delimiters are found */
-	for (i = 0; s[i] && isalpha((int)s[i]); i++)
-		;
-	/* copy tz name */
-	if (i >= sizeof(tzbuf))
-		return -1; /* timezone too long */
-	memcpy(tzbuf, s, i);
-	tzbuf[i] = '\0';
-
-	if ((sscanf(s, "%c%02d:%02d", &c, &tzhour, &tzmin)) == 3)
-		;
-	else if (sscanf(s, "%c%02d%02d", &c, &tzhour, &tzmin) == 3)
-		;
-	else if (sscanf(s, "%c%d", &c, &tzhour) == 2)
-		tzmin = 0;
-	else
-		tzhour = tzmin = 0;
-	if (!tzhour && !tzmin)
-		c = '+';
-
-	/* compare tz and adjust offset relative to UTC */
-	for (i = 0; i < sizeof(tzones) / sizeof(*tzones); i++) {
-		if (!strcmp(tzbuf, tzones[i].name)) {
-			tz = "UTC";
-			tzhour = tzones[i].offhour;
-			tzmin = tzones[i].offmin;
-			c = tzones[i].offhour < 0 ? '-' : '+';
-			break;
-		}
-	}
-	tzhour = abs(tzhour);
-	tzmin = abs(tzmin);
-
-time_ok:
-	/* timezone set but non-match */
-	if (tzbuf[0] && !tz[0]) {
-		tzhour = tzmin = 0;
-		c = '+';
-	}
-	if (tzoffset)
-		*tzoffset = ((tzhour * 3600) + (tzmin * 60)) *
-		            (c == '-' ? -1 : 1);
-	return 0;
-}
-
-static char *
-parseformat(const char *s, struct tm *tm)
-{
-	const char *formats[] = {
-		"%a, %d %b %Y %H:%M:%S",
-		"%Y-%m-%d %H:%M:%S",
-		"%Y-%m-%dT%H:%M:%S",
-		NULL
-	};
-	char *p;
-	size_t i;
-
-	for (i = 0; formats[i]; i++)
-		if ((p = strptime(s, formats[i], tm)))
-			return p;
-
-	return NULL;
-}
-
-static int
-parsetime(const char *s, time_t *tp)
-{
-	time_t t;
-	struct tm tm;
-	char *p;
-	int tzoffset, r;
-
-	if (!(p = parseformat(s, &tm)))
-		return -1;
-
-	/* TODO
-	parse time format to tm
-	get timezone offset
-	convert tm to UNIX timestamp (timegm)
-	*/
-
-	if (gettimetz(p, &tzoffset) == -1)
-		return -1;
-	tm.tm_isdst = -1; /* don't use DST */
-	if ((t = mktime(&tm)) == -1) /* error */
-		return -1;
-	t -= tzoffset;
-	if (tp)
-		*tp = t;
-	return 0;
 }
 
 /* Print text, encode TABs, newlines and '\', remove other whitespace.
@@ -423,10 +290,236 @@ string_print_trimmed(String *s)
 	}
 }
 
+long long
+datetounix(long long year, int mon, int day, int hour, int min, int sec)
+{
+	static const int secs_through_month[] = {
+		0, 31 * 86400, 59 * 86400, 90 * 86400,
+		120 * 86400, 151 * 86400, 181 * 86400, 212 * 86400,
+		243 * 86400, 273 * 86400, 304 * 86400, 334 * 86400 };
+	int is_leap = 0, cycles, centuries = 0, leaps = 0, rem;
+	long long t;
+
+	if (year - 2ULL <= 136) {
+		leaps = (year - 68) >> 2;
+		if (!((year - 68) & 3)) {
+			leaps--;
+			is_leap = 1;
+		} else {
+			is_leap = 0;
+		}
+		t = 31536000 * (year - 70) + 86400 * leaps;
+	} else {
+		cycles = (year - 100) / 400;
+		rem = (year - 100) % 400;
+		if (rem < 0) {
+			cycles--;
+			rem += 400;
+		}
+		if (!rem) {
+			is_leap = 1;
+		} else {
+			if (rem >= 300)
+				centuries = 3, rem -= 300;
+			else if (rem >= 200)
+				centuries = 2, rem -= 200;
+			else if (rem >= 100)
+				centuries = 1, rem -= 100;
+			if (rem) {
+				leaps = rem / 4U;
+				rem %= 4U;
+				is_leap = !rem;
+			}
+		}
+		leaps += 97 * cycles + 24 * centuries - is_leap;
+		t = (year - 100) * 31536000LL + leaps * 86400LL + 946684800 + 86400;
+	}
+	t += secs_through_month[mon];
+	if (is_leap && mon >= 2)
+		t += 86400;
+	t += 86400LL * (day - 1);
+	t += 3600LL * hour;
+	t += 60LL * min;
+	t += sec;
+
+	return t;
+}
+
+/* Get timezone from string, return time offset in seconds from UTC.
+ * NOTE: only parses timezones in RFC-822, other timezones are ambiguous
+ * anyway. If needed you can add some yourself, like "cest", "cet" etc. */
+static long long
+gettzoffset(const char *s)
+{
+	static struct {
+		char *name;
+		size_t len;
+		const int offhour;
+	} tzones[] = {
+		{ STRP("A"),   -1 * 3600 },
+		{ STRP("CDT"), -5 * 3600 },
+		{ STRP("CST"), -6 * 3600 },
+		{ STRP("EDT"), -4 * 3600 },
+		{ STRP("EST"), -5 * 3600 },
+		{ STRP("GMT"),         0 },
+		{ STRP("MDT"), -6 * 3600 },
+		{ STRP("MST"), -7 * 3600 },
+		{ STRP("PDT"), -7 * 3600 },
+		{ STRP("PST"), -8 * 3600 },
+		{ STRP("UT"),          0 },
+		{ STRP("UTC"),         0 },
+		{ STRP("M"),   -2 * 3600 },
+		{ STRP("N"),    1 * 3600 },
+		{ STRP("Y"),   12 * 3600 },
+		{ STRP("Z"),           0 },
+	};
+	const char *p;
+	int tzhour = 0, tzmin = 0;
+	size_t i, namelen;
+
+	for (; *s && isspace((int)*s); s++)
+		;
+	switch (s[0]) {
+	case '-': /* offset */
+	case '+':
+		for (i = 0, p = s + 1; i < 2 && *p && isdigit(*p); i++, p++)
+			tzhour = (tzhour * 10) + (*p - '0');
+		if (*p && !isdigit(*p))
+			p++;
+		for (i = 0; i < 2 && *p && isdigit(*p); i++, p++)
+			tzmin = (tzmin * 10) + (*p - '0');
+		return ((tzhour * 3600) + (tzmin * 60)) * (s[0] == '-' ? -1 : 1);
+	default: /* timezone name */
+		for (i = 0; *s && isalpha((int)s[i]); i++)
+			;
+		namelen = i; /* end of name */
+		/* optimization: these are always non-matching */
+		if (namelen < 1 || namelen > 3)
+			return 0;
+		/* compare tz and adjust offset relative to UTC */
+		for (i = 0; i < sizeof(tzones) / sizeof(*tzones); i++) {
+			if (tzones[i].len == namelen &&
+			    !strncmp(s, tzones[i].name, namelen))
+				return tzones[i].offhour;
+		}
+	}
+	return 0;
+}
+
+static int
+parsetime(const char *s, time_t *tp)
+{
+	static struct {
+		char *name;
+		int len;
+	} mons[] = {
+		{ STRP("January"),   },
+		{ STRP("February"),  },
+		{ STRP("March"),     },
+		{ STRP("April"),     },
+		{ STRP("May"),       },
+		{ STRP("June"),      },
+		{ STRP("July"),      },
+		{ STRP("August"),    },
+		{ STRP("September"), },
+		{ STRP("October"),   },
+		{ STRP("November"),  },
+		{ STRP("December"),  },
+	};
+	const char *end = NULL;
+	int va[6], i, j, v, vi;
+	size_t m;
+
+	for (; *s && isspace((int)*s); s++)
+		;
+	if (!isdigit((int)*s) && !isalpha((int)*s))
+		return -1;
+
+	memset(&va, 0, sizeof(va));
+	if (isdigit((int)*s)) {
+		/* format "%Y-%m-%d %H:%M:%S" or "%Y-%m-%dT%H:%M:%S" */
+		vi = 0;
+time:
+		for (; *s && vi < 6; vi++) {
+			for (i = 0, v = 0; *s && i < 4 && isdigit((int)*s); s++, i++)
+				v = (v * 10) + (*s - '0');
+			va[vi] = v;
+			if ((vi < 2 && *s == '-') ||
+			    (vi == 2 && (*s == 'T' || isspace((int)*s))) ||
+			    (vi > 2 && *s == ':'))
+				s++;
+		}
+		/* TODO: only if seconds are parsed (vi == 5)? */
+		/* skip milliseconds for: %Y-%m-%dT%H:%M:%S.000Z */
+		if (*s == '.') {
+			for (s++; *s && isdigit((int)*s); s++)
+				;
+		}
+		end = s;
+	} else if (isalpha((int)*s)) {
+		/* format: "%a, %d %b %Y %H:%M:%S" */
+		/* parse "%a, %d %b %Y " part, then use time parsing as above */
+		for (; *s && isalpha((int)*s); s++)
+			;
+		for (; *s && isspace((int)*s); s++)
+			;
+		if (*s != ',')
+			return -1;
+		for (s++; *s && isspace((int)*s); s++)
+			;
+		for (v = 0, i = 0; *s && i < 4 && isdigit((int)*s); s++, i++)
+			v = (v * 10) + (*s - '0');
+		va[2] = v; /* day */
+		for (; *s && isspace((int)*s); s++)
+			;
+		/* end of word month */
+		for (j = 0; *s && isalpha((int)s[j]); j++)
+			;
+		/* check month name */
+		if (j < 3 || j > 9)
+			return -1; /* month cannot match */
+		for (m = 0; m < sizeof(mons) / sizeof(*mons); m++) {
+			/* abbreviation (3 length) or long name */
+			if ((j == 3 || j == mons[m].len) &&
+			    !strncasecmp(mons[m].name, s, j)) {
+				va[1] = m + 1;
+				s += j;
+				break;
+			}
+		}
+		if (m >= 12)
+			return -1; /* no month found */
+		for (; *s && isspace((int)*s); s++)
+			;
+		for (v = 0, i = 0; *s && i < 4 && isdigit((int)*s); s++, i++)
+			v = (v * 10) + (*s - '0');
+		va[0] = v; /* year */
+		for (; *s && isspace((int)*s); s++)
+			;
+		/* parse regular time, see above */
+		vi = 3;
+		goto time;
+	}
+
+	/* invalid range */
+	if (va[0] < 0 || va[0] > 9999 ||
+	    va[1] < 1 || va[1] > 12 ||
+	    va[2] < 1 || va[2] > 31 ||
+	    va[3] < 0 || va[3] > 23 ||
+	    va[4] < 0 || va[4] > 59 ||
+	    va[5] < 0 || va[5] > 59)
+		return -1;
+
+	if (tp)
+		*tp = datetounix(va[0] - 1900, va[1] - 1, va[2], va[3], va[4], va[5]) -
+		      gettzoffset(end);
+	return 0;
+}
+
 static void
 printfields(void)
 {
-	char link[4096], timebuf[64];
+	char link[4096];
 	time_t t;
 	int r = -1;
 
@@ -696,10 +789,6 @@ main(int argc, char *argv[])
 
 	if (argc > 1)
 		baseurl = argv[1];
-
-	if (setenv("TZ", "UTC", 1) == -1)
-		err(1, "setenv");
-	tzset();
 
 	parser.xmlattr = xml_handler_attr;
 	parser.xmlattrend = xml_handler_attr_end;

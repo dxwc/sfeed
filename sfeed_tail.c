@@ -35,6 +35,8 @@ printfeed(FILE *fp, const char *feedname)
 	uint32_t hash;
 	int uniq;
 	ssize_t linelen;
+	time_t parsedtime;
+	struct tm *tm;
 
 	while ((linelen = getline(&line, &linesize, fp)) > 0) {
 		if (line[linelen - 1] == '\n')
@@ -65,9 +67,18 @@ printfeed(FILE *fp, const char *feedname)
 			continue;
 		if (!parseline(line, fields))
 			break;
+
+		parsedtime = 0;
+		strtotime(fields[FieldUnixTimestamp], &parsedtime);
+		if (!(tm = localtime(&parsedtime)))
+			err(1, "localtime");
+
 		if (feedname[0])
-			printf("%-15.15s %-30.30s",
-			       feedname, fields[FieldTimeFormatted]);
+			printf("%-15.15s  ", feedname);
+
+		printf("%04d-%02d-%02d %02d:%02d  ",
+		       tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+		       tm->tm_hour, tm->tm_min);
 		printutf8pad(stdout, fields[FieldTitle], 70, ' ');
 		printf(" %s\n", fields[FieldLink]);
 	}

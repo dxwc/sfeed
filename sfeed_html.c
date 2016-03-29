@@ -17,6 +17,7 @@ static void
 printfeed(FILE *fp, struct feed *f)
 {
 	char *fields[FieldLast];
+	struct tm *tm;
 	time_t parsedtime;
 	unsigned int islink, isnew;
 	ssize_t linelen;
@@ -37,8 +38,11 @@ printfeed(FILE *fp, struct feed *f)
 			line[--linelen] = '\0';
 		if (!parseline(line, fields))
 			break;
+
 		parsedtime = 0;
 		strtotime(fields[FieldUnixTimestamp], &parsedtime);
+	        if (!(tm = localtime(&parsedtime)))
+			err(1, "localtime");
 
 		isnew = (parsedtime >= comparetime) ? 1 : 0;
 		islink = (fields[FieldLink][0] != '\0') ? 1 : 0;
@@ -52,7 +56,9 @@ printfeed(FILE *fp, struct feed *f)
 		else
 			fputs("<tr>", stdout);
 		fputs("<td nowrap valign=\"top\">", stdout);
-		fputs(fields[FieldTimeFormatted], stdout);
+	        fprintf(stdout, "%04d-%02d-%02d&nbsp;%02d:%02d",
+		        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+		        tm->tm_hour, tm->tm_min);
 		fputs("</td><td nowrap valign=\"top\">", stdout);
 		if (isnew)
 			fputs("<b><u>", stdout);

@@ -108,6 +108,7 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 	ssize_t linelen;
 	FILE *fpcontent = NULL;
 	unsigned int isnew;
+	struct tm *tm;
 	time_t parsedtime;
 	int fd, r;
 
@@ -152,6 +153,9 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 
 		parsedtime = 0;
 		strtotime(fields[FieldUnixTimestamp], &parsedtime);
+
+		if (!(tm = localtime(&parsedtime)))
+			err(1, "localtime");
 
 		/* content file doesn't exist yet and has error? */
 		if ((fd = open(filepath, O_CREAT | O_EXCL | O_WRONLY,
@@ -208,7 +212,11 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		else
 			fputs("<tr>", fpitems);
 		fputs("<td nowrap valign=\"top\">", fpitems);
-		xmlencode(fields[FieldTimeFormatted], fpitems);
+
+                fprintf(fpitems, "%04d-%02d-%02d %02d:%02d ",
+                       tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+                       tm->tm_hour, tm->tm_min);
+
 		fputs("</td><td nowrap valign=\"top\">", fpitems);
 		if (isnew)
 			fputs("<b><u>", fpitems);
