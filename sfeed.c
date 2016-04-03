@@ -427,7 +427,7 @@ parsetime(const char *s, time_t *tp)
 		{ STRP("December"),  },
 	};
 	const char *end = NULL;
-	int va[6], i, j, v, vi;
+	int va[6] = { 0 }, i, j, v, vi;
 	size_t m;
 
 	for (; *s && isspace((int)*s); s++)
@@ -435,7 +435,6 @@ parsetime(const char *s, time_t *tp)
 	if (!isdigit((int)*s) && !isalpha((int)*s))
 		return -1;
 
-	memset(&va, 0, sizeof(va));
 	if (isdigit((int)*s)) {
 		/* format "%Y-%m-%d %H:%M:%S" or "%Y-%m-%dT%H:%M:%S" */
 		vi = 0;
