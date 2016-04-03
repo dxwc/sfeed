@@ -498,6 +498,8 @@ time:
 		/* parse regular time, see above */
 		vi = 3;
 		goto time;
+	} else {
+		return -1;
 	}
 
 	/* invalid range */
