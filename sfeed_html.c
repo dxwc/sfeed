@@ -22,7 +22,7 @@ printfeed(FILE *fp, struct feed *f)
 	unsigned int islink, isnew;
 	ssize_t linelen;
 
-	if (f->name[0] != '\0') {
+	if (f->name[0]) {
 		fputs("<h2 id=\"", stdout);
 		xmlencode(f->name, stdout);
 		fputs("\"><a href=\"#", stdout);
@@ -45,7 +45,7 @@ printfeed(FILE *fp, struct feed *f)
 			err(1, "localtime");
 
 		isnew = (parsedtime >= comparetime) ? 1 : 0;
-		islink = (fields[FieldLink][0] != '\0') ? 1 : 0;
+		islink = fields[FieldLink][0] ? 1 : 0;
 
 		totalnew += isnew;
 		f->totalnew += isnew;
