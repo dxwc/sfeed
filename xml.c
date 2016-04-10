@@ -280,10 +280,9 @@ xml_numericentitytostr(const char *e, char *buf, size_t bufsiz)
 	else
 		l = strtoul(e, &end, 10);
 	/* invalid value or not a well-formed entity */
-	if (errno != 0 || (*end != '\0' && *end != ';'))
+	if (errno || *end != ';')
 		return 0;
-	if (!(len = xml_codepointtoutf8(l, &cp)))
-		return 0;
+	len = xml_codepointtoutf8(l, &cp);
 	/* make string */
 	for (b = 0; b < len; b++)
 		buf[b] = (cp >> (8 * (len - 1 - b))) & 0xff;
