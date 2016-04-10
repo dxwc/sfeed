@@ -214,7 +214,7 @@ parseline(char *line, char *fields[FieldLast])
 	return i;
 }
 
-/* Parse time to time_t, assumes time_t is signed. */
+/* Parse time to time_t, assumes time_t is signed, ignores fractions. */
 int
 strtotime(const char *s, time_t *t)
 {
@@ -225,6 +225,8 @@ strtotime(const char *s, time_t *t)
 	l = strtoll(s, &e, 10);
 	if (errno || *s == '\0' || *e)
 		return -1;
+	/* NOTE: assumes time_t is 64-bit on 64-bit platforms:
+	         long long (atleast 32-bit) to time_t. */
 	if (t)
 		*t = (time_t)l;
 
