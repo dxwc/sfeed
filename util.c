@@ -100,10 +100,38 @@ readpath:
 	return 0;
 }
 
+static int
+encodeuri(char *buf, size_t bufsiz, const char *s)
+{
+	static const char *table = "0123456789ABCDEF";
+	size_t i, b;
+
+	for (i = 0, b = 0; s[i]; i++) {
+		if ((int)s[i] == ' ' ||
+		    (unsigned char)s[i] > 127 ||
+		    iscntrl((int)s[i])) {
+			if (b + 3 >= bufsiz)
+				return -1;
+			buf[b++] = '%';
+			buf[b++] = table[((uint8_t)s[i] >> 4) & 15];
+			buf[b++] = table[(uint8_t)s[i] & 15];
+		} else if (b < bufsiz) {
+			buf[b++] = s[i];
+		} else {
+			return -1;
+		}
+	}
+	if (b >= bufsiz)
+		return -1;
+	buf[b] = '\0';
+
+	return 0;
+}
+
 /* Get absolute uri; if `link` is relative use `base` to make it absolute.
  * the returned string in `buf` is uri encoded, see: encodeuri(). */
 int
-absuri(const char *link, const char *base, char *buf, size_t bufsiz)
+absuri(char *buf, size_t bufsiz, const char *link, const char *base)
 {
 	struct uri ulink, ubase;
 	char tmp[4096], *host, *p, *port;
@@ -154,37 +182,7 @@ absuri(const char *link, const char *base, char *buf, size_t bufsiz)
 	if (strlcat(tmp, ulink.path, sizeof(tmp)) >= sizeof(tmp))
 		return -1;
 
-	return encodeuri(tmp, buf, bufsiz);
-}
-
-int
-encodeuri(const char *s, char *buf, size_t bufsiz)
-{
-	static const char *table = "0123456789ABCDEF";
-	size_t i, b;
-
-	if (!bufsiz)
-		return -1;
-	for (i = 0, b = 0; s[i]; i++) {
-		if ((int)s[i] == ' ' ||
-		    (unsigned char)s[i] > 127 ||
-		    iscntrl((int)s[i])) {
-			if (b + 3 >= bufsiz)
-				return -1;
-			buf[b++] = '%';
-			buf[b++] = table[((uint8_t)s[i] >> 4) & 15];
-			buf[b++] = table[(uint8_t)s[i] & 15];
-		} else {
-			if (b >= bufsiz)
-				return -1;
-			buf[b++] = s[i];
-		}
-	}
-	if (b >= bufsiz)
-		return -1;
-	buf[b] = '\0';
-
-	return 0;
+	return encodeuri(buf, bufsiz, tmp);
 }
 
 /* Read a field-separated line from 'fp',

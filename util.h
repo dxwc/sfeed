@@ -31,8 +31,7 @@ enum {
 	FieldFeedType, FieldLast
 };
 
-int     absuri(const char *, const char *, char *, size_t);
-int     encodeuri(const char *, char *, size_t);
+int     absuri(char *, size_t, const char *, const char *);
 size_t  parseline(char *, char *[FieldLast]);
 int     parseuri(const char *, struct uri *, int);
 void    printutf8pad(FILE *, const char *, size_t, int);

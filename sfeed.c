@@ -535,8 +535,8 @@ printfields(void)
 	putchar(FieldSeparator);
 	/* always print absolute urls */
 	if (ctx.fields[FeedFieldLink].str.data &&
-	    absuri(ctx.fields[FeedFieldLink].str.data, baseurl, link,
-	           sizeof(link)) != -1)
+	    absuri(link, sizeof(link), ctx.fields[FeedFieldLink].str.data,
+	           baseurl) != -1)
 		fputs(link, stdout);
 	putchar(FieldSeparator);
 	string_print_encoded(&ctx.fields[FeedFieldContent].str);
