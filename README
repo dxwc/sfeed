@@ -137,15 +137,13 @@ TAB-separated format fields
 
 The items are saved in a TSV-like format.
 
-The fields: title, id, author are not allowed to have newlines and TABs. All
-whitespace is replaced by a space character. Control characters are removed.
+The fields: title, id, author are not allowed to have newlines and TABs, all
+whitespace characters are replaced by a space character. Control characters are
+removed.
 
 The content field can contain newlines and TABS and are escaped. TABs, newlines
-and '\' are escaped with '\', so: '\n', '\t', and '\\'. Other whitespace
-characters except space are removed. Control characters are removed.
-
-The timestamp field is converted to a UNIX timestamp. The timestamp is also
-added as a formatted text field.
+and '\' are escaped with '\', so it becomes: '\t', '\n' and '\\'. Other
+whitespace characters except space are removed. Control characters are removed.
 
 The order and format of the fields are:
 
