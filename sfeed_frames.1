@@ -16,8 +16,8 @@ to HTML. It reads TSV data from stdin or
 and writes HTML files to the current directory.
 If no
 .Ar file
-parameters are specified and so the data is read from stdin the feed name
-is named "unnamed".
+parameters are specified and therefore the data is read from stdin then the
+feed name is named "unnamed".
 .Sh FILES WRITTEN
 .Bl -tag -width 13n
 .It index.html
@@ -30,12 +30,12 @@ Menu frame which contains navigation "anchor" links to the feed names
 in items.html.
 .El
 .Sh FILE STRUCTURE
-Items for each feed category is in the format: feedname/itemname.html.
+Items for each feed category are in the format: feedname/itemname.html.
 The feedname and item names are normalized, whitespace characters are replaced
-with a \-, multiple whitespaces are replaced by a single \- and trailing
-whitespace will be removed. The itemname is based on the title of the items.
-The feedname and title is truncated to a maximum of 128 characters. The
-maximum length of the path is PATH_MAX or filesystem-specific (truncated).
+with a \- character, multiple whitespaces are replaced by a single \- character
+and trailing whitespace will be removed. The itemname is based on the title of
+the items. The feedname and title is truncated to a maximum of 128 bytes.
+The maximum length of the path is PATH_MAX or filesystem-specific (truncated).
 .Sh SEE ALSO
 .Xr sfeed 1 ,
 .Xr sfeed_plain 1

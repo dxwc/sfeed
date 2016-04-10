@@ -11,7 +11,7 @@ is the configuration file for
 .Pp
 The variable
 .Va sfeedpath
-can be set for the directory to store the feeds files,
+can be set for the directory to store the TAB-separated feed files,
 by default this is
 .Pa $HOME/.sfeed/feeds .
 .
@@ -24,27 +24,30 @@ file:
 This function is like a "main" function called from
 .Xr sfeed_update 1 .
 .It feed
-Function to process the feed, its arguments are in order:
+Function to process the feed, its arguments are in the order:
 .Bl -tag -width Ds
 .It name
-Name of the feed, this is also used as the filename for the feeds file.
+Name of the feed, this is also used as the filename for the TAB-separated
+feed file.
 .It feedurl
-Uri to fetch the RSS/Atom data from, generally a HTTP or HTTPS uri.
+Uri to fetch the RSS/Atom data from, usually a HTTP or HTTPS uri.
 .It Op basesiteurl
+Baseurl of the feed links. This argument allows to fix relative item links.
+.Pp
 According to the RSS and Atom specification feeds should always have absolute
-urls, however this is not always the case in practise. This option allows to
-specify the base url to fix the relative urls.
+urls, however this is not always the case in practise.
 .It Op encoding
-Feeds are decoded from this name to utf-8, the name should be a usable
+Feeds are decoded from this name to UTF-8, the name should be a usable
 character-set for the
 .Xr iconv 1
 tool.
 .El
 .El
 .Sh OVERRIDE FUNCTIONS
-Each function of
+Because
 .Xr sfeed_update 1
-can be overridden to change its behaviour, notable functions are:
+is a shellscript each function can be overridden to change its behaviour,
+notable functions are:
 .Bl -tag -width Ds
 .It fetchfeed
 Fetch feed from url and writes data to stdout, its arguments are:
@@ -54,7 +57,7 @@ Uri to fetch.
 .It name
 Specified name in configuration file (useful for logging).
 .It feedfile
-Used feedfile (useful for checking modification times).
+Used feedfile (useful for comparing modification times).
 .El
 .It merge
 Merge data of oldfile with newfile and writes it to stdout, its arguments are:
@@ -75,9 +78,9 @@ To text-encoding.
 .El
 .El
 .Pp
-See the contents of
+See the convertencoding() function in the script
 .Xr sfeed_update 1
-for more.
+for more details.
 .Sh EXAMPLES
 An example configuration file is included named sfeedrc.example and also
 shown below:
