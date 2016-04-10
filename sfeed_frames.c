@@ -169,11 +169,18 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 			      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
 			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />"
 			      "</head>\n<body class=\"frame\">"
-			      "<div class=\"content\"><h2><a href=\"", fpcontent);
-			xmlencode(fields[FieldLink], fpcontent);
-			fputs("\">", fpcontent);
+			      "<div class=\"content\"><h2>", fpcontent);
+
+			if (fields[FieldLink][0]) {
+				fputs("<a href=\"", fpcontent);
+				xmlencode(fields[FieldLink], fpcontent);
+				fputs("\">", fpcontent);
+			}
 			xmlencode(fields[FieldTitle], fpcontent);
-			fputs("</a></h2>", fpcontent);
+			if (fields[FieldLink][0])
+				fputs("</a>", fpcontent);
+			fputs("</h2>", fpcontent);
+
 			/* NOTE: this prints the raw HTML of the feed, this is
 			 * potentially dangerous, it is left up to the
 			 * user / browser to trust a feed it's HTML content. */
