@@ -55,7 +55,7 @@ enum TagId {
 	AtomTagId,
 	AtomTagLink,
 	AtomTagAuthor,
-	TagLast,
+	TagLast
 };
 
 typedef struct feedtag {
@@ -85,7 +85,7 @@ typedef struct feedcontext {
 	int              attrcount; /* count item HTML element attributes */
 } FeedContext;
 
-static long long datetounix(long long, int, int, int, int, int);
+static long long  datetounix(long long, int, int, int, int, int);
 static enum TagId gettag(enum FeedType, const char *, size_t);
 static long long  gettzoffset(const char *);
 static int  isattr(const char *, size_t, const char *, size_t);
