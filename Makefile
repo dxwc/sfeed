@@ -35,6 +35,7 @@ LIB = ${LIBUTIL} ${LIBXML}
 MAN1 = ${BIN:=.1}\
 	${SCRIPTS:=.1}
 MAN5 = \
+	sfeed.5\
 	sfeedrc.5
 DOC = \
 	CHANGELOG\

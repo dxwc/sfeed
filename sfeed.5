@@ -1,22 +1,16 @@
-.Dd December 25, 2014
-.Dt SFEED 1
+.Dd April 10, 2016
+.Dt SFEED 5
 .Os
 .Sh NAME
 .Nm sfeed
-.Nd RSS and Atom parser
+.Nd feed format
 .Sh SYNOPSIS
 .Nm
-.Op Ar baseurl
 .Sh DESCRIPTION
-.Nm
+.Xr sfeed 1
 reads RSS or Atom feed data (XML) from stdin. It writes the feed data in a
-TAB-separated format to stdout. A
-.Ar baseurl
-can be specified if the links in the feed are relative urls. It is
-recommended to always have absolute urls in your feeds.
+TAB-separated format to stdout.
 .Sh TAB-SEPARATED FORMAT FIELDS
-The items are saved in a TSV-like format.
-.Pp
 The fields: title, id, author are not allowed to have newlines and TABs, all
 whitespace characters are replaced by a single space character. Control
 characters are removed.
@@ -47,9 +41,7 @@ Item author.
 "rss" or "atom".
 .El
 .Sh SEE ALSO
-.Xr sfeed_plain 1 ,
-.Xr sfeed_update 1 ,
-.Xr sh 1
+.Xr sfeed 1
 .Sh AUTHORS
 .An Hiltjo Posthuma Aq Mt hiltjo@codemadness.org
 .Sh CAVEATS
