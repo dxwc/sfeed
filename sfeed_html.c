@@ -81,6 +81,7 @@ int
 main(int argc, char *argv[])
 {
 	struct feed *f;
+	char *name;
 	FILE *fp;
 	int i;
 
@@ -119,8 +120,8 @@ main(int argc, char *argv[])
 		for (i = 1; i < argc; i++) {
 			if (!(feeds[i - 1] = calloc(1, sizeof(struct feed))))
 				err(1, "calloc");
-			feeds[i - 1]->name = xbasename(argv[i]);
-
+			name = ((name = strrchr(argv[i], '/'))) ? name + 1 : argv[i];
+			feeds[i - 1]->name = name;
 			if (!(fp = fopen(argv[i], "r")))
 				err(1, "fopen: %s", argv[i]);
 			printfeed(fp, feeds[i - 1]);

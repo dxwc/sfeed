@@ -236,8 +236,8 @@ int
 main(int argc, char *argv[])
 {
 	FILE *fpindex, *fpitems, *fpmenu, *fp;
-	int showsidebar = (argc > 1);
-	int i;
+	char *name;
+	int i, showsidebar = (argc > 1);
 	struct feed *f;
 
 	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
@@ -271,7 +271,8 @@ main(int argc, char *argv[])
 		for (i = 1; i < argc; i++) {
 			if (!(feeds[i - 1] = calloc(1, sizeof(struct feed))))
 				err(1, "calloc");
-			feeds[i - 1]->name = xbasename(argv[i]);
+			name = ((name = strrchr(argv[i], '/'))) ? name + 1 : argv[i];
+			feeds[i - 1]->name = name;
 
 			if (!(fp = fopen(argv[i], "r")))
 				err(1, "fopen: %s", argv[i]);

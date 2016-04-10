@@ -67,9 +67,8 @@ main(int argc, char *argv[])
 		for (i = 1; i < argc; i++) {
 			if (!(fp = fopen(argv[i], "r")))
 				err(1, "fopen: %s", argv[i]);
-			name = xbasename(argv[i]);
+			name = ((name = strrchr(argv[i], '/'))) ? name + 1 : argv[i];
 			printfeed(fp, name);
-			free(name);
 			if (ferror(fp))
 				err(1, "ferror: %s", argv[i]);
 			fclose(fp);
