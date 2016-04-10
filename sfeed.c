@@ -529,7 +529,7 @@ printfields(void)
 	if (ctx.fields[FeedFieldTime].str.data)
 		r = parsetime(ctx.fields[FeedFieldTime].str.data, &t);
 	if (r != -1)
-		printf("%ld", (long)t);
+		printf("%lld", (long long)t);
 	putchar(FieldSeparator);
 	string_print_trimmed(&ctx.fields[FeedFieldTitle].str);
 	putchar(FieldSeparator);

@@ -218,12 +218,12 @@ parseline(char *line, char *fields[FieldLast])
 int
 strtotime(const char *s, time_t *t)
 {
-	long l;
+	long long l;
 	char *e;
 
 	errno = 0;
-	l = strtol(s, &e, 10);
-	if (*s == '\0' || *e != '\0')
+	l = strtoll(s, &e, 10);
+	if (errno || *s == '\0' || *e)
 		return -1;
 	if (t)
 		*t = (time_t)l;
