@@ -77,10 +77,11 @@ parseuri(const char *s, struct uri *u, int rel)
 			return -1; /* port too long */
 		memcpy(u->port, p, i);
 		u->port[i] = '\0';
-		/* check for valid port */
+		/* check for valid port: range 1 - 65535 */
 		errno = 0;
 		l = strtoul(u->port, &endptr, 10);
-		if (errno || *endptr != '\0' || !l || l > 65535)
+		if (errno || u->port[0] == '\0' || *endptr ||
+		    !l || l > 65535)
 			return -1;
 		p = &p[i];
 	}
