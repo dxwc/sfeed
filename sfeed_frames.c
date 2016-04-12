@@ -144,18 +144,20 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 			line[--linelen] = '\0';
 		if (!parseline(line, fields))
 			break;
-		/* write content */
-		if (!normalizepath(fields[FieldTitle], name, sizeof(name)))
-			continue;
-		r = snprintf(filepath, sizeof(filepath), "%s/%s.html", dirpath, name);
-		if (r == -1 || (size_t)r >= sizeof(filepath))
-			errx(1, "snprintf: path truncation: '%s/%s.html'", dirpath, name);
 
 		parsedtime = 0;
 		strtotime(fields[FieldUnixTimestamp], &parsedtime);
-
 		if (!(tm = localtime(&parsedtime)))
 			err(1, "localtime");
+
+		if (!normalizepath(fields[FieldTitle], name, sizeof(name)))
+			continue;
+
+		r = snprintf(filepath, sizeof(filepath), "%s/%s-%lld.html",
+		             dirpath, name, (long long)parsedtime);
+		if (r == -1 || (size_t)r >= sizeof(filepath))
+			errx(1, "snprintf: path truncation: '%s/%s-%lld.html'",
+			        dirpath, name, (long long)parsedtime);
 
 		/* content file doesn't exist yet and has error? */
 		if ((fd = open(filepath, O_CREAT | O_EXCL | O_WRONLY,
