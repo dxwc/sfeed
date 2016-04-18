@@ -157,7 +157,6 @@ item content             - Newlines and TABs are escaped. Control characters
 item contenttype         - "html" or "plain".
 item id                  - RSS item GUID or Atom id.
 item author              - Item author.
-feed type                - "rss" or "atom".
 
 CAVEATS:
 - if a timezone is not supported (non-RFC-822) the UNIX timestamp is

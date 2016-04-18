@@ -26,9 +26,8 @@ struct uri {
 };
 
 enum {
-	FieldUnixTimestamp = 0, FieldTitle,
-	FieldLink, FieldContent, FieldContentType, FieldId, FieldAuthor,
-	FieldFeedType, FieldLast
+	FieldUnixTimestamp = 0, FieldTitle, FieldLink,
+	FieldContent, FieldContentType, FieldId, FieldAuthor, FieldLast
 };
 
 int     absuri(char *, size_t, const char *, const char *);
@@ -36,7 +35,6 @@ size_t  parseline(char *, char *[FieldLast]);
 int     parseuri(const char *, struct uri *, int);
 void    printutf8pad(FILE *, const char *, size_t, int);
 int     strtotime(const char *, time_t *);
-char *  xbasename(const char *);
 void    xmlencode(const char *, FILE *);
 
 #ifdef USE_PLEDGE

@@ -21,7 +21,6 @@ enum FeedType {
 	FeedTypeRSS  = 1,
 	FeedTypeAtom = 2
 };
-static const char *feedtypes[] = { "", "rss", "atom" };
 
 enum ContentType {
 	ContentTypeNone  = 0,
@@ -546,8 +545,6 @@ printfields(void)
 	string_print_trimmed(&ctx.fields[FeedFieldId].str);
 	putchar(FieldSeparator);
 	string_print_trimmed(&ctx.fields[FeedFieldAuthor].str);
-	putchar(FieldSeparator);
-	fputs(feedtypes[ctx.feedtype], stdout);
 	putchar('\n');
 }
 
