@@ -1,3 +1,35 @@
+v1.0 (unreleased)
+====
+
+* Simplified the sfeed(5) format:
+  * The formatted time field is removed.
+  * The feedtype field (values "atom" or "rss") is removed.
+  To convert your files from the previous format to the changed format you
+  can just remove the fields:
+      cd ~/.sfeed/feeds
+      for i in *; do cut -f 1,3-8 "$i" > /tmp/t; mv /tmp/t "$i"; done
+* Simpler and much faster time parsing in sfeed(1): like timegm(3), this is
+  also more portable.
+* 2038-proof: support 64-bit time_t, output truncated as long long int.
+* The format programs now use the localtime and a shorter time format:
+  "yyyy-mm-dd HH:MM" instead of "yyyy-mm-dd HH:MM:SS timezone".
+  If you run the programs on a system in a different timezone make sure to
+  update the TZ environment variable or change the source-code to show the UTC
+  offset.
+
+Minor fixes:
+* Check errno (ERANGE) when parsing UNIX timestamp from a sfeed(5) file.
+* sfeed_frames: don't make title of content a HTML anchor if it's empty.
+* sfeed_frames: make the filename of the content file more unique: use the
+  UNIX timestamp in the filename. This makes sure it won't overwrite older
+  content files anymore which had the same title, but a different timestamp.
+
+Documentation:
+* Add sfeed(5) man page which explains the feed file format, this information
+  is also still available in sfeed(1).
+* Rewrite some sentences so it is hopefully more clear.
+
+
 v0.9.1
 ======
 
