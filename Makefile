@@ -59,7 +59,7 @@ ${OBJ}: config.mk ${HDR}
 	${CC} ${LDFLAGS} -o $@ $< ${LIB}
 
 .c.o:
-	${CC} -c ${CFLAGS} ${CPPFLAGS} -o $@ -c $<
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ -c $<
 
 ${LIBUTIL}: ${LIBUTILOBJ}
 	${AR} rc $@ $?
