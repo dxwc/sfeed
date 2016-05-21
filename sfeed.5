@@ -11,6 +11,8 @@
 reads RSS or Atom feed data (XML) from stdin. It writes the feed data in a
 TAB-separated format to stdout.
 .Sh TAB-SEPARATED FORMAT FIELDS
+The items are saved in a TSV-like format.
+.Pp
 The fields: title, id, author are not allowed to have newlines and TABs, all
 whitespace characters are replaced by a single space character. Control
 characters are removed.
@@ -19,30 +21,30 @@ The content field can contain newlines and is escaped. TABs, newlines and '\\'
 are escaped with '\\', so it becomes: '\\t', '\\n' and '\\\\'. Other whitespace
 characters except space are removed. Control characters are removed.
 .Pp
-The order and format of the fields are:
+The order and content of the fields are:
 .Bl -tag -width 17n
-.It item timestamp
+.It timestamp
 UNIX timestamp in UTC+0, empty on parse failure.
-.It item title
-Title text, HTML in titles is treated as plain-text.
-.It item link
+.It title
+Title text, HTML code in titles is ignored and is treated as plain-text.
+.It link
 Absolute url, unsafe characters are encoded.
-.It item content
-Newlines and TABs are escaped. Control characters are removed. See the
-.Sx TAB-SEPARATED FORMAT FIELDS
-text.
-.It item content\-type
+.It content
+Content, can have plain-text or HTML code depending on the content\-type field.
+.It content\-type
 "html" or "plain".
-.It item id
+.It id
 RSS item GUID or Atom id.
-.It item author
+.It author
 Item author.
 .El
 .Sh SEE ALSO
-.Xr sfeed 1
+.Xr sfeed 1 ,
+.Xr sfeed_plain 1
 .Sh AUTHORS
 .An Hiltjo Posthuma Aq Mt hiltjo@codemadness.org
 .Sh CAVEATS
-if a timezone is not supported (non-RFC-822) the UNIX timestamp is interpreted
-as UTC+0.
+If a timezone is not in the RFC-822 or RFC-3332 format it is not supported and
+the UNIX timestamp is interpreted as UTC+0.
+.Pp
 HTML in titles is treated as plain-text.

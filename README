@@ -87,7 +87,7 @@ Platforms tested
 
 - Linux (glibc+gcc, musl-gcc, clang).
 - NetBSD
-- OpenBSD
+- OpenBSD: (gcc, pcc).
 - Windows (cygwin gcc, mingw).
 
 
@@ -132,36 +132,11 @@ feedname     - TAB-separated format containing all items per feed. The
 feedname.new - Temporary file used by sfeed_update(1) to merge items.
 
 
-TAB-separated format fields
----------------------------
+File format
+-----------
 
-The items are saved in a TSV-like format.
-
-The fields: title, id, author are not allowed to have newlines and TABs, all
-whitespace characters are replaced by a space character. Control characters are
-removed.
-
-The content field can contain newlines and TABS and are escaped. TABs, newlines
-and '\' are escaped with '\', so it becomes: '\t', '\n' and '\\'. Other
-whitespace characters except space are removed. Control characters are removed.
-
-The order and format of the fields are:
-
-item UNIX timestamp      - UNIX timestamp (UTC+0), empty on parse failure.
-item title               - Title text, HTML in titles is treated as
-                           plain-text.
-item link                - Absolute url, unsafe characters are encoded.
-item content             - Newlines and TABs are escaped. Control characters
-                           are removed. See the "TAB-separated format fields"
-                           text.
-item contenttype         - "html" or "plain".
-item id                  - RSS item GUID or Atom id.
-item author              - Item author.
-
-CAVEATS:
-- if a timezone is not supported (non-RFC-822) the UNIX timestamp is
-  interpreted as UTC+0.
-- HTML in titles is not supported on purpose.
+man 5 sfeed
+man 1 sfeed
 
 
 Usage and examples
