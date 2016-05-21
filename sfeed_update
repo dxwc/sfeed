@@ -86,8 +86,7 @@ feed() {
 			# overwrite old file with updated file
 			mv "${sfeedfilenew}" "${sfeedfile}"
 		else
-			# else just copy
-			mv "${tmpfeedfile}" "${sfeedfile}"
+			merge "/dev/null" "${tmpfeedfile}" > "${sfeedfile}"
 		fi
 	fi) &
 }
