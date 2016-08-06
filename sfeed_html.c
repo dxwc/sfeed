@@ -31,7 +31,6 @@ printfeed(FILE *fp, struct feed *f)
 		xmlencode(f->name, stdout);
 		fputs("</a></h2>\n", stdout);
 	}
-	fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", stdout);
 
 	while ((linelen = getline(&line, &linesize, fp)) > 0) {
 		if (line[linelen - 1] == '\n')
@@ -51,15 +50,9 @@ printfeed(FILE *fp, struct feed *f)
 		f->totalnew += isnew;
 		f->total++;
 
-		if (isnew)
-			fputs("<tr class=\"n\">", stdout);
-		else
-			fputs("<tr>", stdout);
-		fputs("<td nowrap valign=\"top\">", stdout);
-	        fprintf(stdout, "%04d-%02d-%02d&nbsp;%02d:%02d",
+	        fprintf(stdout, "%04d-%02d-%02d&nbsp;%02d:%02d ",
 		        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 		        tm->tm_hour, tm->tm_min);
-		fputs("</td><td nowrap valign=\"top\">", stdout);
 		if (isnew)
 			fputs("<b><u>", stdout);
 		if (islink) {
@@ -72,9 +65,8 @@ printfeed(FILE *fp, struct feed *f)
 			fputs("</a>", stdout);
 		if (isnew)
 			fputs("</u></b>", stdout);
-		fputs("</td></tr>\n", stdout);
+		fputs("\n", stdout);
 	}
-	fputs("</table>\n", stdout);
 }
 
 int
@@ -110,6 +102,7 @@ main(int argc, char *argv[])
 		fputs("\t\t<div id=\"items\">\n", stdout);
 	else
 		fputs("\t\t<div id=\"items\" class=\"nosidebar\">\n", stdout);
+	fputs("<pre>", stdout);
 
 	if (argc == 1) {
 		if (!(feeds[0] = calloc(1, sizeof(struct feed))))
@@ -132,7 +125,7 @@ main(int argc, char *argv[])
 			fclose(fp);
 		}
 	}
-	fputs("</div>\n", stdout); /* div items */
+	fputs("</pre>\n</div>\n", stdout); /* div items */
 
 	if (showsidebar) {
 		fputs("\t<div id=\"sidebar\">\n\t\t<ul>\n", stdout);

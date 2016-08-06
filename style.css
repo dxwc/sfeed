@@ -26,7 +26,7 @@ h2 {
 #sidebar a {
 	padding: 5px 3px 5px 10px;
 }
-#sidebar a, #items a {
+#sidebar a {
 	display: block;
 }
 #sidebar a, #items h2 a {
@@ -34,11 +34,6 @@ h2 {
 }
 div#items {
 	padding: 0 15px;
-}
-div#items table tr td {
-	white-space: nowrap;
-	font-size: 9pt;
-	padding: 1px;
 }
 body.noframe div#sidebar {
 	position: fixed;
@@ -68,15 +63,4 @@ body.frame .content {
 	padding: 0 1em;
 	font-family: sans;
 	font-size: medium;
-}
-/* show only new when body has newonly class */
-body.newonly tr,
-body.newonly li {
-	display: none;
-}
-body.newonly li.n {
-	display: list-item;
-}
-body.newonly tr.n {
-	display: table-row;
 }

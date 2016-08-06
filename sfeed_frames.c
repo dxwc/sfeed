@@ -138,7 +138,6 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		fputs("</a></h2>\n", fpitems);
 	}
 
-	fputs("<table cellpadding=\"0\" cellspacing=\"0\">\n", fpitems);
 	while ((linelen = getline(&line, &linesize, fpin)) > 0) {
 		if (line[linelen - 1] == '\n')
 			line[--linelen] = '\0';
@@ -216,17 +215,11 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		totalnew += isnew;
 		f->totalnew += isnew;
 		f->total++;
-		if (isnew)
-			fputs("<tr class=\"n\">", fpitems);
-		else
-			fputs("<tr>", fpitems);
-		fputs("<td nowrap valign=\"top\">", fpitems);
 
-                fprintf(fpitems, "%04d-%02d-%02d %02d:%02d ",
+                fprintf(fpitems, "%04d-%02d-%02d&nbsp;%02d:%02d ",
                        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
                        tm->tm_hour, tm->tm_min);
 
-		fputs("</td><td nowrap valign=\"top\">", fpitems);
 		if (isnew)
 			fputs("<b><u>", fpitems);
 		fputs("<a href=\"", fpitems);
@@ -236,9 +229,8 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		fputs("</a>", fpitems);
 		if (isnew)
 			fputs("</u></b>", fpitems);
-		fputs("</td></tr>\n", fpitems);
+		fputs("\n", fpitems);
 	}
-	fputs("</table>\n", fpitems);
 }
 
 int
@@ -271,7 +263,7 @@ main(int argc, char *argv[])
 		err(1, "fopen: items.html");
 	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
 	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>"
-	      "<body class=\"frame\"><div id=\"items\">", fpitems);
+	      "<body class=\"frame\"><div id=\"items\"><pre>", fpitems);
 
 	if (argc == 1) {
 		if (!(feeds[0] = calloc(1, sizeof(struct feed))))
@@ -293,7 +285,7 @@ main(int argc, char *argv[])
 			fclose(fp);
 		}
 	}
-	fputs("\n</div></body>\n</html>", fpitems); /* div items */
+	fputs("</pre>\n</div></body>\n</html>", fpitems); /* div items */
 
 	if (showsidebar) {
 		fputs("<html><head>"
