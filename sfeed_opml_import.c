@@ -76,8 +76,10 @@ xml_handler_attrentity(XMLParser *p, const char *tag, size_t taglen,
 int
 main(void)
 {
+#ifdef USE_PLEDGE
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
+#endif
 
 	parser.xmlattr = xml_handler_attr;
 	parser.xmlattrentity = xml_handler_attrentity;

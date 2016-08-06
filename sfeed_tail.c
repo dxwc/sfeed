@@ -91,8 +91,10 @@ main(int argc, char *argv[])
 	FILE *fp;
 	int i;
 
+#ifdef USE_PLEDGE
 	if (pledge(argc == 1 ? "stdio" : "stdio rpath", NULL) == -1)
 		err(1, "pledge");
+#endif
 
 	if (!(bucket = buckets = calloc(argc, sizeof(struct bucket))))
 		err(1, "calloc");

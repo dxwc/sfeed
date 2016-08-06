@@ -249,8 +249,10 @@ main(int argc, char *argv[])
 	int i, showsidebar = (argc > 1);
 	struct feed *f;
 
+#ifdef USE_PLEDGE
 	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
 		err(1, "pledge");
+#endif
 
 	if (!(feeds = calloc(argc, sizeof(struct feed *))))
 		err(1, "calloc");

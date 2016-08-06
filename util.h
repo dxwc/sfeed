@@ -1,5 +1,8 @@
 #include <stdint.h>
 #include <time.h>
+#ifdef USE_PLEDGE
+#include <unistd.h>
+#endif
 
 #undef strlcat
 size_t strlcat(char *, const char *, size_t);
@@ -36,12 +39,6 @@ int     parseuri(const char *, struct uri *, int);
 void    printutf8pad(FILE *, const char *, size_t, int);
 int     strtotime(const char *, time_t *);
 void    xmlencode(const char *, FILE *);
-
-#ifdef USE_PLEDGE
-#include <unistd.h>
-#else
-int     pledge(const char *, const char *[]);
-#endif
 
 #define ROT32(x, y) ((x << y) | (x >> (32 - y)))
 uint32_t murmur3_32(const char *, uint32_t, uint32_t);

@@ -14,14 +14,6 @@
 
 #include "util.h"
 
-#ifndef USE_PLEDGE
-int
-pledge(const char *promises, const char *paths[])
-{
-	return 0;
-}
-#endif
-
 int
 parseuri(const char *s, struct uri *u, int rel)
 {
