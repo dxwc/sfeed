@@ -360,17 +360,13 @@ gettzoffset(const char *s)
 		{ STRP("CST"), -6 * 3600 },
 		{ STRP("EDT"), -4 * 3600 },
 		{ STRP("EST"), -5 * 3600 },
-		{ STRP("GMT"),         0 },
 		{ STRP("MDT"), -6 * 3600 },
 		{ STRP("MST"), -7 * 3600 },
 		{ STRP("PDT"), -7 * 3600 },
 		{ STRP("PST"), -8 * 3600 },
-		{ STRP("UT"),          0 },
-		{ STRP("UTC"),         0 },
 		{ STRP("M"),   -2 * 3600 },
 		{ STRP("N"),    1 * 3600 },
 		{ STRP("Y"),   12 * 3600 },
-		{ STRP("Z"),           0 },
 	};
 	const char *p;
 	int tzhour = 0, tzmin = 0;
