@@ -20,12 +20,11 @@ Initial setup:
 	cp sfeedrc.example "$HOME/.sfeed/sfeedrc"
 	cp style.css "$HOME/.sfeed/style.css"
 
-Edit the configuration file containing your feed to update:
+Edit the configuration file and append any RSS/Atom feeds:
 
 	$EDITOR "$HOME/.sfeed/sfeedrc"
 
-or you you can use sfeed_opml_import(1) to import your existing
-subscriptions from the OPML format:
+or you can import existing OPML subscriptions using sfeed_opml_import(1):
 
 	sfeed_opml_import < file.opml > "$HOME/sfeed/sfeedrc"
 
