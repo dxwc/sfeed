@@ -2,6 +2,8 @@
 #include <time.h>
 #ifdef USE_PLEDGE
 #include <unistd.h>
+#else
+#define pledge(p1,p2) 0
 #endif
 
 #undef strlcat
