@@ -78,10 +78,8 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 int
 main(int argc, char *argv[])
 {
-#ifdef USE_PLEDGE
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
-#endif
 
 	if (argc > 1)
 		strlcpy(basehref, argv[1], sizeof(basehref));

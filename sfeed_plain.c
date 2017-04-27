@@ -53,10 +53,8 @@ main(int argc, char *argv[])
 	char *name;
 	int i;
 
-#ifdef USE_PLEDGE
 	if (pledge(argc == 1 ? "stdio" : "stdio rpath", NULL) == -1)
 		err(1, "pledge");
-#endif
 
 	if ((comparetime = time(NULL)) == -1)
 		err(1, "time");

@@ -778,10 +778,8 @@ xml_handler_end_el(XMLParser *p, const char *name, size_t namelen, int isshort)
 int
 main(int argc, char *argv[])
 {
-#ifdef USE_PLEDGE
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
-#endif
 
 	if (argc > 1)
 		baseurl = argv[1];

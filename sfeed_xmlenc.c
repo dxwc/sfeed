@@ -46,10 +46,8 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 int
 main(void)
 {
-#ifdef USE_PLEDGE
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
-#endif
 
 	parser.xmlattr = xmlattr;
 	parser.xmltagend = xmltagend;
