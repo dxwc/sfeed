@@ -122,8 +122,7 @@ static FeedTag rsstags[] = {
 	{ STRP("link"),              RSSTagLink              },
 	{ STRP("media:description"), RSSTagMediaDescription  },
 	{ STRP("pubdate"),           RSSTagPubdate           },
-	{ STRP("title"),             RSSTagTitle             },
-	{ NULL, 0, -1 }
+	{ STRP("title"),             RSSTagTitle             }
 };
 /* Atom, alphabetical order */
 static FeedTag atomtags[] = {
@@ -137,8 +136,7 @@ static FeedTag atomtags[] = {
 	{ STRP("published"),         AtomTagPublished        },
 	{ STRP("summary"),           AtomTagSummary          },
 	{ STRP("title"),             AtomTagTitle            },
-	{ STRP("updated"),           AtomTagUpdated          },
-	{ NULL, 0, -1 }
+	{ STRP("updated"),           AtomTagUpdated          }
 };
 
 /* map tagid type to RSS/Atom field */
@@ -176,25 +174,30 @@ static XMLParser parser; /* XML parser state */
 static enum TagId
 gettag(enum FeedType feedtype, const char *name, size_t namelen)
 {
-	const FeedTag *tags;
 	size_t i;
 
-	/* optimization: these are always non-matching */
-	if (namelen < 2 || namelen > 17)
-		return TagUnknown;
-
 	switch (feedtype) {
-	case FeedTypeRSS:  tags = &rsstags[0];  break;
-	case FeedTypeAtom: tags = &atomtags[0]; break;
-	default:           return TagUnknown;
+	case FeedTypeRSS:
+		/* optimization: these are always non-matching */
+		if (namelen < 4 || namelen > 17)
+			return TagUnknown;
+
+		for (i = 0; i < sizeof(rsstags) / sizeof(rsstags[0]); i++)
+			if (istag(rsstags[i].name, rsstags[i].len, name, namelen))
+				return rsstags[i].id;
+		return TagUnknown;
+	case FeedTypeAtom:
+		/* optimization: these are always non-matching */
+		if (namelen < 2 || namelen > 17)
+			return TagUnknown;
+
+		for (i = 0; i < sizeof(atomtags) / sizeof(atomtags[0]); i++)
+			if (istag(atomtags[i].name, atomtags[i].len, name, namelen))
+				return atomtags[i].id;
+		return TagUnknown;
+	default:
+		return TagUnknown;
 	}
-
-	/* TODO: test if checking for sort order matters performance-wise */
-	for (i = 0; tags[i].name; i++)
-		if (istag(tags[i].name, tags[i].len, name, namelen))
-			return tags[i].id;
-
-	return TagUnknown;
 }
 
 /* Clear string only; don't free, prevents unnecessary reallocation. */
