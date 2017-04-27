@@ -8,18 +8,20 @@
 .Nm
 .Sh DESCRIPTION
 .Xr sfeed 1
-reads RSS or Atom feed data (XML) from stdin. It writes the feed data in a
-TAB-separated format to stdout.
+reads RSS or Atom feed data (XML) from stdin.
+It writes the feed data in a TAB-separated format to stdout.
 .Sh TAB-SEPARATED FORMAT FIELDS
 The items are saved in a TSV-like format.
 .Pp
 The fields: title, id, author are not allowed to have newlines and TABs, all
-whitespace characters are replaced by a single space character. Control
-characters are removed.
+whitespace characters are replaced by a single space character.
+Control characters are removed.
 .Pp
-The content field can contain newlines and is escaped. TABs, newlines and '\\'
-are escaped with '\\', so it becomes: '\\t', '\\n' and '\\\\'. Other whitespace
-characters except space are removed. Control characters are removed.
+The content field can contain newlines and is escaped.
+TABs, newlines and '\\' are escaped with '\\', so it becomes: '\\t', '\\n'
+and '\\\\'.
+Other whitespace characters except spaces are removed.
+Control characters are removed.
 .Pp
 The order and content of the fields are:
 .Bl -tag -width 17n
@@ -30,8 +32,8 @@ Title text, HTML code in titles is ignored and is treated as plain-text.
 .It link
 Absolute url, unsafe characters are encoded.
 .It content
-Content, can have plain-text or HTML code depending on the content\-type field.
-.It content\-type
+Content, can have plain-text or HTML code depending on the content-type field.
+.It content-type
 "html" or "plain".
 .It id
 RSS item GUID or Atom id.

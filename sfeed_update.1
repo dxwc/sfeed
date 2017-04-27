@@ -9,8 +9,8 @@
 .Op Ar sfeedrc
 .Sh DESCRIPTION
 .Nm
-updates feeds files and merges the new data with the previous files. These
-are the files in the directory
+updates feeds files and merges the new data with the previous files.
+These are the files in the directory
 .Pa $HOME/.sfeed/feeds
 by default.
 .Sh OPTIONS
@@ -18,7 +18,8 @@ by default.
 .It Ar sfeedrc
 Config file, if not specified uses the path
 .Pa $HOME/.sfeed/sfeedrc
-by default. See the
+by default.
+See the
 .Sx FILES READ
 section for more information.
 .El
@@ -33,8 +34,9 @@ use
 .Xr curl 1 ,
 .Xr wget 1 ,
 or an other network downloader or you can override the merge() function to
-change the merge logic. The function feeds() is called to fetch the feeds. By
-default the function feed() is executed concurrently as a background job to
+change the merge logic.
+The function feeds() is called to fetch the feeds.
+By default the function feed() is executed concurrently as a background job to
 speedup updating.
 .El
 .Sh FILES WRITTEN

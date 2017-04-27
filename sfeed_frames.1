@@ -11,7 +11,8 @@
 .Nm
 formats feed data (TSV) from
 .Xr sfeed 1
-to HTML. It reads TSV data from stdin or
+to HTML.
+It reads TSV data from stdin or
 .Ar file
 and writes HTML files to the current directory.
 If no
@@ -32,9 +33,10 @@ in items.html.
 .Sh FILE STRUCTURE
 Items for each feed category are in the format: feedname/itemname.html.
 The feedname and item names are normalized, whitespace characters are replaced
-with a \- character, multiple whitespaces are replaced by a single \- character
-and trailing whitespace will be removed. The itemname is based on the title of
-the items. The feedname and title is truncated to a maximum of 128 bytes.
+with a - character, multiple whitespaces are replaced by a single - character
+and trailing whitespace will be removed.
+The itemname is based on the title of the items.
+The feedname and title is truncated to a maximum of 128 bytes.
 The maximum length of the path is PATH_MAX or filesystem-specific (truncated).
 .Sh SEE ALSO
 .Xr sfeed 1 ,
@@ -44,6 +46,7 @@ The maximum length of the path is PATH_MAX or filesystem-specific (truncated).
 .Sh SECURITY CONSIDERATIONS
 Each item content file contains the content formatted as HTML, if the feed data
 contains HTML like Javascripts, tracking cookies, custom styles and such
-these will also be displayed. Due to the crazy nature of "the web" these things
-are complex to filter. Some security and privacy can be gained by using an
-adblocker, script blocker and to set your browser settings more strictly.
+these will also be displayed.
+Due to the crazy nature of "the web" these things are complex to filter.
+Some security and privacy can be gained by using an adblocker, script blocker
+and to set your browser settings more strictly.
