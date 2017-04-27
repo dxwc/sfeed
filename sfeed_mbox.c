@@ -35,7 +35,7 @@ read:
 			case 't':  fputc('\t', fp); break;
 			case 'n':
 				fputc('\n', fp);
-				for (s++; *s && *s == '>'; s++)
+				for (s++; *s == '>'; s++)
 					fputc('>', fp);
 				/* escape "From ", mboxrd-style. */
 				if (!strncmp(s, "From ", 5))
@@ -45,7 +45,7 @@ read:
 			break;
 		case '\n':
 			fputc((int)*s, fp);
-			for (s++; *s && *s == '>'; s++)
+			for (s++; *s == '>'; s++)
 				fputc('>', fp);
 			/* escape "From ", mboxrd-style. */
 			if (!strncmp(s, "From ", 5))
