@@ -81,13 +81,19 @@ Optional dependencies
 - mandoc for documentation: http://mdocml.bsd.lv/ .
 
 
-Platforms tested
-----------------
+OS tested
+---------
 
 - Linux (glibc+gcc, musl-gcc, clang).
 - NetBSD
 - OpenBSD: (gcc, pcc).
 - Windows (cygwin gcc, mingw).
+- HaikuOS
+
+
+Architectures tested
+--------------------
+amd64, ARM, i386.
 
 
 Files
@@ -135,6 +141,7 @@ File format
 -----------
 
 man 5 sfeed
+man 5 sfeedrc
 man 1 sfeed
 
 
