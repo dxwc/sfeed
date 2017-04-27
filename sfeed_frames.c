@@ -64,7 +64,7 @@ printcontentxml(const char *s, FILE *fp)
 		/* XML entities */
 		case '<':  fputs("&lt;",   fp); break;
 		case '>':  fputs("&gt;",   fp); break;
-		case '\'': fputs("&apos;", fp); break;
+		case '\'': fputs("&#39;",  fp); break;
 		case '&':  fputs("&amp;",  fp); break;
 		case '"':  fputs("&quot;", fp); break;
 		default:   fputc((int)*s, fp);
