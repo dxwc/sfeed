@@ -1,4 +1,4 @@
-.Dd August 5, 2015
+.Dd June 29, 2017
 .Dt SFEED_PLAIN 1
 .Os
 .Sh NAME
@@ -23,7 +23,18 @@ If no
 .Ar file
 parameters are specified and so the data is read from stdin the feed name
 is empty.
-.Xr sfeed 1
+.Pp
+.Nm
+aligns the output.
+It shows a maximum of 70 column-wide characters for the title and outputs
+an ellipsis symbol if the title is longer and truncated.
+Make sure the environment variable
+.Ev LC_CTYPE
+is set to a UTF-8 locale, so it can determine the proper column-width
+per rune, using
+.Xr mbtowc 3
+and
+.Xr wcwidth 3 .
 .Sh SEE ALSO
 .Xr sfeed 1 ,
 .Xr sfeed_html 1
