@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <err.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,6 +53,11 @@ main(int argc, char *argv[])
 	FILE *fp;
 	char *name;
 	int i;
+
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
+
+	setlocale(LC_CTYPE, "");
 
 	if (pledge(argc == 1 ? "stdio" : "stdio rpath", NULL) == -1)
 		err(1, "pledge");
