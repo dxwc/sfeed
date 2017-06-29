@@ -245,20 +245,26 @@ void
 printutf8pad(FILE *fp, const char *s, size_t len, int pad)
 {
 	wchar_t w;
-	size_t n = 0, i;
-	int r;
+	size_t col = 0, i, slen;
+	int rl, wc;
 
-	for (i = 0; *s && n < len; i++, s++) {
-		if (ISUTF8(*s)) {
-			if ((r = mbtowc(&w, s, 4)) == -1)
-				break;
-			if ((r = wcwidth(w)) == -1)
-				r = 1;
-			n += (size_t)r;
+	if (!len)
+		return;
+
+	slen = strlen(s);
+	for (i = 0; i < slen && col < len + 1; i += rl) {
+		if ((rl = mbtowc(&w, &s[i], slen - i < 4 ? slen - i : 4)) <= 0)
+			break;
+		if ((wc = wcwidth(w)) == -1)
+			wc = 1;
+		col += (size_t)wc;
+		if (col >= len && s[i + rl]) {
+			fputs("\xe2\x80\xa6", fp);
+			break;
 		}
-		putc(*s, fp);
+		fwrite(&s[i], 1, rl, fp);
 	}
-	for (; n < len; n++)
+	for (; col < len; col++)
 		putc(pad, fp);
 }
 
