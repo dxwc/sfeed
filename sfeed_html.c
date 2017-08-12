@@ -147,7 +147,7 @@ main(int argc, char *argv[])
 		fputs("\t\t</ul>\n\t</div>\n", stdout);
 	}
 
-	fprintf(stdout, "\t</body>\n\t<title>Newsfeed (%lu)</title>\n</html>",
+	fprintf(stdout, "\t</body>\n\t<title>Newsfeed (%lu)</title>\n</html>\n",
 	        totalnew);
 
 	return 0;

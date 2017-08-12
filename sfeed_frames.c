@@ -193,7 +193,7 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 				printcontentxml(fields[FieldContent], fpcontent);
 				fputs("</pre>", fpcontent);
 			}
-			fputs("</div></body></html>", fpcontent);
+			fputs("</div></body></html>\n", fpcontent);
 
 			/* set modified and access time of file to time of item. */
 			if (parsedtime) {
@@ -283,7 +283,7 @@ main(int argc, char *argv[])
 			fclose(fp);
 		}
 	}
-	fputs("</pre>\n</div></body>\n</html>", fpitems); /* div items */
+	fputs("</pre>\n</div></body>\n</html>\n", fpitems); /* div items */
 
 	if (showsidebar) {
 		fputs("<html><head>"
@@ -307,7 +307,7 @@ main(int argc, char *argv[])
 				fputs("</u></b>", fpmenu);
 			fputs("</a><br/>\n", fpmenu);
 		}
-		fputs("</div></body></html>", fpmenu);
+		fputs("</div></body></html>\n", fpmenu);
 	}
 	fputs("<!DOCTYPE html><html><head>\n\t<title>Newsfeed (", fpindex);
 	fprintf(fpindex, "%lu", totalnew);
@@ -325,7 +325,7 @@ main(int argc, char *argv[])
 	      "\t\t<frame name=\"content\" target=\"content\">\n"
 	      "\t</frameset>\n"
 	      "</frameset>\n"
-	      "</html>", fpindex);
+	      "</html>\n", fpindex);
 
 	fclose(fpitems);
 	fclose(fpmenu);
