@@ -17,6 +17,10 @@ SCRIPTS = \
 	sfeed_update
 
 SRC = ${BIN:=.c}
+HDR = \
+	tree.h\
+	util.h\
+	xml.h
 
 LIBUTIL = libutil.a
 LIBUTILSRC = \
@@ -43,9 +47,6 @@ DOC = \
 	README\
 	README.xml\
 	TODO
-HDR = \
-	util.h\
-	xml.h
 
 all: $(BIN)
 
