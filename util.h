@@ -41,6 +41,3 @@ int     parseuri(const char *, struct uri *, int);
 void    printutf8pad(FILE *, const char *, size_t, int);
 int     strtotime(const char *, time_t *);
 void    xmlencode(const char *, FILE *);
-
-#define ROT32(x, y) ((x << y) | (x >> (32 - y)))
-uint32_t murmur3_32(const char *, uint32_t, uint32_t);

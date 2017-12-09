@@ -16,6 +16,60 @@ static size_t linesize;
 static char host[256], *user, mtimebuf[32];
 static const uint32_t seed = 1167266473;
 
+#define ROT32(x, y) ((x << y) | (x >> (32 - y)))
+
+uint32_t
+murmur3_32(const char *key, uint32_t len, uint32_t seed)
+{
+	static const uint32_t c1 = 0xcc9e2d51;
+	static const uint32_t c2 = 0x1b873593;
+	static const uint32_t r1 = 15;
+	static const uint32_t r2 = 13;
+	static const uint32_t m = 5;
+	static const uint32_t n = 0xe6546b64;
+	uint32_t hash = seed;
+	const int nblocks = len / 4;
+	const uint32_t *blocks = (const uint32_t *) key;
+	int i;
+	uint32_t k, k1;
+	const uint8_t *tail;
+
+	for (i = 0; i < nblocks; i++) {
+		k = blocks[i];
+		k *= c1;
+		k = ROT32(k, r1);
+		k *= c2;
+
+		hash ^= k;
+		hash = ROT32(hash, r2) * m + n;
+	}
+	tail = (const uint8_t *) (key + nblocks * 4);
+
+	k1 = 0;
+	switch (len & 3) {
+	case 3:
+		k1 ^= tail[2] << 16;
+	case 2:
+		k1 ^= tail[1] << 8;
+	case 1:
+		k1 ^= tail[0];
+
+		k1 *= c1;
+		k1 = ROT32(k1, r1);
+		k1 *= c2;
+		hash ^= k1;
+	}
+
+	hash ^= len;
+	hash ^= (hash >> 16);
+	hash *= 0x85ebca6b;
+	hash ^= (hash >> 13);
+	hash *= 0xc2b2ae35;
+	hash ^= (hash >> 16);
+
+	return hash;
+}
+
 /* Unescape / decode fields printed by string_print_encoded()
  * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
  * are ignored: "\z" etc. Mangle "From " in mboxrd style (always prefix >). */
@@ -75,29 +129,27 @@ printfeed(FILE *fp, const char *feedname)
 		/* can't convert: default to formatted time for time_t 0. */
 		if (!gmtime_r(&parsedtime, &tm) ||
 		    !strftime(timebuf, sizeof(timebuf),
-		    "%a, %d %b %Y %H:%M +0000", &tm))
+		              "%a, %d %b %Y %H:%M +0000", &tm))
 			strlcpy(timebuf, "Thu, 01 Jan 1970 00:00 +0000",
 		                sizeof(timebuf));
 
 		/* mbox + mail header */
-		printf("From MAILER-DAEMON %s\n"
-			"Date: %s\n"
-			"From: %s <sfeed@>\n"
-			"To: %s <%s@%s>\n"
-			"Subject: %s\n"
-			"Message-ID: <%s%s%"PRIu32"@%s>\n"
-			"Content-Type: text/%s; charset=UTF-8\n"
-			"Content-Transfer-Encoding: binary\n"
-			"X-Feedname: %s\n"
-			"\n",
-			mtimebuf, timebuf,
-			fields[FieldAuthor][0] ? fields[FieldAuthor] : "anonymous",
-			user, user, host, fields[FieldTitle],
-			fields[FieldUnixTimestamp],
-			fields[FieldUnixTimestamp][0] ? "." : "",
-			murmur3_32(line, (size_t)linelen, seed),
-			feedname[0] ? feedname : "unnamed",
-			fields[FieldContentType], feedname);
+		printf("From MAILER-DAEMON %s\n", mtimebuf);
+		printf("Date: %s\n", timebuf);
+		printf("From: %s <sfeed@>\n", fields[FieldAuthor][0] ? fields[FieldAuthor] : "unknown");
+		printf("To: %s <%s@%s>\n", user, user, host);
+		if (feedname[0])
+			printf("Subject: [%s] %s\n", feedname, fields[FieldTitle]);
+		else
+			printf("Subject: %s\n", fields[FieldTitle]);
+		printf("Message-ID: <%s%s%"PRIu32"@%s>\n",
+		       fields[FieldUnixTimestamp],
+		       fields[FieldUnixTimestamp][0] ? "." : "",
+		       murmur3_32(line, (size_t)linelen, seed),
+		       feedname);
+		printf("Content-Type: text/%s; charset=UTF-8\n", fields[FieldContentType]);
+		printf("Content-Transfer-Encoding: binary\n");
+		printf("X-Feedname: %s\n\n", feedname);
 
 		if (!strcmp(fields[FieldContentType], "html")) {
 			fputs("<p>Link: <a href=\"", stdout);
