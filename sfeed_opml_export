@@ -25,7 +25,8 @@ loadconfig() {
 # override feeds function to ouput opml XML.
 # feed(name, feedurl, [basesiteurl], [encoding])
 feed() {
-	printf '\t\t<outline title="%s" text="%s" xmlUrl="%s" htmlUrl="%s"/>\n' "$1" "$1" "$2" "$3"
+	printf '\t<outline title="%s" text="%s" xmlUrl="%s" htmlUrl="%s"/>\n' \
+		"$1" "$1" "$2" "$3"
 }
 
 # load config file.
@@ -34,10 +35,10 @@ loadconfig "$1"
 cat <<!
 <?xml version="1.0" encoding="UTF-8"?>
 <opml version="1.0">
-    <head>
-        <title>opml export from sfeed</title>
-    </head>
-    <body>
+<head>
+	<title>opml export from sfeed</title>
+</head>
+<body>
 !
 
 feeds
@@ -45,6 +46,6 @@ feeds
 wait
 
 cat <<!
-    </body>
+</body>
 </opml>
 !
