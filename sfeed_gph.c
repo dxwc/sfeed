@@ -55,28 +55,6 @@ utf8pad(char *buf, size_t bufsiz, const char *s, size_t len, int pad)
 	return 0;
 }
 
-/* Escape characters in text in geomyidae .gph format,
-   newlines are ignored */
-void
-gphtext(FILE *fp, const char *s, size_t len)
-{
-	size_t i;
-
-	for (i = 0; *s && i < len; i++) {
-		switch (s[i]) {
-		case '\r': /* ignore CR */
-		case '\n': /* ignore LF */
-			break;
-		case '\t':
-			fputs("        ", fp);
-			break;
-		default:
-			fputc(s[i], fp);
-			break;
-		}
-	}
-}
-
 /* Escape characters in links in geomyidae .gph format */
 void
 gphlink(FILE *fp, const char *s, size_t len)
