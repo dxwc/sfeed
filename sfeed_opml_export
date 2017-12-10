@@ -22,11 +22,20 @@ loadconfig() {
 	fi
 }
 
+# escape(s)
+escape() {
+	printf '%s' "$1" | sed 's@"@\&quot;@g'
+}
+
 # override feeds function to ouput opml XML.
 # feed(name, feedurl, [basesiteurl], [encoding])
 feed() {
+	name=$(escape "$1")
+	xmlurl=$(escape "$2")
+	htmlurl=$(escape "$3")
+
 	printf '\t<outline title="%s" text="%s" xmlUrl="%s" htmlUrl="%s"/>\n' \
-		"$1" "$1" "$2" "$3"
+		"${name}" "${name}" "${xmlurl}" "${htmlurl}"
 }
 
 # load config file.

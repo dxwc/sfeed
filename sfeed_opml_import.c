@@ -16,9 +16,13 @@ static char url[2048], text[256], title[256];
 static void
 printsafe(const char *s)
 {
-	for (; *s; s++)
-		if (!iscntrl((int)*s) && *s != '\'' && *s != '\\')
-			putchar((int)*s);
+	for (; *s; s++) {
+		if (iscntrl((int)*s))
+			continue;
+		if (*s == '\\' || *s == '\'')
+			putchar('\\');
+		putchar((int)*s);
+	}
 }
 
 static void
