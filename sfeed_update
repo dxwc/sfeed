@@ -31,9 +31,9 @@ loadconfig() {
 # merge raw files.
 # merge(oldfile, newfile)
 merge() {
-	# unique sort by id, link, title.
+	# unique sort by id, title, link.
 	# order by timestamp (desc).
-	(sort -t '	' -u -k6,6 -k3,3 -k2,2 "$1" "$2" 2>/dev/null) |
+	(sort -t '	' -u -k6,6 -k2,2 -k3,3 "$1" "$2" 2>/dev/null) |
 	sort -t '	' -k1rn,1
 }
 
@@ -63,21 +63,26 @@ convertencoding() {
 # feed(name, feedurl, [basesiteurl], [encoding])
 feed() {
 	(name="$1"
-	tmpfeedfile="${sfeedtmpdir}/${name}"
+	filename="$(printf '%s' "$1" | sed -E 's@[^a-zA-Z0-9]+@_@g')"
+	feedurl="$2"
+	basesiteurl="$3"
+	tmpfeedfile="${sfeedtmpdir}/${filename}"
 	tmpencfile=""
 	encoding="$4"
-	sfeedfile="${sfeedpath}/$1"
+	sfeedfile="${sfeedpath}/${filename}"
 	if [ ! "${encoding}" = "" ]; then
-		fetchfeed "$2" "$1" "${sfeedfile}" | convertencoding "${encoding}" "utf-8"
+		fetchfeed "${feedurl}" "${name}" "${sfeedfile}" | \
+			convertencoding "${encoding}" "utf-8"
 	else # detect encoding.
 		tmpencfile="${tmpfeedfile}.enc"
-		fetchfeed "$2" "$1" "${sfeedfile}" > "${tmpencfile}"
+		fetchfeed "${feedurl}" "${name}" "${sfeedfile}" > "${tmpencfile}"
 		detectenc=$(sfeed_xmlenc < "${tmpencfile}")
 		convertencoding "${detectenc}" "utf-8" < "${tmpencfile}"
-	fi | sfeed "$3" > "${tmpfeedfile}"
+	fi | sfeed "${basesiteurl}" | \
+		awk -v "n=${name}" '{ print $0 "	" n }' > "${tmpfeedfile}"
 
 	# get new data and merge with old.
-	sfeedfilenew="${sfeedpath}/${name}.new"
+	sfeedfilenew="${sfeedpath}/${filename}.new"
 	# new feed data is non-empty.
 	if [ -s "${tmpfeedfile}" ]; then
 		# if file exists, merge
