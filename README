@@ -28,7 +28,7 @@ or you can import existing OPML subscriptions using sfeed_opml_import(1):
 
 	sfeed_opml_import < file.opml > "$HOME/sfeed/sfeedrc"
 
-Update feeds, this script merges and sorts the items aswell:
+Update feeds, this script merges the new items:
 
 	sfeed_update
 
