@@ -46,6 +46,8 @@ xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort)
 
 	if (absuri(abslink, sizeof(abslink), feedlink, basehref) != -1)
 		fputs(abslink, stdout);
+	else
+		fputs(feedlink, stdout);
 	fputc('\t', stdout);
 	printfeedtype(feedtype, stdout);
 	putchar('\n');

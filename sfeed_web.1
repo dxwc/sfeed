@@ -1,4 +1,4 @@
-.Dd December 25, 2014
+.Dd December 13, 2017
 .Dt SFEED_WEB 1
 .Os
 .Sh NAME
@@ -20,14 +20,14 @@ Optional base url to use for found feed urls that are relative.
 url<TAB>content\-type<newline>
 .Bl -tag -width Ds
 .It url
-Found absolute url.
+Found relative or absolute url.
 If the url is relative and the
 .Ar baseurl
 option is
 specified then the url is made absolute.
 If the url is relative and no
 .Ar baseurl
-option is specified it is empty.
+option is specified then it is printed as is.
 .It content\-type
 Usually application/atom+xml or application/rss+xml.
 .El
