@@ -90,8 +90,7 @@ xml_parseattrs(XMLParser *x)
 					break;
 				}
 			}
-			namelen = 0;
-			endname = 0;
+			namelen = endname = 0;
 		} else if (namelen < sizeof(x->name) - 1) {
 			x->name[namelen++] = c;
 		}
@@ -221,7 +220,7 @@ xml_codepointtoutf8(uint32_t cp, uint32_t *utf)
 ssize_t
 xml_namedentitytostr(const char *e, char *buf, size_t bufsiz)
 {
-	const struct {
+	static const struct {
 		char *entity;
 		int c;
 	} entities[] = {
@@ -268,7 +267,7 @@ xml_numericentitytostr(const char *e, char *buf, size_t bufsiz)
 		return -1;
 
 	/* not a numeric entity */
-	if (!(e[0] == '&' && e[1] == '#'))
+	if (e[0] != '&' || e[1] != '#')
 		return 0;
 
 	/* e[1] == '#', numeric / hexadecimal entity */
