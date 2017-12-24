@@ -11,7 +11,7 @@
 #include "util.h"
 
 static int firsttime;
-static int runs;
+static int sleepsecs;
 static char *line;
 static size_t linesize;
 time_t comparetime;
@@ -31,9 +31,9 @@ linecmp(struct line *e1, struct line *e2)
 
 	if ((r = strcmp(e1->id, e2->id)))
 		return r;
-	if ((r = strcmp(e1->link, e2->link)))
+	else if ((r = strcmp(e1->title, e2->title)))
 		return r;
-	return strcmp(e1->title, e2->title);
+	return strcmp(e1->link, e2->link);
 }
 RB_HEAD(linetree, line) head = RB_INITIALIZER(&head);
 RB_GENERATE_STATIC(linetree, line, entry, linecmp)
@@ -61,10 +61,11 @@ static void
 printfeed(FILE *fp, const char *feedname)
 {
 	struct line *add, search;
-	char *fields[FieldLast];
+	char *fields[FieldLast], *s;
 	ssize_t linelen;
 	time_t parsedtime;
 	struct tm *tm;
+	int i;
 
 	while ((linelen = getline(&line, &linesize, fp)) > 0) {
 		if (line[linelen - 1] == '\n')
@@ -73,7 +74,8 @@ printfeed(FILE *fp, const char *feedname)
 		if (!parseline(line, fields))
 			break;
 		parsedtime = 0;
-		strtotime(fields[FieldUnixTimestamp], &parsedtime);
+		if (strtotime(fields[FieldUnixTimestamp], &parsedtime))
+			continue;
 		if (!(tm = localtime(&parsedtime)))
 			err(1, "localtime");
 
@@ -105,13 +107,26 @@ printfeed(FILE *fp, const char *feedname)
 		if (firsttime)
 			continue;
 
-		if (feedname[0])
+		/* output parsed line: it may not be the same as the input. */
+		for (i = 0; i < FieldLast; i++) {
+			if (i)
+				putchar('\t');
+			fputs(fields[i], stdout);
+		}
+		putchar('\n');
+		fflush(stdout);
+
+#if 0
+		if (fields[FieldFeedName][0])
+			printf("%-15.15s  ", fields[FieldFeedName]);
+		else if (feedname[0])
 			printf("%-15.15s  ", feedname);
 		printf("%04d-%02d-%02d %02d:%02d  ",
 		       tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 		       tm->tm_hour, tm->tm_min);
 		printutf8pad(stdout, fields[FieldTitle], 70, ' ');
 		printf(" %s\n", fields[FieldLink]);
+#endif
 	}
 }
 
@@ -120,7 +135,7 @@ main(int argc, char *argv[])
 {
 	char *name;
 	FILE *fp;
-	int i;
+	int i, slept = 0;
 
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
@@ -130,7 +145,12 @@ main(int argc, char *argv[])
 	if (pledge(argc == 1 ? "stdio" : "stdio rpath", NULL) == -1)
 		err(1, "pledge");
 
-	for (runs = 0, firsttime = (argc > 1); ; ++runs, firsttime = 0) {
+	if (argc == 1)
+		sleepsecs = 1;
+	else
+		sleepsecs = 300;
+
+	for (firsttime = (argc > 1); ; firsttime = 0) {
 		if ((comparetime = time(NULL)) == -1)
 			err(1, "time");
 		/* 1 day is old news */
@@ -148,12 +168,16 @@ main(int argc, char *argv[])
 				fclose(fp);
 			}
 		}
-		sleep(300);
-		/* gc once every 12 runs, each run takes some CPU time and
-		   a 5 minute sleep */
-		if (runs && (runs % 12) == 0) {
+		// DEBUG: TODO: gc first run.
+		gc();
+
+		sleep(sleepsecs);
+		slept += sleepsecs;
+
+		/* gc once every hour (excluding run-time) */
+		if (slept >= 3600) {
 			gc();
-			runs = 0;
+			slept = 0;
 		}
 	}
 	return 0;
