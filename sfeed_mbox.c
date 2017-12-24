@@ -125,7 +125,8 @@ printfeed(FILE *fp, const char *feedname)
 		if (!parseline(line, fields))
 			break;
 		parsedtime = 0;
-		strtotime(fields[FieldUnixTimestamp], &parsedtime);
+		if (strtotime(fields[FieldUnixTimestamp], &parsedtime))
+			continue;
 		/* can't convert: default to formatted time for time_t 0. */
 		if (!gmtime_r(&parsedtime, &tm) ||
 		    !strftime(timebuf, sizeof(timebuf),

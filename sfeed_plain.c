@@ -27,7 +27,8 @@ printfeed(FILE *fp, const char *feedname)
 			break;
 
 		parsedtime = 0;
-		strtotime(fields[FieldUnixTimestamp], &parsedtime);
+		if (strtotime(fields[FieldUnixTimestamp], &parsedtime))
+			continue;
 	        if (!(tm = localtime(&parsedtime)))
 			err(1, "localtime");
 
