@@ -18,7 +18,7 @@ static const uint32_t seed = 1167266473;
 
 #define ROT32(x, y) ((x << y) | (x >> (32 - y)))
 
-uint32_t
+static uint32_t
 murmur3_32(const char *key, uint32_t len, uint32_t seed)
 {
 	static const uint32_t c1 = 0xcc9e2d51;
