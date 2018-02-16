@@ -53,7 +53,7 @@ parseuri(const char *s, struct uri *u, int rel)
 		if (!(b = strchr(p, ']')) || b - p >= (ssize_t)sizeof(u->host))
 			return -1;
 		memcpy(u->host, p + 1, b - p - 1);
-		u->host[b - p] = '\0';
+		u->host[b - p - 1] = '\0';
 		p = b + 1;
 	} else {
 		/* domain / host part, skip until port, path or end. */
