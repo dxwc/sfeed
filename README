@@ -106,6 +106,7 @@ Files
 sfeed             - Read XML RSS or Atom feed data from stdin. Write feed data
                     in TAB-separated format to stdout.
 sfeed_frames      - Format feed data (TSV) to HTML file(s) with frames.
+sfeed_gph         - Format feed data (TSV) to geomyidae .gph files.
 sfeed_html        - Format feed data (TSV) to HTML.
 sfeed_opml_export - Generate an OPML XML file from a sfeedrc config file.
 sfeed_opml_import - Generate a sfeedrc config file from an OPML XML file.

@@ -5,6 +5,7 @@ VERSION = 0.9.3
 BIN = \
 	sfeed\
 	sfeed_frames\
+	sfeed_gph \
 	sfeed_html\
 	sfeed_mbox\
 	sfeed_opml_import\

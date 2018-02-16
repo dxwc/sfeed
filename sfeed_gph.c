@@ -1,59 +1,26 @@
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <ctype.h>
 #include <err.h>
-#include <locale.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <wchar.h>
+#include <unistd.h>
 
 #include "util.h"
 
-static time_t comparetime;
+static struct feed **feeds;
+static char *prefixpath;
 static char *line;
 static size_t linesize;
-
-/* format `len' columns of characters. If string is shorter pad the rest
- * with characters `pad`. */
-int
-utf8pad(char *buf, size_t bufsiz, const char *s, size_t len, int pad)
-{
-	wchar_t w;
-	size_t col = 0, i, slen, siz = 0;
-	int rl, wc;
-
-	if (!len)
-		return -1;
-
-	slen = strlen(s);
-	for (i = 0; i < slen && col < len + 1; i += rl) {
-		if ((rl = mbtowc(&w, &s[i], slen - i < 4 ? slen - i : 4)) <= 0)
-			break;
-		if ((wc = wcwidth(w)) == -1)
-			wc = 1;
-		col += wc;
-		if (col >= len && s[i + rl]) {
-			if (siz + 4 >= bufsiz)
-				return -1;
-			memcpy(&buf[siz], "\xe2\x80\xa6", 4);
-			return 0;
-		}
-		if (siz + rl + 1 >= bufsiz)
-			return -1;
-		memcpy(&buf[siz], &s[i], rl);
-		siz += rl;
-		buf[siz] = '\0';
-	}
-
-	len -= col;
-	if (siz + len + 1 >= bufsiz)
-		return -1;
-	memset(&buf[siz], pad, len);
-	siz += len;
-	buf[siz] = '\0';
-
-	return 0;
-}
+static time_t comparetime;
+static unsigned long totalnew;
 
 /* Escape characters in links in geomyidae .gph format */
 void
@@ -61,8 +28,8 @@ gphlink(FILE *fp, const char *s, size_t len)
 {
 	size_t i;
 
-	for (i = 0; *s && i < len; i++) {
-		switch (s[i]) {
+	for (i = 0; *s && i < len; s++, i++) {
+		switch (*s) {
 		case '\r': /* ignore CR */
 		case '\n': /* ignore LF */
 			break;
@@ -73,22 +40,25 @@ gphlink(FILE *fp, const char *s, size_t len)
 			fputs("\\|", fp);
 			break;
 		default:
-			fputc(s[i], fp);
+			fputc(*s, fp);
 			break;
 		}
 	}
 }
 
 static void
-printfeed(FILE *fp, const char *feedname)
+printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 {
-	char *fields[FieldLast], buf[1024];
+	char *fields[FieldLast];
+	ssize_t linelen;
+	unsigned int isnew;
 	struct tm *tm;
 	time_t parsedtime;
-	ssize_t linelen;
-	size_t lc;
 
-	for (lc = 0; (linelen = getline(&line, &linesize, fp)) > 0; lc++) {
+	if (f->name[0])
+		fprintf(fpitems, "t%s\n\n", f->name);
+
+	while ((linelen = getline(&line, &linesize, fpin)) > 0) {
 		if (line[linelen - 1] == '\n')
 			line[--linelen] = '\0';
 		if (!parseline(line, fields))
@@ -97,50 +67,41 @@ printfeed(FILE *fp, const char *feedname)
 		parsedtime = 0;
 		if (strtotime(fields[FieldUnixTimestamp], &parsedtime))
 			continue;
-	        if (!(tm = localtime(&parsedtime)))
+		if (!(tm = localtime(&parsedtime)))
 			err(1, "localtime");
 
-		if (lc == 0 && feedname[0]) {
-			fputs("\n  ", stdout);
-			utf8pad(buf, sizeof(buf), feedname, 77, ' ');
-			gphlink(stdout, buf, strlen(buf));
-			fputs("\n  ", stdout);
-			memset(buf, '=', 77);
-			buf[78] = '\0';
-			puts(buf);
-		}
+		isnew = (parsedtime >= comparetime) ? 1 : 0;
+		totalnew += isnew;
+		f->totalnew += isnew;
+		f->total++;
 
-		fputs("[h|", stdout);
-		if (parsedtime >= comparetime)
-			fputs("N ", stdout);
-		else
-			fputs("  ", stdout);
-
-	        fprintf(stdout, "%04d-%02d-%02d %02d:%02d  ",
+		fputs("[h|", fpitems);
+		fprintf(fpitems, "%04d-%02d-%02d %02d:%02d ",
 		        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 		        tm->tm_hour, tm->tm_min);
-		utf8pad(buf, sizeof(buf), fields[FieldTitle], 59, ' ');
-		gphlink(stdout, buf, strlen(buf));
-		fputs("|URL:", stdout);
-		gphlink(stdout, fields[FieldLink], strlen(fields[FieldLink]));
-		fputs("|server|port]\n", stdout);
+		gphlink(fpitems, fields[FieldTitle], strlen(fields[FieldTitle]));
+		fputs("|URL:", fpitems);
+		gphlink(fpitems, fields[FieldLink], strlen(fields[FieldLink]));
+		fputs("|server|port]\n", fpitems);
 	}
 }
 
 int
 main(int argc, char *argv[])
 {
-	FILE *fp;
-	char *name;
+	FILE *fpitems, *fpindex, *fp;
+	char *name, path[PATH_MAX + 1];
 	int i;
+	struct feed *f;
 
-	if (pledge("stdio rpath", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
 
-	setlocale(LC_CTYPE, "");
+	if (!(prefixpath = getenv("SFEED_GPH_PATH")))
+		prefixpath = "/";
 
-	if (pledge(argc == 1 ? "stdio" : "stdio rpath", NULL) == -1)
-		err(1, "pledge");
+	if (!(feeds = calloc(argc, sizeof(struct feed *))))
+		err(1, "calloc");
 
 	if ((comparetime = time(NULL)) == -1)
 		err(1, "time");
@@ -148,17 +109,47 @@ main(int argc, char *argv[])
 	comparetime -= 86400;
 
 	if (argc == 1) {
-		printfeed(stdin, "");
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+		if (!(feeds[0] = calloc(1, sizeof(struct feed))))
+			err(1, "calloc");
+		feeds[0]->name = "";
+		printfeed(stdout, stdin, feeds[0]);
 	} else {
+		/* write main index page */
+		if (!(fpindex = fopen("index.gph", "wb")))
+			err(1, "fopen: index.gph");
+
 		for (i = 1; i < argc; i++) {
+			if (!(feeds[i - 1] = calloc(1, sizeof(struct feed))))
+				err(1, "calloc");
+			f = feeds[i - 1];
+			name = ((name = strrchr(argv[i], '/'))) ? name + 1 : argv[i];
+			f->name = name;
+
 			if (!(fp = fopen(argv[i], "r")))
 				err(1, "fopen: %s", argv[i]);
-			name = ((name = strrchr(argv[i], '/'))) ? name + 1 : argv[i];
-			printfeed(fp, name);
+
+			snprintf(path, sizeof(path), "%s.gph", f->name);
+			if (!(fpitems = fopen(path, "wb")))
+				err(1, "fopen");
+			printfeed(fpitems, fp, f);
 			if (ferror(fp))
 				err(1, "ferror: %s", argv[i]);
 			fclose(fp);
+			fclose(fpitems);
+
+			/* append directory item to index */
+			fprintf(fpindex, "[1|");
+			gphlink(fpindex, f->name, strlen(f->name));
+			fprintf(fpindex, " (%lu/%lu)|%s",
+			        f->totalnew, f->total, prefixpath);
+			snprintf(path, sizeof(path), "%s.gph", f->name);
+			gphlink(fpindex, path, strlen(path));
+			fputs("|server|port]\n", fpindex);
 		}
+		fclose(fpindex);
 	}
+
 	return 0;
 }
