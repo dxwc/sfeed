@@ -36,7 +36,7 @@ merge() {
 	# order new items by timestamp (asc).
 	(sed 's@^@O	@' "$1"
 	sed 's@^@N	@' "$2") | \
-		awk '!x[$7 "	" $3 "	" $4]++ && $1 == "N"' 2>/dev/null | \
+		LC_ALL=C awk '!x[$7 "	" $3 "	" $4]++ && $1 == "N"' 2>/dev/null | \
 		cut -f 2- | \
 		sort -t '	' -k1n,1
 }
