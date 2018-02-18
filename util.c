@@ -35,7 +35,7 @@ parseuri(const char *s, struct uri *u, int rel)
 			       *p == '+' || *p == '-' || *p == '.'); p++)
 			;
 		if (!strncmp(p, "://", 3)) {
-			if (p - s >= (ssize_t)sizeof(u->proto))
+			if ((size_t)(p - s) >= sizeof(u->proto))
 				return -1; /* protocol too long */
 			memcpy(u->proto, s, p - s);
 			u->proto[p - s] = '\0';
@@ -50,7 +50,7 @@ parseuri(const char *s, struct uri *u, int rel)
 	/* IPv6 address */
 	if (*p == '[') {
 		/* bracket not found or host too long */
-		if (!(b = strchr(p, ']')) || b - p >= (ssize_t)sizeof(u->host))
+		if (!(b = strchr(p, ']')) || (size_t)(b - p) >= (ssize_t)sizeof(u->host))
 			return -1;
 		memcpy(u->host, p + 1, b - p - 1);
 		u->host[b - p - 1] = '\0';
