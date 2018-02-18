@@ -31,11 +31,13 @@ loadconfig() {
 # merge raw files.
 # merge(oldfile, newfile)
 merge() {
+	oldfile="$(printf '%s' "$1" | tr '	' ' ')"
+	newfile="$(printf '%s' "$2" | tr '	' ' ')"
 	# unique check by id, title, link.
 	# print only new entries in newfile.
 	# order new items by timestamp (asc).
-	(sed 's@^@O	@' "$1"
-	sed 's@^@N	@' "$2") | \
+	(sed 's@^@O	@' "${oldfile}"
+	sed 's@^@N	@' "${newfile}") | \
 		LC_ALL=C awk '!x[$7 "	" $3 "	" $4]++ && $1 == "N"' 2>/dev/null | \
 		cut -f 2- | \
 		sort -t '	' -k1n,1
