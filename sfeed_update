@@ -89,11 +89,10 @@ feed() {
 		if [ -e "${sfeedfile}" ]; then
 			merge "${sfeedfile}" "${tmpfeedfile}" > "${sfeedfilenew}"
 
-			# append new entries to feed file.
-			cat "${sfeedfilenew}" >> "${sfeedfile}"
-			rm -f "${sfeedfilenew}"
+			# overwrite old file with updated file
+			mv "${sfeedfilenew}" "${sfeedfile}"
 		else
-			mv "${tmpfeedfile}" "${sfeedfile}"
+			merge "/dev/null" "${tmpfeedfile}" > "${sfeedfile}"
 		fi
 	fi) &
 }
