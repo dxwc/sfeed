@@ -154,12 +154,12 @@ Usage and examples
 
 Find RSS/Atom feed urls from a webpage:
 
-	url="codemadness.org"; curl -L -s "$url" | sfeed_web "$url"
+	url="https://codemadness.org"; curl -L -s "$url" | sfeed_web "$url"
 
-output:
+output example:
 
-	http://codemadness.org/blog/rss.xml	application/rss+xml
-	http://codemadness.org/blog/atom.xml	application/atom+xml
+	https://codemadness.org/blog/rss.xml	application/rss+xml
+	https://codemadness.org/blog/atom.xml	application/atom+xml
 
 - - -
 
