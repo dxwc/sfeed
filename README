@@ -74,7 +74,6 @@ Optional dependencies
 - make(1) (for Makefile).
 - POSIX sh(1),
   used by sfeed_update(1) and sfeed_opml_export(1).
-- awk(1), used by sfeed_update(1).
 - curl(1) binary: http://curl.haxx.se/ ,
   used by sfeed_update(1), can be replaced with any tool like wget(1),
   OpenBSD ftp(1).

@@ -31,14 +31,10 @@ loadconfig() {
 # merge raw files.
 # merge(oldfile, newfile)
 merge() {
-	# unique check by id, title, link.
-	# print only new entries in newfile.
-	# order new items by timestamp (asc).
-	(sed 's@^@O	@' "$1"
-	sed 's@^@N	@' "$2") | \
-		LC_ALL=C awk '!x[$7 "	" $3 "	" $4]++ && $1 == "N"' 2>/dev/null | \
-		cut -f 2- | \
-		sort -t '	' -k1n,1
+	# unique sort by id, title, link.
+	# order by timestamp (desc).
+	(sort -t '	' -u -k6,6 -k2,2 -k3,3 "$1" "$2" 2>/dev/null) |
+	sort -t '	' -k1rn,1
 }
 
 # fetch a feed via HTTP/HTTPS etc.
