@@ -37,8 +37,10 @@ printfeed(FILE *fp, const char *feedname)
 		else
 			fputs("  ", stdout);
 
-		if (feedname[0])
-			printf("%-15.15s  ", feedname);
+		if (feedname[0]) {
+			printutf8pad(stdout, feedname, 15, ' ');
+			fputs("  ", stdout);
+		}
 
 	        fprintf(stdout, "%04d-%02d-%02d %02d:%02d  ",
 		        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
