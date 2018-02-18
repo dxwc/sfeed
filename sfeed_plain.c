@@ -47,6 +47,7 @@ printfeed(FILE *fp, const char *feedname)
 		        tm->tm_hour, tm->tm_min);
 		printutf8pad(stdout, fields[FieldTitle], 70, ' ');
 		printf(" %s\n", fields[FieldLink]);
+		fflush(stdout);
 	}
 }
 
