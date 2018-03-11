@@ -63,11 +63,10 @@ static void
 printfeed(FILE *fp, const char *feedname)
 {
 	struct line *add, search;
-	char *fields[FieldLast], *s;
+	char *fields[FieldLast];
 	ssize_t linelen;
 	time_t parsedtime;
 	struct tm *tm;
-	int i;
 
 	while ((linelen = getline(&line, &linesize, fp)) > 0) {
 		if (line[linelen - 1] == '\n')
