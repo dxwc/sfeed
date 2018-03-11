@@ -181,6 +181,7 @@ xml_parsecdata(XMLParser *x)
 			if (x->xmlcdata)
 				for (; i > 0; i--)
 					x->xmlcdata(x, "]", 1);
+			i = 0;
 		}
 
 		if (datalen < sizeof(x->data) - 1) {
