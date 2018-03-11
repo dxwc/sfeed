@@ -10,6 +10,7 @@ BIN = \
 	sfeed_mbox\
 	sfeed_opml_import\
 	sfeed_plain\
+	sfeed_tail\
 	sfeed_web\
 	sfeed_xmlenc
 SCRIPTS = \
@@ -18,6 +19,7 @@ SCRIPTS = \
 
 SRC = ${BIN:=.c}
 HDR = \
+	tree.h\
 	util.h\
 	xml.h
 
