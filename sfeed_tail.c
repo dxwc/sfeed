@@ -1,3 +1,5 @@
+#include <sys/types.h>
+
 #include <ctype.h>
 #include <err.h>
 #include <locale.h>
@@ -107,26 +109,16 @@ printfeed(FILE *fp, const char *feedname)
 		if (firsttime)
 			continue;
 
-		/* output parsed line: it may not be the same as the input. */
-		for (i = 0; i < FieldLast; i++) {
-			if (i)
-				putchar('\t');
-			fputs(fields[i], stdout);
+		if (feedname[0]) {
+			printutf8pad(stdout, feedname, 15, ' ');
+			fputs("  ", stdout);
 		}
-		putchar('\n');
-		fflush(stdout);
 
-#if 0
-		if (fields[FieldFeedName][0])
-			printf("%-15.15s  ", fields[FieldFeedName]);
-		else if (feedname[0])
-			printf("%-15.15s  ", feedname);
-		printf("%04d-%02d-%02d %02d:%02d  ",
-		       tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-		       tm->tm_hour, tm->tm_min);
+	        fprintf(stdout, "%04d-%02d-%02d %02d:%02d  ",
+		        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+		        tm->tm_hour, tm->tm_min);
 		printutf8pad(stdout, fields[FieldTitle], 70, ' ');
 		printf(" %s\n", fields[FieldLink]);
-#endif
 	}
 }
 
@@ -168,7 +160,7 @@ main(int argc, char *argv[])
 				fclose(fp);
 			}
 		}
-		// DEBUG: TODO: gc first run.
+		/* DEBUG: TODO: gc first run. */
 		gc();
 
 		sleep(sleepsecs);
