@@ -1,3 +1,5 @@
+#include <sys/types.h>
+
 #include <ctype.h>
 #include <err.h>
 #include <locale.h>
