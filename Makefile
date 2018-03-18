@@ -43,7 +43,6 @@ MAN5 = \
 	sfeed.5\
 	sfeedrc.5
 DOC = \
-	CHANGELOG\
 	LICENSE\
 	README\
 	README.xml\
