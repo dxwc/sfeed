@@ -163,8 +163,8 @@ output example:
 
 - - -
 
-Make sure your sfeedrc config file exists, see sfeedrc.example. To update
-your feeds (configfile argument is optional):
+Make sure your sfeedrc config file exists, see sfeedrc.example. To update your
+feeds (configfile argument is optional):
 
 	sfeed_update "configfile"
 
@@ -271,8 +271,8 @@ Now compile and run:
 
 - - -
 
-Convert mbox to separate maildirs per feed and filter duplicate messages
-using fdm(1): https://github.com/nicm/fdm .
+Convert mbox to separate maildirs per feed and filter duplicate messages using
+fdm(1): https://github.com/nicm/fdm .
 
 fdm config file (~/.sfeed/fdm.conf):
 
@@ -312,8 +312,8 @@ Now you can view feeds in mutt(1) for example.
 
 - - -
 
-Convert mbox to separate maildirs per feed and filter duplicate messages
-using procmail(1).
+Convert mbox to separate maildirs per feed and filter duplicate messages using
+procmail(1).
 
 procmail_maildirs.sh file:
 
