@@ -239,31 +239,32 @@ xmlencode(const char *s, FILE *fp)
 	}
 }
 
-/* print `len' columns of characters. If string is shorter pad the rest
- * with characters `pad`. */
+/* print `len' columns of characters. If string is shorter pad the rest with
+ * characters `pad`. */
 void
 printutf8pad(FILE *fp, const char *s, size_t len, int pad)
 {
-	wchar_t w;
+	wchar_t wc;
 	size_t col = 0, i, slen;
-	int rl, wc;
+	int rl, w;
 
 	if (!len)
 		return;
 
 	slen = strlen(s);
-	for (i = 0; i < slen && col < len + 1; i += rl) {
-		if ((rl = mbtowc(&w, &s[i], slen - i < 4 ? slen - i : 4)) <= 0)
+	for (i = 0; i < slen; i += rl) {
+		if ((rl = mbtowc(&wc, s + i, slen - i < 4 ? slen - i : 4)) <= 0)
 			break;
-		if ((wc = wcwidth(w)) == -1)
-			wc = 1;
-		col += (size_t)wc;
-		if (col >= len && s[i + rl]) {
+		if ((w = wcwidth(wc)) == -1)
+			continue;
+		if (col + w > len || (col + w == len && s[i + rl])) {
 			fputs("\xe2\x80\xa6", fp);
+			col++;
 			break;
 		}
 		fwrite(&s[i], 1, rl, fp);
+		col += w;
 	}
-	for (; col < len; col++)
+	for (; col < len; ++col)
 		putc(pad, fp);
 }
