@@ -21,9 +21,12 @@ printsafe(const char *s)
 	for (; *s; s++) {
 		if (iscntrl((int)*s))
 			continue;
-		if (*s == '\\' || *s == '\'')
-			putchar('\\');
-		putchar((int)*s);
+		else if (*s == '\\')
+			fputs("\\\\", stdout);
+		else if (*s == '\'')
+			fputs("'\\''", stdout);
+		else
+			putchar((int)*s);
 	}
 }
 
