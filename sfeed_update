@@ -40,7 +40,7 @@ merge() {
 # fetch a feed via HTTP/HTTPS etc.
 # fetchfeed(url, name, feedfile)
 fetchfeed() {
-	if curl -H 'User-Agent:' -f -s -S --max-time 15 -z "$3" "$1"; then
+	if curl -L --max-redirs 0 -H 'User-Agent:' -f -s -S -m 15 -z "$3" "$1" 2>/dev/null; then
 		printf "  OK %s %s\n" "$(date +'%H:%M:%S')" "$2" >&2
 	else
 		printf "FAIL %s %s\n" "$(date +'%H:%M:%S')" "$2" >&2
