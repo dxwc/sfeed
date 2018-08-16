@@ -289,8 +289,8 @@ xml_numericentitytostr(const char *e, char *buf, size_t bufsiz)
 		l = strtoul(e + 1, &end, 16);
 	else
 		l = strtoul(e, &end, 10);
-	/* invalid value or not a well-formed entity */
-	if (errno || *end != ';')
+	/* invalid value or not a well-formed entity or too high codepoint */
+	if (errno || *end != ';' || l > 0x10FFFF)
 		return 0;
 	len = xml_codepointtoutf8(l, &cp);
 	/* make string */
