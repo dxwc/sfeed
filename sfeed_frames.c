@@ -12,120 +12,23 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <utime.h>
 
 #include "util.h"
 
 static struct feed **feeds;
 static char *line;
 static size_t linesize;
-static struct timespec times[2];
 static time_t comparetime;
 static unsigned long totalnew;
-
-/* Unescape / decode fields printed by string_print_encoded()
- * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
- * are ignored: "\z" etc. */
-static void
-printcontent(const char *s, FILE *fp)
-{
-	for (; *s; s++) {
-		switch (*s) {
-		case '\\':
-			switch (*(++s)) {
-			case '\0': return; /* ignore */
-			case '\\': fputc('\\', fp); break;
-			case 't':  fputc('\t', fp); break;
-			case 'n':  fputc('\n', fp); break;
-			}
-			break;
-		default:
-			fputc((int)*s, fp);
-		}
-	}
-}
-
-/* Unescape / decode fields printed by string_print_encoded()
- * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
- * are ignored: "\z" etc. Encode HTML 2.0 / XML 1.0 entities.  */
-static void
-printcontentxml(const char *s, FILE *fp)
-{
-	for (; *s; s++) {
-		switch (*s) {
-		case '\\':
-			switch (*(++s)) {
-			case '\0': return; /* ignore */
-			case '\\': fputc('\\', fp); break;
-			case 't':  fputc('\t', fp); break;
-			case 'n':  fputc('\n', fp); break;
-			}
-			break;
-		/* XML entities */
-		case '<':  fputs("&lt;",   fp); break;
-		case '>':  fputs("&gt;",   fp); break;
-		case '\'': fputs("&#39;",  fp); break;
-		case '&':  fputs("&amp;",  fp); break;
-		case '"':  fputs("&quot;", fp); break;
-		default:   fputc((int)*s, fp);
-		}
-	}
-}
-
-/* normalize path names, transform to lower-case and replace non-alpha and
- * non-digit with '-' */
-static size_t
-normalizepath(const char *path, char *buf, size_t bufsiz)
-{
-	size_t i, r = 0;
-
-	for (i = 0; *path && i < bufsiz; path++) {
-		if (isalpha((int)*path) || isdigit((int)*path)) {
-			buf[i++] = tolower((int)*path);
-			r = 0;
-		} else {
-			/* don't repeat '-', don't start with '-' */
-			if (!r && i)
-				buf[i++] = '-';
-			r++;
-		}
-	}
-	/* remove trailing '-' */
-	for (; i > 0 && (buf[i - 1] == '-'); i--)
-		;
-
-	if (bufsiz > 0)
-		buf[i] = '\0';
-
-	return i;
-}
 
 static void
 printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 {
-	char dirpath[PATH_MAX], filepath[PATH_MAX];
-	char *fields[FieldLast], *feedname, name[128];
+	char *fields[FieldLast];
 	ssize_t linelen;
-	FILE *fpcontent = NULL;
 	unsigned int isnew;
 	struct tm *tm;
 	time_t parsedtime;
-	int fd, r;
-
-	if (f->name[0])
-		feedname = f->name;
-	else
-		feedname = "unnamed";
-
-	/* make directory for feedname */
-	if (!normalizepath(feedname, name, sizeof(name)))
-		return;
-
-	strlcpy(dirpath, name, sizeof(dirpath));
-
-	/* error creating directory and it doesn't exist. */
-	if (mkdir(dirpath, S_IRWXU | S_IRWXG | S_IRWXO) == -1 && errno != EEXIST)
-		err(1, "mkdir: %s", dirpath);
 
 	/* menu if not unnamed */
 	if (f->name[0]) {
@@ -150,68 +53,6 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		if (!(tm = localtime(&parsedtime)))
 			err(1, "localtime");
 
-		if (!normalizepath(fields[FieldTitle], name, sizeof(name)))
-			continue;
-
-		r = snprintf(filepath, sizeof(filepath), "%s/%s-%lld.html",
-		             dirpath, name, (long long)parsedtime);
-		if (r == -1 || (size_t)r >= sizeof(filepath))
-			errx(1, "snprintf: path truncation: '%s/%s-%lld.html'",
-			        dirpath, name, (long long)parsedtime);
-
-		/* content file doesn't exist yet and has error? */
-		if ((fd = open(filepath, O_CREAT | O_EXCL | O_WRONLY,
-		               S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) == -1) {
-			if (errno != EEXIST)
-				err(1, "open: %s", filepath);
-		} else {
-			if (!(fpcontent = fdopen(fd, "wb")))
-				err(1, "fdopen: %s", filepath);
-			fputs("<html><head>"
-			      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../../style.css\" />"
-			      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />"
-			      "</head>\n<body class=\"frame\">"
-			      "<div class=\"content\"><h2>", fpcontent);
-
-			if (fields[FieldLink][0]) {
-				fputs("<a href=\"", fpcontent);
-				xmlencode(fields[FieldLink], fpcontent);
-				fputs("\">", fpcontent);
-			}
-			xmlencode(fields[FieldTitle], fpcontent);
-			if (fields[FieldLink][0])
-				fputs("</a>", fpcontent);
-			fputs("</h2>", fpcontent);
-
-			/* NOTE: this prints the raw HTML of the feed, this is
-			 * potentially dangerous, it is left up to the
-			 * user / browser to trust a feed it's HTML content. */
-			if (!strcmp(fields[FieldContentType], "html")) {
-				printcontent(fields[FieldContent], fpcontent);
-			} else {
-				/* plain-text, wrap with <pre> */
-				fputs("<pre>", fpcontent);
-				printcontentxml(fields[FieldContent], fpcontent);
-				fputs("</pre>", fpcontent);
-			}
-			fputs("</div></body></html>\n", fpcontent);
-
-			/* set modified and access time of file to time of item. */
-			if (parsedtime) {
-				/* flush writes before setting atime and mtime
-				   else the remaining (buffered) write can occur at
-				   fclose() and overwrite our time again. */
-				fflush(fpcontent);
-
-				times[0].tv_sec = parsedtime;
-				times[1].tv_sec = parsedtime;
-
-				if (futimens(fd, times) == -1)
-					err(1, "futimens");
-			}
-			fclose(fpcontent);
-		}
-
 		isnew = (parsedtime >= comparetime) ? 1 : 0;
 		totalnew += isnew;
 		f->totalnew += isnew;
@@ -223,11 +64,15 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 
 		if (isnew)
 			fputs("<b><u>", fpitems);
-		fputs("<a href=\"", fpitems);
-		fputs(filepath, fpitems);
-		fputs("\" target=\"content\">", fpitems);
-		xmlencode(fields[FieldTitle], fpitems);
-		fputs("</a>", fpitems);
+		if (fields[FieldLink][0]) {
+			fputs("<a href=\"", fpitems);
+			xmlencode(fields[FieldLink], fpitems);
+			fputs("\">", fpitems);
+			xmlencode(fields[FieldTitle], fpitems);
+			fputs("</a>", fpitems);
+		} else {
+			xmlencode(fields[FieldTitle], fpitems);
+		}
 		if (isnew)
 			fputs("</u></b>", fpitems);
 		fputs("\n", fpitems);
@@ -237,12 +82,12 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 int
 main(int argc, char *argv[])
 {
-	FILE *fpindex, *fpitems, *fpmenu, *fp;
+	FILE *fpindex, *fpitems, *fpmenu = NULL, *fp;
 	char *name;
 	int i, showsidebar = (argc > 1);
 	struct feed *f;
 
-	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
 
 	if (!(feeds = calloc(argc, sizeof(struct feed *))))
@@ -256,11 +101,15 @@ main(int argc, char *argv[])
 	/* write main index page */
 	if (!(fpindex = fopen("index.html", "wb")))
 		err(1, "fopen: index.html");
-	if (!(fpmenu = fopen("menu.html", "wb")))
-		err(1, "fopen: menu.html");
 	if (!(fpitems = fopen("items.html", "wb")))
 		err(1, "fopen: items.html");
-	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />"
+	if (showsidebar && !(fpmenu = fopen("menu.html", "wb")))
+		err(1, "fopen: menu.html");
+
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
+
+	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />"
 	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>"
 	      "<body class=\"frame\"><div id=\"items\"><pre>", fpitems);
 
@@ -288,7 +137,7 @@ main(int argc, char *argv[])
 
 	if (showsidebar) {
 		fputs("<html><head>"
-		      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />\n"
+		      "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />\n"
 		      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 		      "</head><body class=\"frame\"><div id=\"sidebar\">", fpmenu);
 
@@ -312,25 +161,24 @@ main(int argc, char *argv[])
 	}
 	fputs("<!DOCTYPE html><html><head>\n\t<title>Newsfeed (", fpindex);
 	fprintf(fpindex, "%lu", totalnew);
-	fputs(")</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\" />\n"
+	fputs(")</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />\n"
 	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 	      "</head>\n", fpindex);
 	if (showsidebar) {
-		fputs("<frameset framespacing=\"0\" cols=\"200,*\" frameborder=\"1\">\n"
-		      "	<frame name=\"menu\" src=\"menu.html\" target=\"menu\">\n", fpindex);
+		fputs("<frameset framespacing=\"0\" cols=\"250,*\" frameborder=\"1\">\n"
+		      "\t<frame name=\"menu\" src=\"menu.html\" target=\"menu\">\n", fpindex);
 	} else {
 		fputs("<frameset framespacing=\"0\" cols=\"*\" frameborder=\"1\">\n", fpindex);
 	}
-	fputs("\t<frameset id=\"frameset\" framespacing=\"0\" cols=\"50%,50%\" frameborder=\"1\">\n"
-	      "\t\t<frame name=\"items\" src=\"items.html\" target=\"items\">\n"
-	      "\t\t<frame name=\"content\" target=\"content\">\n"
-	      "\t</frameset>\n"
+	fputs(
+	      "\t<frame name=\"items\" src=\"items.html\" target=\"items\">\n"
 	      "</frameset>\n"
 	      "</html>\n", fpindex);
 
-	fclose(fpitems);
-	fclose(fpmenu);
 	fclose(fpindex);
+	fclose(fpitems);
+	if (fpmenu)
+		fclose(fpmenu);
 
 	return 0;
 }

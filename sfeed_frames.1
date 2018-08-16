@@ -1,4 +1,4 @@
-.Dd August 5, 2015
+.Dd August 16, 2018
 .Dt SFEED_FRAMES 1
 .Os
 .Sh NAME
@@ -14,39 +14,24 @@ formats feed data (TSV) from
 to HTML.
 It reads TSV data from stdin or
 .Ar file
-and writes HTML files to the current directory.
+and writes HTML files for the frameset to the current directory.
 If no
 .Ar file
 parameters are specified and therefore the data is read from stdin then the
-feed name is named "unnamed".
+menu.html file is not written.
 .Sh FILES WRITTEN
 .Bl -tag -width 13n
 .It index.html
-The main HTML file referencing to the frames items.html and
-menu.html.
+The main HTML file referencing to the frames items.html and menu.html.
 .It items.html
-Contains all the items as HTML links to the local content.
+The items frame contains all the item HTML links to the remote content.
 .It menu.html
-Menu frame which contains navigation "anchor" links to the feed names
-in items.html.
+The menu frame which contains navigation "anchor" links to the feed names in
+items.html.
 .El
-.Sh FILE STRUCTURE
-Items for each feed category are in the format: feedname/itemname.html.
-The feedname and item names are normalized, whitespace characters are replaced
-with a - character, multiple whitespaces are replaced by a single - character
-and trailing whitespace will be removed.
-The itemname is based on the title of the items.
-The feedname and title is truncated to a maximum of 128 bytes.
-The maximum length of the path is PATH_MAX or filesystem-specific (truncated).
 .Sh SEE ALSO
 .Xr sfeed 1 ,
+.Xr sfeed_html 1 ,
 .Xr sfeed_plain 1
 .Sh AUTHORS
 .An Hiltjo Posthuma Aq Mt hiltjo@codemadness.org
-.Sh SECURITY CONSIDERATIONS
-Each item content file contains the content formatted as HTML, if the feed data
-contains HTML like Javascripts, tracking cookies, custom styles and such
-these will also be displayed.
-Due to the crazy nature of "the web" these things are complex to filter.
-Some security and privacy can be gained by using an adblocker, script blocker
-and to set your browser settings more strictly.
