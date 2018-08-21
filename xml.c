@@ -207,26 +207,31 @@ xml_parsecdata(XMLParser *x)
 static int
 codepointtoutf8(const uint32_t r, uint8_t *s)
 {
-	if (cp >= 0x10000) {
-		/* 4 bytes */
-		*utf = 0xf0808080 | ((cp & 0xfc0000) << 6) |
-		       ((cp & 0x3f000) << 4) | ((cp & 0xfc0) << 2) |
-		       (cp & 0x3f);
-		return 4;
-	} else if (cp >= 0x00800) {
-		/* 3 bytes */
-		*utf = 0xe08080 |
-		       ((cp & 0x3f000) << 4) | ((cp & 0xfc0) << 2) |
-		       (cp & 0x3f);
-		return 3;
-	} else if (cp >= 0x80) {
-		/* 2 bytes */
-		*utf = 0xc080 |
-		       ((cp & 0xfc0) << 2) | (cp & 0x3f);
+	if (r == 0) {
+		return 0; /* NUL byte */
+	} else if (r <= 0x7F) {
+		/* 1 byte: 0aaaaaaa */
+		s[0] = r;
+		return 1;
+	} else if (r <= 0x07FF) {
+		/* 2 bytes: 00000aaa aabbbbbb */
+		s[0] = 0xC0 | ((r & 0x0007C0) >>  6); /* 110aaaaa */
+		s[1] = 0x80 |  (r & 0x00003F);        /* 10bbbbbb */
 		return 2;
+	} else if (r <= 0xFFFF) {
+		/* 3 bytes: aaaabbbb bbcccccc */
+		s[0] = 0xE0 | ((r & 0x00F000) >> 12); /* 1110aaaa */
+		s[1] = 0x80 | ((r & 0x000FC0) >>  6); /* 10bbbbbb */
+		s[2] = 0x80 |  (r & 0x00003F);        /* 10cccccc */
+		return 3;
+	} else {
+		/* 4 bytes: 000aaabb bbbbcccc ccdddddd */
+		s[0] = 0xF0 | ((r & 0x1C0000) >> 18); /* 11110aaa */
+		s[1] = 0x80 | ((r & 0x03F000) >> 12); /* 10bbbbbb */
+		s[2] = 0x80 | ((r & 0x000FC0) >>  6); /* 10cccccc */
+		s[3] = 0x80 |  (r & 0x00003F);        /* 10dddddd */
+		return 4;
 	}
-	*utf = cp & 0xff;
-	return *utf ? 1 : 0; /* 1 byte */
 }
 
 static int
@@ -270,8 +275,8 @@ namedentitytostr(const char *e, char *buf, size_t bufsiz)
 static int
 numericentitytostr(const char *e, char *buf, size_t bufsiz)
 {
-	uint32_t l = 0, cp = 0;
-	size_t b, len;
+	uint32_t l;
+	int len;
 	char *end;
 
 	/* buffer is too small */
