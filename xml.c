@@ -203,8 +203,8 @@ xml_parsecdata(XMLParser *x)
 	}
 }
 
-int
-xml_codepointtoutf8(uint32_t cp, uint32_t *utf)
+static int
+codepointtoutf8(const uint32_t r, uint8_t *s)
 {
 	if (cp >= 0x10000) {
 		/* 4 bytes */
@@ -228,8 +228,8 @@ xml_codepointtoutf8(uint32_t cp, uint32_t *utf)
 	return *utf ? 1 : 0; /* 1 byte */
 }
 
-ssize_t
-xml_namedentitytostr(const char *e, char *buf, size_t bufsiz)
+static int
+namedentitytostr(const char *e, char *buf, size_t bufsiz)
 {
 	static const struct {
 		char *entity;
@@ -266,8 +266,8 @@ xml_namedentitytostr(const char *e, char *buf, size_t bufsiz)
 	return 0;
 }
 
-ssize_t
-xml_numericentitytostr(const char *e, char *buf, size_t bufsiz)
+static int
+numericentitytostr(const char *e, char *buf, size_t bufsiz)
 {
 	uint32_t l = 0, cp = 0;
 	size_t b, len;
@@ -292,18 +292,15 @@ xml_numericentitytostr(const char *e, char *buf, size_t bufsiz)
 	/* invalid value or not a well-formed entity or too high codepoint */
 	if (errno || *end != ';' || l > 0x10FFFF)
 		return 0;
-	len = xml_codepointtoutf8(l, &cp);
-	/* make string */
-	for (b = 0; b < len; b++)
-		buf[b] = (cp >> (8 * (len - 1 - b))) & 0xff;
+	len = codepointtoutf8(l, buf);
 	buf[len] = '\0';
 
-	return (ssize_t)len;
+	return len;
 }
 
 /* convert named- or numeric entity string to buffer string
  * returns byte-length of string. */
-ssize_t
+int
 xml_entitytostr(const char *e, char *buf, size_t bufsiz)
 {
 	/* buffer is too small */
@@ -314,9 +311,9 @@ xml_entitytostr(const char *e, char *buf, size_t bufsiz)
 		return 0;
 	/* named entity */
 	if (e[1] != '#')
-		return xml_namedentitytostr(e, buf, bufsiz);
+		return namedentitytostr(e, buf, bufsiz);
 	else /* numeric entity */
-		return xml_numericentitytostr(e, buf, bufsiz);
+		return numericentitytostr(e, buf, bufsiz);
 }
 
 void
