@@ -5,7 +5,7 @@ XML parser
 Dependencies
 ------------
 
-- C compiler (C99).
+- C compiler (C99 expected).
 
 
 Features
@@ -15,6 +15,7 @@ Features
 - Pretty simple API comparable with libexpat.
 - Pretty fast.
 - Portable
+- No dynamic memory allocation.
 
 
 Supports
@@ -34,12 +35,16 @@ Supports
 Caveats
 -------
 
+- It is not a compliant XML parser.
+- The XML is not checked for errors so it will continue parsing XML data, this
+  is by design.
 - Internally fixed-size buffers are used, callbacks like XMLParser.xmldata are
   called multiple times for the same tag if the data size is bigger than the
   internal buffer size (sizeof(XMLParser.data)). To differentiate between new
   calls for data you can use the xml*start and xml*end handlers.
-- The XML is not checked for errors so it will continue parsing XML data, this
-  is by design.
+- The XML specification has no limits on tag and attribute names. For
+  simplicity/sanity sake this XML parser takes some liberties. Tag and
+  attribute names are truncated.
 
 
 Files used
