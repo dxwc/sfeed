@@ -332,8 +332,7 @@ xml_parse(XMLParser *x)
 		if (c == '<') { /* parse tag */
 			if ((c = x->getnext()) == EOF)
 				return;
-			x->tag[0] = '\0';
-			x->taglen = 0;
+
 			if (c == '!') { /* cdata and comments */
 				for (tagdatalen = 0; (c = x->getnext()) != EOF;) {
 					if (tagdatalen <= sizeof("[CDATA[") - 1) /* if (d < sizeof(x->data)) */
@@ -353,6 +352,9 @@ xml_parse(XMLParser *x)
 					}
 				}
 			} else {
+				x->tag[0] = '\0';
+				x->taglen = 0;
+
 				/* normal tag (open, short open, close), processing instruction. */
 				if (isspace(c))
 					while ((c = x->getnext()) != EOF && isspace(c))
