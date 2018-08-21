@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 	if (showsidebar && !(fpmenu = fopen("menu.html", "wb")))
 		err(1, "fopen: menu.html");
 
-	if (pledge("stdio rpath", NULL) == -1)
+	if (pledge(argc == 1 ? "stdio" : "stdio rpath", NULL) == -1)
 		err(1, "pledge");
 
 	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />"
