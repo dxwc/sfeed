@@ -57,11 +57,12 @@ xml_parseattrs(XMLParser *x)
 						if (valuelen < sizeof(x->data) - 1)
 							x->data[valuelen++] = c;
 						else {
-							/* TODO: entity too long? this should be very strange. */
+							/* entity too long for buffer, handle as normal data */
 							x->data[valuelen] = '\0';
 							if (x->xmlattr)
 								x->xmlattr(x, x->tag, x->taglen, x->name, namelen, x->data, valuelen);
-							valuelen = 0;
+							x->data[0] = c;
+							valuelen = 1;
 							break;
 						}
 						if (c == ';') {
@@ -100,8 +101,8 @@ xml_parseattrs(XMLParser *x)
 			break;
 		} else if (c == '/') {
 			x->isshorttag = 1;
-			namelen = 0;
 			x->name[0] = '\0';
+			namelen = 0;
 		}
 	}
 }
