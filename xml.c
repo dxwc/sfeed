@@ -389,7 +389,7 @@ xml_parse(XMLParser *x)
 							x->xmltagend(x, x->tag, x->taglen, 1);
 						break;
 					} else if (taglen < sizeof(x->tag) - 1)
-						x->tag[taglen++] = c;
+						x->tag[taglen++] = c; /* NOTE: tag name truncation */
 				}
 			}
 		} else {

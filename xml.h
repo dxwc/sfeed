@@ -31,7 +31,7 @@ typedef struct xmlparser {
 	/* current tag is in short form ? <tag /> */
 	int isshorttag;
 	/* current attribute name */
-	char name[256];
+	char name[1024];
 	/* data buffer used for tag data, cdata and attribute data */
 	char data[BUFSIZ];
 } XMLParser;
