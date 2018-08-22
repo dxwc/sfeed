@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -11,11 +12,10 @@
 #include "tree.h"
 #include "util.h"
 
-static int firsttime;
-static int sleepsecs;
 static char *line;
 static size_t linesize;
-time_t comparetime;
+static int changed;
+static time_t comparetime;
 
 struct line {
 	char *id;
@@ -47,8 +47,6 @@ gc(void)
 
 	RB_FOREACH_SAFE(line, linetree, &head, tmp) {
 		if (line->timestamp < comparetime) {
-/*			printf("DEBUG: gc: removing: %s %s\n",
-				line->id, line->title);*/
 			free(line->id);
 			free(line->link);
 			free(line->title);
@@ -90,8 +88,7 @@ printfeed(FILE *fp, const char *feedname)
 		if (RB_FIND(linetree, &head, &search))
 			continue;
 
-/*		printf("DEBUG: new: id: %s, link: %s, title: %s\n",
-			fields[FieldId], fields[FieldLink], fields[FieldTitle]);*/
+		changed = 1;
 
 		if (!(add = calloc(1, sizeof(*add))))
 			err(1, "calloc");
@@ -103,9 +100,6 @@ printfeed(FILE *fp, const char *feedname)
 			err(1, "strdup");
 		add->timestamp = parsedtime;
 		RB_INSERT(linetree, &head, add);
-
-		if (firsttime)
-			continue;
 
 		if (feedname[0]) {
 			printutf8pad(stdout, feedname, 15, ' ');
@@ -123,6 +117,7 @@ printfeed(FILE *fp, const char *feedname)
 int
 main(int argc, char *argv[])
 {
+	struct stat *stfiles, st;
 	char *name;
 	FILE *fp;
 	int i, slept = 0;
@@ -130,45 +125,50 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
 
+	if (argc <= 1) {
+		fprintf(stderr, "usage: %s <file>...\n", argv[0]);
+		return 1;
+	}
+
 	setlocale(LC_CTYPE, "");
 
-	if (pledge(argc == 1 ? "stdio" : "stdio rpath", NULL) == -1)
-		err(1, "pledge");
+	if (!(stfiles = calloc(argc - 1, sizeof(*stfiles))))
+		err(1, "calloc");
 
-	if (argc == 1)
-		sleepsecs = 1;
-	else
-		sleepsecs = 300;
+	while (1) {
+		changed = 0;
 
-	for (firsttime = (argc > 1); ; firsttime = 0) {
 		if ((comparetime = time(NULL)) == -1)
 			err(1, "time");
 		/* 1 day is old news */
 		comparetime -= 86400;
-		if (argc == 1) {
-			printfeed(stdin, "");
-		} else {
-			for (i = 1; i < argc; i++) {
-				if (!(fp = fopen(argv[i], "r")))
-					err(1, "fopen: %s", argv[i]);
+
+		for (i = 1; i < argc; i++) {
+			if (!(fp = fopen(argv[i], "r")))
+				err(1, "fopen: %s", argv[i]);
+			if (fstat(fileno(fp), &st) == -1)
+				err(1, "fstat: %s", argv[i]);
+
+			/* did the file change? by size, modification */
+			if (stfiles[i - 1].st_size != st.st_size ||
+			    stfiles[i - 1].st_mtime != st.st_mtime) {
 				name = ((name = strrchr(argv[i], '/'))) ? name + 1 : argv[i];
 				printfeed(fp, name);
 				if (ferror(fp))
 					err(1, "ferror: %s", argv[i]);
-				fclose(fp);
 			}
+			memcpy(&stfiles[i - 1], &st, sizeof(st));
+			fclose(fp);
 		}
-		/* DEBUG: TODO: gc first run. */
-		gc();
 
-		sleep(sleepsecs);
-		slept += sleepsecs;
-
-		/* gc once every hour (excluding run-time) */
-		if (slept >= 3600) {
+		/* "garbage collect" on a change or every 5 minutes */
+		if (changed || slept > 10) {
 			gc();
+			changed = 0;
 			slept = 0;
 		}
+		sleep(1);
+		slept++;
 	}
 	return 0;
 }
