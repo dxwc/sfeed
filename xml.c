@@ -416,9 +416,16 @@ xml_parse(XMLParser *x)
 							break;
 						if (datalen < sizeof(x->data) - 1)
 							x->data[datalen++] = c;
-						if (isspace(c))
+						else {
+							/* entity too long for buffer, handle as normal data */
+							x->data[datalen] = '\0';
+							if (x->xmldata)
+								x->xmldata(x, x->data, datalen);
+							x->data[0] = c;
+							datalen = 1;
 							break;
-						else if (c == ';') {
+						}
+						if (c == ';') {
 							x->data[datalen] = '\0';
 							if (x->xmldataentity)
 								x->xmldataentity(x, x->data, datalen);
