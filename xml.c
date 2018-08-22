@@ -14,19 +14,20 @@ static void
 xml_parseattrs(XMLParser *x)
 {
 	size_t namelen = 0, valuelen;
-	int c, endsep, endname = 0;
+	int c, endsep, endname = 0, valuestart = 0;
 
 	while ((c = x->getnext()) != EOF) {
-		if (isspace(c)) { /* TODO: simplify endname ? */
+		if (isspace(c)) {
 			if (namelen)
 				endname = 1;
 			continue;
-		}
-		if (c == '?')
+		} else if (c == '?')
 			; /* ignore */
 		else if (c == '=') {
 			x->name[namelen] = '\0';
-		} else if (namelen && ((endname && isalpha(c)) || (c == '>' || c == '/'))) {
+			valuestart = 1;
+			endname = 1;
+		} else if (namelen && ((endname && !valuestart && isalpha(c)) || (c == '>' || c == '/'))) {
 			/* attribute without value */
 			x->name[namelen] = '\0';
 			if (x->xmlattrstart)
@@ -38,12 +39,21 @@ xml_parseattrs(XMLParser *x)
 			endname = 0;
 			x->name[0] = c;
 			namelen = 1;
-		} else if (namelen && (c == '\'' || c == '"')) {
+		} else if (namelen && valuestart) {
 			/* attribute with value */
-			endsep = c; /* c is end separator */
 			if (x->xmlattrstart)
 				x->xmlattrstart(x, x->tag, x->taglen, x->name, namelen);
-			for (valuelen = 0; (c = x->getnext()) != EOF;) {
+
+			valuelen = 0;
+			if (c == '\'' || c == '"') {
+				endsep = c;
+			} else {
+				endsep = ' '; /* isspace() */
+				goto startvalue;
+			}
+
+			while ((c = x->getnext()) != EOF) {
+startvalue:
 				if (c == '&') { /* entities */
 					x->data[valuelen] = '\0';
 					/* call data function with data before entity if there is data */
@@ -52,7 +62,7 @@ xml_parseattrs(XMLParser *x)
 					x->data[0] = c;
 					valuelen = 1;
 					while ((c = x->getnext()) != EOF) {
-						if (c == endsep)
+						if (c == endsep || (endsep == ' ' && (c == '>' || isspace(c))))
 							break;
 						if (valuelen < sizeof(x->data) - 1)
 							x->data[valuelen++] = c;
@@ -73,7 +83,7 @@ xml_parseattrs(XMLParser *x)
 							break;
 						}
 					}
-				} else if (c != endsep) {
+				} else if (c != endsep && !(endsep == ' ' && (c == '>' || isspace(c)))) {
 					if (valuelen < sizeof(x->data) - 1) {
 						x->data[valuelen++] = c;
 					} else {
@@ -84,7 +94,7 @@ xml_parseattrs(XMLParser *x)
 						valuelen = 1;
 					}
 				}
-				if (c == endsep) {
+				if (c == endsep || (endsep == ' ' && (c == '>' || isspace(c)))) {
 					x->data[valuelen] = '\0';
 					if (x->xmlattr)
 						x->xmlattr(x, x->tag, x->taglen, x->name, namelen, x->data, valuelen);
@@ -93,7 +103,7 @@ xml_parseattrs(XMLParser *x)
 					break;
 				}
 			}
-			namelen = endname = 0;
+			namelen = endname = valuestart = 0;
 		} else if (namelen < sizeof(x->name) - 1) {
 			x->name[namelen++] = c;
 		}
