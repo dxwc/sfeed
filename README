@@ -111,7 +111,8 @@ sfeed_opml_export - Generate an OPML XML file from a sfeedrc config file.
 sfeed_opml_import - Generate a sfeedrc config file from an OPML XML file.
 sfeed_mbox        - Format feed data (TSV) to mbox.
 sfeed_plain       - Format feed data (TSV) to a plain-text list.
-sfeed_tail        - format unseen feed data (TSV) to a plain-text list.
+sfeed_tail        - Format unseen feed data (TSV) to a plain-text list.
+sfeed_twtxt       - Format feed data (TSV) to a twtxt feed.
 sfeed_update      - Update feeds and merge with old feeds in the directory
                     $HOME/.sfeed/feeds by default.
 sfeed_web         - Find urls to RSS/Atom feed from a webpage.

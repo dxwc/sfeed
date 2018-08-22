@@ -11,6 +11,7 @@ BIN = \
 	sfeed_opml_import\
 	sfeed_plain\
 	sfeed_tail\
+	sfeed_twtxt\
 	sfeed_web\
 	sfeed_xmlenc
 SCRIPTS = \
