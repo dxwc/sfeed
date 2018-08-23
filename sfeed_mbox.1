@@ -23,16 +23,12 @@ If no
 .Ar file
 parameters are specified and so the data is read from stdin the feed name
 is empty.
-Lines starting with "From " will be mangled in the mboxrd-style.
 The mbox data can be further processed by tools like
 .Xr procmail 1
 or
 .Xr fdm 1
 for example.
 See the README file for some useful examples.
-.Sh FORMAT
-Depending on the original content\-type the mail will be formatted as
-plain-text (text/plain) or HTML (text/html).
 .Sh CUSTOM HEADERS
 To make further filtering simpler some custom headers are set:
 .Bl -tag -width Ds

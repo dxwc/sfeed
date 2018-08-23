@@ -70,47 +70,6 @@ murmur3_32(const char *key, uint32_t len, uint32_t seed)
 	return hash;
 }
 
-/* Unescape / decode fields printed by string_print_encoded()
- * "\\" to "\", "\t", to TAB, "\n" to newline. Unrecognised escape sequences
- * are ignored: "\z" etc. Mangle "From " in mboxrd style (always prefix >). */
-static void
-printcontent(const char *s, FILE *fp)
-{
-	if (!strncmp(s, "From ", 5))
-		fputc('>', fp);
-
-read:
-	for (; *s; s++) {
-		switch (*s) {
-		case '\\':
-			switch (*(++s)) {
-			case '\0': return; /* ignore */
-			case '\\': fputc('\\', fp); break;
-			case 't':  fputc('\t', fp); break;
-			case 'n':
-				fputc('\n', fp);
-				for (s++; *s == '>'; s++)
-					fputc('>', fp);
-				/* escape "From ", mboxrd-style. */
-				if (!strncmp(s, "From ", 5))
-					fputc('>', fp);
-				goto read;
-			}
-			break;
-		case '\n':
-			fputc((int)*s, fp);
-			for (s++; *s == '>'; s++)
-				fputc('>', fp);
-			/* escape "From ", mboxrd-style. */
-			if (!strncmp(s, "From ", 5))
-				fputc('>', fp);
-			goto read;
-		default:
-			fputc((int)*s, fp);
-		}
-	}
-}
-
 static void
 printfeed(FILE *fp, const char *feedname)
 {
@@ -148,22 +107,11 @@ printfeed(FILE *fp, const char *feedname)
 		       fields[FieldUnixTimestamp][0] ? "." : "",
 		       murmur3_32(line, (size_t)linelen, seed),
 		       feedname);
-		printf("Content-Type: text/%s; charset=UTF-8\n", fields[FieldContentType]);
+		printf("Content-Type: text/plain; charset=\"utf-8\"\n");
 		printf("Content-Transfer-Encoding: binary\n");
 		printf("X-Feedname: %s\n\n", feedname);
 
-		if (!strcmp(fields[FieldContentType], "html")) {
-			fputs("<p>Link: <a href=\"", stdout);
-			xmlencode(fields[FieldLink], stdout);
-			fputs("\">", stdout);
-			fputs(fields[FieldLink], stdout);
-			fputs("</a></p>\n\n", stdout);
-			printcontent(fields[FieldContent], stdout);
-		} else {
-			printf("Link: %s\n\n", fields[FieldLink]);
-			printcontent(fields[FieldContent], stdout);
-		}
-		fputs("\n\n", stdout);
+		printf("%s\n\n", fields[FieldLink]);
 	}
 }
 
