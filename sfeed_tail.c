@@ -14,7 +14,7 @@
 
 static char *line;
 static size_t linesize;
-static int changed;
+static int changed, firsttime = 1;
 static time_t comparetime;
 
 struct line {
@@ -144,10 +144,19 @@ main(int argc, char *argv[])
 		comparetime -= 86400;
 
 		for (i = 1; i < argc; i++) {
-			if (!(fp = fopen(argv[i], "r")))
-				err(1, "fopen: %s", argv[i]);
-			if (fstat(fileno(fp), &st) == -1)
-				err(1, "fstat: %s", argv[i]);
+			if (!(fp = fopen(argv[i], "r"))) {
+				if (firsttime)
+					err(1, "fopen: %s", argv[i]);
+				/* NOTE: don't report when the file is missing */
+				continue;
+			}
+			if (fstat(fileno(fp), &st) == -1) {
+				if (firsttime)
+					err(1, "fstat: %s", argv[i]);
+				warn("fstat: %s", argv[i]);
+				fclose(fp);
+				continue;
+			}
 
 			/* did the file change? by size, modification */
 			if (stfiles[i - 1].st_size != st.st_size ||
@@ -155,9 +164,10 @@ main(int argc, char *argv[])
 				name = ((name = strrchr(argv[i], '/'))) ? name + 1 : argv[i];
 				printfeed(fp, name);
 				if (ferror(fp))
-					err(1, "ferror: %s", argv[i]);
+					warn("ferror: %s", argv[i]);
+				memcpy(&stfiles[i - 1], &st, sizeof(st));
 			}
-			memcpy(&stfiles[i - 1], &st, sizeof(st));
+
 			fclose(fp);
 		}
 
@@ -169,6 +179,7 @@ main(int argc, char *argv[])
 		}
 		sleep(1);
 		slept++;
+		firsttime = 0;
 	}
 	return 0;
 }
