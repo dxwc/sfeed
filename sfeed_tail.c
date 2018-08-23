@@ -172,7 +172,7 @@ main(int argc, char *argv[])
 		}
 
 		/* "garbage collect" on a change or every 5 minutes */
-		if (changed || slept > 10) {
+		if (changed || slept > 300) {
 			gc();
 			changed = 0;
 			slept = 0;
