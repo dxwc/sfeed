@@ -37,7 +37,7 @@ printfeed(FILE *fp, const char *feedname)
 			printf("[%s] ", feedname);
 		fputs(fields[FieldTitle], stdout);
 		if (fields[FieldLink][0]) {
-			fputs(" ", stdout);
+			fputs(": ", stdout);
 			fputs(fields[FieldLink], stdout);
 		}
 		putchar('\n');
