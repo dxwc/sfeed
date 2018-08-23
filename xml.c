@@ -350,8 +350,9 @@ xml_parse(XMLParser *x)
 
 			if (c == '!') { /* cdata and comments */
 				for (tagdatalen = 0; (c = x->getnext()) != EOF;) {
-					if (tagdatalen <= sizeof("[CDATA[") - 1) /* if (d < sizeof(x->data)) */
-						x->data[tagdatalen++] = c; /* TODO: prevent overflow */
+					/* NOTE: sizeof(x->data) must be atleast sizeof("[CDATA[") */
+					if (tagdatalen <= sizeof("[CDATA[") - 1)
+						x->data[tagdatalen++] = c;
 					if (c == '>')
 						break;
 					else if (c == '-' && tagdatalen == sizeof("--") - 1 &&
@@ -381,7 +382,7 @@ xml_parse(XMLParser *x)
 				x->isshorttag = ispi;
 				taglen = 1;
 				while ((c = x->getnext()) != EOF) {
-					if (c == '/') /* TODO: simplify short tag? */
+					if (c == '/')
 						x->isshorttag = 1; /* short tag */
 					else if (c == '>' || isspace(c)) {
 						x->tag[taglen] = '\0';
