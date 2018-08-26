@@ -12,7 +12,7 @@ Features
 --------
 
 - Relatively small parser.
-- Pretty simple API comparable with libexpat.
+- Pretty simple API.
 - Pretty fast.
 - Portable
 - No dynamic memory allocation.

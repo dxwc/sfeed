@@ -3,7 +3,6 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -215,7 +214,7 @@ xml_parsecdata(XMLParser *x)
 }
 
 static int
-codepointtoutf8(const uint32_t r, uint8_t *s)
+codepointtoutf8(long r, char *s)
 {
 	if (r == 0) {
 		return 0; /* NUL byte */
@@ -251,16 +250,16 @@ namedentitytostr(const char *e, char *buf, size_t bufsiz)
 		char *entity;
 		int c;
 	} entities[] = {
-		{ .entity = "&amp;",  .c = '&'  },
-		{ .entity = "&lt;",   .c = '<'  },
-		{ .entity = "&gt;",   .c = '>'  },
-		{ .entity = "&apos;", .c = '\'' },
-		{ .entity = "&quot;", .c = '"'  },
-		{ .entity = "&AMP;",  .c = '&'  },
-		{ .entity = "&LT;",   .c = '<'  },
-		{ .entity = "&GT;",   .c = '>'  },
-		{ .entity = "&APOS;", .c = '\'' },
-		{ .entity = "&QUOT;", .c = '"'  }
+		{ "&amp;",  '&'  },
+		{ "&lt;",   '<'  },
+		{ "&gt;",   '>'  },
+		{ "&apos;", '\'' },
+		{ "&quot;", '"'  },
+		{ "&AMP;",  '&'  },
+		{ "&LT;",   '<'  },
+		{ "&GT;",   '>'  },
+		{ "&APOS;", '\'' },
+		{ "&QUOT;", '"'  }
 	};
 	size_t i;
 
@@ -285,7 +284,7 @@ namedentitytostr(const char *e, char *buf, size_t bufsiz)
 static int
 numericentitytostr(const char *e, char *buf, size_t bufsiz)
 {
-	uint32_t l;
+	long l;
 	int len;
 	char *end;
 
