@@ -6,7 +6,6 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -105,8 +104,8 @@ encodeuri(char *buf, size_t bufsiz, const char *s)
 			if (b + 3 >= bufsiz)
 				return -1;
 			buf[b++] = '%';
-			buf[b++] = table[((uint8_t)s[i] >> 4) & 15];
-			buf[b++] = table[(uint8_t)s[i] & 15];
+			buf[b++] = table[((unsigned char)s[i] >> 4) & 15];
+			buf[b++] = table[(unsigned char)s[i] & 15];
 		} else if (b < bufsiz) {
 			buf[b++] = s[i];
 		} else {
