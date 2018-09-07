@@ -97,8 +97,8 @@ feed() {
 	fi) &
 }
 
-terminated() {
-	isrunning="0"
+interrupted() {
+	isinterrupted="1"
 }
 
 cleanup() {
@@ -115,10 +115,10 @@ feeds() {
 loadconfig "$1"
 # fetch feeds and store in temporary file.
 sfeedtmpdir="$(mktemp -d '/tmp/sfeed_XXXXXX')"
-# kill whole current process group on ^C.
-isrunning="1"
+# kill whole current process group on ^C (SIGINT).
+isinterrupted="0"
 # SIGTERM: signal to terminate parent.
-trap -- "terminated" "15"
+trap -- "interrupted" "15"
 # SIGINT: kill all running childs >:D
 trap -- "kill -TERM -$$" "2"
 # make sure path exists.
@@ -129,5 +129,6 @@ feeds
 wait
 # cleanup temporary files etc.
 cleanup
-# if terminated.
-[ "${isrunning}" = "0" ] && exit 1
+# on SIGINT exit with 128 + signal (SIGINT = 2).
+[ "${isinterrupted}" = "1" ] && exit 130
+exit 0
