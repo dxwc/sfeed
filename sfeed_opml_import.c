@@ -18,14 +18,14 @@ static void
 printsafe(const char *s)
 {
 	for (; *s; s++) {
-		if (iscntrl((int)*s))
+		if (iscntrl((unsigned char)*s))
 			continue;
 		else if (*s == '\\')
 			fputs("\\\\", stdout);
 		else if (*s == '\'')
 			fputs("'\\''", stdout);
 		else
-			putchar((int)*s);
+			putchar(*s);
 	}
 }
 

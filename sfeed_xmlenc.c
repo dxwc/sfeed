@@ -37,7 +37,7 @@ xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
 		if (*value) {
 			/* output lowercase */
 			for (; *value; value++)
-				putc(tolower((int)*value), stdout);
+				putchar(tolower((unsigned char)*value));
 			putchar('\n');
 		}
 		exit(0);

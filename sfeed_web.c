@@ -22,7 +22,7 @@ static void
 printfeedtype(const char *s, FILE *fp)
 {
 	for (; *s; s++)
-		if (!isspace((int)*s))
+		if (!isspace((unsigned char)*s))
 			fputc(*s, fp);
 }
 
@@ -49,7 +49,7 @@ xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort)
 		fputs(abslink, stdout);
 	else
 		fputs(feedlink, stdout);
-	fputc('\t', stdout);
+	putchar('\t');
 	printfeedtype(feedtype, stdout);
 	putchar('\n');
 	found++;

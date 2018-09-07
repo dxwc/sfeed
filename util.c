@@ -31,7 +31,7 @@ parseuri(const char *s, struct uri *u, int rel)
 		p += 2; /* skip "//" */
 	} else {
 		/* protocol part */
-		for (p = s; *p && (isalpha((int)*p) || isdigit((int)*p) ||
+		for (p = s; *p && (isalpha((unsigned char)*p) || isdigit((unsigned char)*p) ||
 			       *p == '+' || *p == '-' || *p == '.'); p++)
 			;
 		if (!strncmp(p, "://", 3)) {
@@ -101,7 +101,7 @@ encodeuri(char *buf, size_t bufsiz, const char *s)
 	for (i = 0, b = 0; s[i]; i++) {
 		if ((int)s[i] == ' ' ||
 		    (unsigned char)s[i] > 127 ||
-		    iscntrl((int)s[i])) {
+		    iscntrl((unsigned char)s[i])) {
 			if (b + 3 >= bufsiz)
 				return -1;
 			buf[b++] = '%';
