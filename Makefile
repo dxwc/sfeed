@@ -1,7 +1,7 @@
 include config.mk
 
 NAME = sfeed
-VERSION = 0.9.5
+VERSION = 0.9.6
 BIN = \
 	sfeed\
 	sfeed_frames\
