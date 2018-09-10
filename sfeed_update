@@ -97,13 +97,13 @@ feed() {
 	fi) &
 }
 
-interrupted() {
-	isinterrupted="1"
-}
-
 cleanup() {
 	# remove temporary files
 	rm -rf "${sfeedtmpdir}"
+}
+
+interrupted() {
+	isinterrupted="1"
 }
 
 feeds() {
@@ -111,16 +111,16 @@ feeds() {
 	echo "See sfeedrc.example for an example." >&2
 }
 
-# load config file.
-loadconfig "$1"
-# fetch feeds and store in temporary file.
-sfeedtmpdir="$(mktemp -d '/tmp/sfeed_XXXXXX')"
 # kill whole current process group on ^C (SIGINT).
 isinterrupted="0"
 # SIGTERM: signal to terminate parent.
 trap -- "interrupted" "15"
 # SIGINT: kill all running childs >:D
 trap -- "kill -TERM -$$" "2"
+# load config file.
+loadconfig "$1"
+# fetch feeds and store in temporary file.
+sfeedtmpdir="$(mktemp -d '/tmp/sfeed_XXXXXX')"
 # make sure path exists.
 mkdir -p "${sfeedpath}"
 # fetch feeds specified in config file.
