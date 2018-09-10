@@ -88,8 +88,9 @@ OS tested
 ---------
 
 - Linux (glibc+gcc, musl-gcc, clang).
+- OpenBSD (gcc, clang).
 - NetBSD
-- OpenBSD: (gcc).
+- FreeBSD
 - Windows (cygwin gcc, mingw).
 - HaikuOS
 
