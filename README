@@ -87,7 +87,7 @@ Optional dependencies
 OS tested
 ---------
 
-- Linux (glibc+gcc, musl-gcc, clang).
+- Linux (glibc+gcc, musl+gcc, clang).
 - OpenBSD (gcc, clang).
 - NetBSD
 - FreeBSD
@@ -97,7 +97,7 @@ OS tested
 
 Architectures tested
 --------------------
-amd64, ARM, i386, SPARC64.
+amd64, ARM, aarch64, i386, SPARC64.
 
 
 Files
