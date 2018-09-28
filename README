@@ -127,12 +127,18 @@ Files read at runtime by sfeed_update(1)
 ----------------------------------------
 
 sfeedrc - Config file. This file is evaluated as a shellscript in
-          sfeed_update(1). You can for example override the fetchfeed()
-          function to use wget(1), OpenBSD ftp(1) an other download program or
-          you can override the merge() function to change the merge logic. The
-          function feeds() is called to fetch the feeds. The function feed()
-          can safely be executed concurrently as a background job in your
-          sfeedrc(5) config file to make updating faster.
+          sfeed_update(1).
+
+Atleast the following functions can be overridden per feed:
+
+- fetchfeed: to use wget(1), OpenBSD ftp(1) or an other download program.
+- merge: to change the merge logic.
+- filter: to filter on fields.
+- order: to change the sort order.
+
+The function feeds() is called to fetch the feeds. The function feed() can
+safely be executed concurrently as a background job in your sfeedrc(5) config
+file to make updating faster.
 
 
 Files written at runtime by sfeed_update(1)
@@ -209,6 +215,48 @@ Export an OPML file of your feeds from a sfeedrc config file (configfile
 argument is optional):
 
 	sfeed_opml_export configfile > myfeeds.opml
+
+- - -
+
+# filter fields.
+# filter(name)
+filter() {
+	case "$1" in
+	"tweakers")
+		LC_LOCALE=C awk -F '	' 'BEGIN {
+			OFS = "	";
+		}
+		# skip ads.
+		$2 ~ /^ADV:/ {
+			next;
+		}
+		# shorten link.
+		{
+			if (match($3, /^https:\/\/tweakers\.net\/(nieuws|downloads|reviews|geek)\/[0-9]+\//)) {
+				$3 = substr($3, RSTART, RLENGTH);
+			}
+			print $0;
+		}';;
+	"yt BSDNow")
+		# filter only BSD Now from channel.
+		LC_LOCALE=C awk -F '	' '$2 ~ / \| BSD Now/';;
+	*)
+		cat;;
+	esac | \
+		# replace youtube links with embed links.
+		sed 's@www.youtube.com/watch?v=@www.youtube.com/embed/@g' | \
+		# try to strip utm_ tracking parameters.
+		LC_LOCALE=C awk -F '	' 'BEGIN {
+			OFS = "	";
+		}
+		{
+			gsub(/\?utm_([^&]+)/, "?", $3);
+			gsub(/&utm_([^&]+)/, "", $3);
+			gsub(/\?&/, "?", $3);
+			gsub(/[\?&]+$/, "", $3);
+			print $0;
+		}'
+}
 
 - - -
 

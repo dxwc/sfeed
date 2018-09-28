@@ -1,4 +1,4 @@
-.Dd August 5, 2015
+.Dd September 28, 2018
 .Dt SFEED_UPDATE 1
 .Os
 .Sh NAME
@@ -29,15 +29,28 @@ section for more information.
 Config file, see the sfeedrc.example file for an example.
 This file is evaluated as a shellscript in
 .Nm .
-You can for example override the fetchfeed() function to
-use
-.Xr curl 1 ,
+.Pp
+Atleast the following functions can be overridden per feed:
+.Bl -tag -width 17n
+.It fetchfeed
+to use
 .Xr wget 1 ,
-or an other network downloader or you can override the merge() function to
-change the merge logic.
+OpenBSD
+.Xr ftp 1
+or an other download program.
+.It merge
+to change the merge logic.
+.It filter
+to filter on fields.
+.It order
+to change the sort order.
+.El
+.Pp
 The function feeds() is called to fetch the feeds.
-By default the function feed() is executed concurrently as a background job to
-speedup updating.
+The function feed() can safely be executed concurrently as a background job in
+your
+.Xr sfeedrc 5
+config file to make updating faster.
 .El
 .Sh FILES WRITTEN
 .Bl -tag -width 17n

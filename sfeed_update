@@ -9,7 +9,7 @@ sfeedpath="$HOME/.sfeed/feeds"
 # loadconfig(configfile)
 loadconfig() {
 	# allow to specify config via argv[1].
-	if [ ! x"$1" = x"" ]; then
+	if [ "$1" != "" ]; then
 		# get absolute path of config file.
 		config=$(readlink -f "$1")
 	else
@@ -17,8 +17,7 @@ loadconfig() {
 		config="$HOME/.sfeed/sfeedrc"
 	fi
 
-	# load config: config is loaded here to be able to override $sfeedpath
-	# or functions.
+	# config is loaded here to be able to override $sfeedpath or functions.
 	if [ -r "${config}" ]; then
 		. "${config}"
 	else
@@ -28,34 +27,44 @@ loadconfig() {
 	fi
 }
 
-# merge raw files.
-# merge(oldfile, newfile)
-merge() {
-	# unique sort by id, title, link.
-	# order by timestamp (desc).
-	(sort -t '	' -u -k6,6 -k2,2 -k3,3 "$1" "$2" 2>/dev/null) |
-	sort -t '	' -k1rn,1
-}
-
-# fetch a feed via HTTP/HTTPS etc.
-# fetchfeed(url, name, feedfile)
-fetchfeed() {
-	if curl -L --max-redirs 0 -H 'User-Agent:' -f -s -S -m 15 -z "$3" "$1" 2>/dev/null; then
-		printf "  OK %s %s\n" "$(date +'%H:%M:%S')" "$2" >&2
-	else
-		printf "FAIL %s %s\n" "$(date +'%H:%M:%S')" "$2" >&2
-	fi
-}
-
 # convert encoding from one encoding to another.
 # convertencoding(from, to)
 convertencoding() {
 	# if from != to
-	if [ ! "$1" = "" ] && [ ! "$2" = "" ] && [ ! "$1" = "$2" ]; then
+	if [ "$1" != "" ] && [ "$2" != "" ] && [ "$1" != "$2" ]; then
 		iconv -cs -f "$1" -t "$2" 2> /dev/null
 	else
 		# else no convert, just output
 		cat
+	fi
+}
+
+# merge raw files: unique sort by id, title, link.
+# merge(name, oldfile, newfile)
+merge() {
+	sort -t '	' -u -k6,6 -k2,2 -k3,3 "$2" "$3" 2>/dev/null
+}
+
+# filter fields.
+# filter(name)
+filter() {
+	cat
+}
+
+# order by timestamp (descending).
+# order(name)
+order() {
+	sort -t '	' -k1rn,1
+}
+
+# fetch a feed via HTTP/HTTPS etc.
+# fetchfeed(name, url, feedfile)
+fetchfeed() {
+	if curl -L --max-redirs 0 -H "User-Agent:" -f -s -S -m 15 \
+		-z "$3" "$2" 2>/dev/null; then
+		printf "  OK %s %s\n" "$(date +'%H:%M:%S')" "$1" >&2
+	else
+		printf "FAIL %s %s\n" "$(date +'%H:%M:%S')" "$1" >&2
 	fi
 }
 
@@ -72,14 +81,14 @@ feed() {
 	sfeedfile="${sfeedpath}/${filename}"
 
 	if [ ! "${encoding}" = "" ]; then
-		fetchfeed "${feedurl}" "${name}" "${sfeedfile}" | \
+		fetchfeed "${name}" "${feedurl}" "${sfeedfile}" | \
 			convertencoding "${encoding}" "utf-8"
 	else # detect encoding.
 		tmpencfile="${tmpfeedfile}.enc"
-		fetchfeed "${feedurl}" "${name}" "${sfeedfile}" > "${tmpencfile}"
+		fetchfeed "${name}" "${feedurl}" "${sfeedfile}" > "${tmpencfile}"
 		detectenc=$(sfeed_xmlenc < "${tmpencfile}")
 		convertencoding "${detectenc}" "utf-8" < "${tmpencfile}"
-	fi | sfeed "${basesiteurl}" > "${tmpfeedfile}"
+	fi | sfeed "${basesiteurl}" | filter "${name}" > "${tmpfeedfile}"
 
 	# get new data and merge with old.
 	sfeedfilenew="${sfeedpath}/${filename}.new"
@@ -87,18 +96,20 @@ feed() {
 	if [ -s "${tmpfeedfile}" ]; then
 		# if file exists, merge
 		if [ -e "${sfeedfile}" ]; then
-			merge "${sfeedfile}" "${tmpfeedfile}" > "${sfeedfilenew}"
+			merge "${name}" "${sfeedfile}" "${tmpfeedfile}" | \
+				order "${name}" > "${sfeedfilenew}"
 
 			# overwrite old file with updated file
 			mv "${sfeedfilenew}" "${sfeedfile}"
 		else
-			merge "/dev/null" "${tmpfeedfile}" > "${sfeedfile}"
+			merge "${name}" "/dev/null" "${tmpfeedfile}" | \
+				order "${name}" > "${sfeedfile}"
 		fi
 	fi) &
 }
 
 cleanup() {
-	# remove temporary files
+	# remove temporary files.
 	rm -rf "${sfeedtmpdir}"
 }
 
@@ -114,9 +125,9 @@ feeds() {
 # kill whole current process group on ^C (SIGINT).
 isinterrupted="0"
 # SIGTERM: signal to terminate parent.
-trap -- "interrupted" "15"
+trap -- "interrupted" "TERM"
 # SIGINT: kill all running childs >:D
-trap -- "kill -TERM -$$" "2"
+trap -- "kill -TERM -$$" "INT"
 # load config file.
 loadconfig "$1"
 # fetch feeds and store in temporary file.
