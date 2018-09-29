@@ -49,7 +49,7 @@ DOC = \
 	README.xml\
 	TODO
 
-all: $(BIN)
+all: ${BIN}
 
 ${BIN}: ${LIB} ${@:=.o}
 
@@ -91,7 +91,7 @@ install: all
 	# installing executable files and scripts.
 	mkdir -p "${DESTDIR}${PREFIX}/bin"
 	cp -f ${BIN} ${SCRIPTS} "${DESTDIR}${PREFIX}/bin"
-	for f in $(BIN) $(SCRIPTS); do chmod 755 "${DESTDIR}${PREFIX}/bin/$$f"; done
+	for f in ${BIN} ${SCRIPTS}; do chmod 755 "${DESTDIR}${PREFIX}/bin/$$f"; done
 	# installing example files.
 	mkdir -p "${DESTDIR}${PREFIX}/share/${NAME}"
 	cp -f sfeedrc.example\
@@ -99,18 +99,18 @@ install: all
 		README\
 		README.xml\
 		"${DESTDIR}${PREFIX}/share/${NAME}"
-	# installing manual pages for tools.
+	# installing manual pages for general commands: section 1.
 	mkdir -p "${DESTDIR}${MANPREFIX}/man1"
 	cp -f ${MAN1} "${DESTDIR}${MANPREFIX}/man1"
-	for m in $(MAN1); do chmod 644 "${DESTDIR}${MANPREFIX}/man1/$$m"; done
-	# installing manual pages for sfeedrc(5).
+	for m in ${MAN1}; do chmod 644 "${DESTDIR}${MANPREFIX}/man1/$$m"; done
+	# installing manual pages for file formats: section 5.
 	mkdir -p "${DESTDIR}${MANPREFIX}/man5"
 	cp -f ${MAN5} "${DESTDIR}${MANPREFIX}/man5"
-	for m in $(MAN5); do chmod 644 "${DESTDIR}${MANPREFIX}/man5/$$m"; done
+	for m in ${MAN5}; do chmod 644 "${DESTDIR}${MANPREFIX}/man5/$$m"; done
 
 uninstall:
 	# removing executable files and scripts.
-	for f in $(BIN) $(SCRIPTS); do rm -f "${DESTDIR}${PREFIX}/bin/$$f"; done
+	for f in ${BIN} ${SCRIPTS}; do rm -f "${DESTDIR}${PREFIX}/bin/$$f"; done
 	# removing example files.
 	rm -f \
 		"${DESTDIR}${PREFIX}/share/${NAME}/sfeedrc.example"\
@@ -119,7 +119,7 @@ uninstall:
 		"${DESTDIR}${PREFIX}/share/${NAME}/README.xml"
 	-rmdir "${DESTDIR}${PREFIX}/share/${NAME}"
 	# removing manual pages.
-	for m in $(MAN1); do rm -f "${DESTDIR}${MANPREFIX}/man1/$$m"; done
-	for m in $(MAN5); do rm -f "${DESTDIR}${MANPREFIX}/man5/$$m"; done
+	for m in ${MAN1}; do rm -f "${DESTDIR}${MANPREFIX}/man1/$$m"; done
+	for m in ${MAN5}; do rm -f "${DESTDIR}${MANPREFIX}/man5/$$m"; done
 
 .PHONY: all clean dist install uninstall
