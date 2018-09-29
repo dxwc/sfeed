@@ -60,7 +60,7 @@ order() {
 # fetch a feed via HTTP/HTTPS etc.
 # fetchfeed(name, url, feedfile)
 fetchfeed() {
-	if curl -L --max-redirs 0 -H "User-Agent:" -f -s -S -m 15 \
+	if curl -L --max-redirs 0 -H "User-Agent:" -f -s -m 15 \
 		-z "$3" "$2" 2>/dev/null; then
 		printf "  OK %s %s\n" "$(date +'%H:%M:%S')" "$1" >&2
 	else
