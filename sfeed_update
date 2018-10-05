@@ -77,7 +77,7 @@ fetchfeed() {
 feed() {
 	# wait until ${maxjobs} are finished: throughput using this logic is
 	# non-optimal, but it is simple and portable.
-	test $((curjobs % maxjobs)) -eq 0 && wait
+	[ $((curjobs % maxjobs)) -eq 0 ] && wait
 	curjobs=$((curjobs + 1))
 
 	(name="$1"
@@ -89,7 +89,7 @@ feed() {
 	encoding="$4"
 	sfeedfile="${sfeedpath}/${filename}"
 
-	if [ ! "${encoding}" = "" ]; then
+	if [ "${encoding}" != "" ]; then
 		fetchfeed "${name}" "${feedurl}" "${sfeedfile}" | \
 			convertencoding "${encoding}" "utf-8"
 	else # detect encoding.
