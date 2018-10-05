@@ -223,16 +223,14 @@ argument is optional):
 filter() {
 	case "$1" in
 	"tweakers")
-		LC_LOCALE=C awk -F '	' 'BEGIN {
-			OFS = "	";
-		}
+		LC_LOCALE=C awk -F '	' 'BEGIN { OFS = "	"; }
 		# skip ads.
 		$2 ~ /^ADV:/ {
 			next;
 		}
 		# shorten link.
 		{
-			if (match($3, /^https:\/\/tweakers\.net\/(nieuws|downloads|reviews|geek)\/[0-9]+\//)) {
+			if (match($3, /^https:\/\/tweakers\.net\/[a-z]+\/[0-9]+\//)) {
 				$3 = substr($3, RSTART, RLENGTH);
 			}
 			print $0;
@@ -245,15 +243,23 @@ filter() {
 	esac | \
 		# replace youtube links with embed links.
 		sed 's@www.youtube.com/watch?v=@www.youtube.com/embed/@g' | \
-		# try to strip utm_ tracking parameters.
-		LC_LOCALE=C awk -F '	' 'BEGIN {
-			OFS = "	";
-		}
+
+		LC_LOCALE=C awk -F '	' 'BEGIN { OFS = "	"; }
 		{
-			gsub(/\?utm_([^&]+)/, "?", $3);
-			gsub(/&utm_([^&]+)/, "", $3);
+			# shorten feedburner links.
+			if (match($3, /^(http|https):\/\/[^/]+\/~r\/.*\/~3\/[^\/]+\//)) {
+				$3 = substr($3, RSTART, RLENGTH);
+			}
+
+			# strip tracking parameters
+
+			# urchin, facebook, piwik, webtrekk and generic.
+			gsub(/\?(ad|campaign|pk|tm|wt)_([^&]+)/, "?", $3);
+			gsub(/&(ad|campaign|pk|tm|wt)_([^&]+)/, "", $3);
+
 			gsub(/\?&/, "?", $3);
 			gsub(/[\?&]+$/, "", $3);
+
 			print $0;
 		}'
 }
@@ -314,7 +320,7 @@ File sfeed_archive.c:
 
 Now compile and run:
 
-	$ cc util.c sfeed_archive.c -o sfeed_archive -std=c99
+	$ cc -std=c99 -o sfeed_archive util.c sfeed_archive.c
 	$ ./sfeed_archive 20150101 < feeds > feeds.new
 	$ mv feeds feeds.bak
 	$ mv feeds.new feeds
