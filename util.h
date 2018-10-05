@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <time.h>
-#ifdef USE_PLEDGE
+
+#ifdef __OpenBSD__
 #include <unistd.h>
 #else
 #define pledge(p1,p2) 0
