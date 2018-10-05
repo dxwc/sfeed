@@ -434,7 +434,7 @@ parsetime(const char *s, time_t *tp)
 	if (!isdigit((unsigned char)*s) && !isalpha((unsigned char)*s))
 		return -1;
 
-	if (isdigit((unsigned char)*s)) {
+	if (strspn(s, "0123456789") == 4) {
 		/* format "%Y-%m-%d %H:%M:%S" or "%Y-%m-%dT%H:%M:%S" */
 		vi = 0;
 time:
@@ -454,16 +454,16 @@ time:
 				;
 		}
 		end = s;
-	} else if (isalpha((unsigned char)*s)) {
-		/* format: "%a, %d %b %Y %H:%M:%S" */
-		/* parse "%a, %d %b %Y " part, then use time parsing as above */
+	} else {
+		/* format: "[%a, ]%d %b %Y %H:%M:%S" */
+		/* parse "[%a, ]%d %b %Y " part, then use time parsing as above */
 		for (; *s && isalpha((unsigned char)*s); s++)
 			;
 		for (; *s && isspace((unsigned char)*s); s++)
 			;
-		if (*s != ',')
-			return -1;
-		for (s++; *s && isspace((unsigned char)*s); s++)
+		if (*s == ',')
+			s++;
+		for (; *s && isspace((unsigned char)*s); s++)
 			;
 		for (v = 0, i = 0; *s && i < 4 && isdigit((unsigned char)*s); s++, i++)
 			v = (v * 10) + (*s - '0');
@@ -497,8 +497,6 @@ time:
 		/* parse regular time, see above */
 		vi = 3;
 		goto time;
-	} else {
-		return -1;
 	}
 
 	/* invalid range */
