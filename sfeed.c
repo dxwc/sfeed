@@ -378,7 +378,7 @@ gettzoffset(const char *s)
 
 	for (; *s && isspace((unsigned char)*s); s++)
 		;
-	switch (s[0]) {
+	switch (*s) {
 	case '-': /* offset */
 	case '+':
 		for (i = 0, p = s + 1; i < 2 && *p && isdigit((unsigned char)*p); i++, p++)
@@ -425,7 +425,6 @@ parsetime(const char *s, time_t *tp)
 		{ STRP("November"),  },
 		{ STRP("December"),  },
 	};
-	const char *end = NULL;
 	int va[6] = { 0 }, i, j, v, vi;
 	size_t m;
 
@@ -437,23 +436,6 @@ parsetime(const char *s, time_t *tp)
 	if (strspn(s, "0123456789") == 4) {
 		/* format "%Y-%m-%d %H:%M:%S" or "%Y-%m-%dT%H:%M:%S" */
 		vi = 0;
-time:
-		for (; *s && vi < 6; vi++) {
-			for (i = 0, v = 0; *s && i < 4 && isdigit((unsigned char)*s); s++, i++)
-				v = (v * 10) + (*s - '0');
-			va[vi] = v;
-			if ((vi < 2 && *s == '-') ||
-			    (vi == 2 && (*s == 'T' || isspace((unsigned char)*s))) ||
-			    (vi > 2 && *s == ':'))
-				s++;
-		}
-		/* TODO: only if seconds are parsed (vi == 5)? */
-		/* skip milliseconds for: %Y-%m-%dT%H:%M:%S.000Z */
-		if (*s == '.') {
-			for (s++; *s && isdigit((unsigned char)*s); s++)
-				;
-		}
-		end = s;
 	} else {
 		/* format: "[%a, ]%d %b %Y %H:%M:%S" */
 		/* parse "[%a, ]%d %b %Y " part, then use time parsing as above */
@@ -494,9 +476,25 @@ time:
 		va[0] = v; /* year */
 		for (; *s && isspace((unsigned char)*s); s++)
 			;
-		/* parse regular time, see above */
+		/* parse only regular time part, see below */
 		vi = 3;
-		goto time;
+	}
+
+	/* parse time part */
+	for (; *s && vi < 6; vi++) {
+		for (i = 0, v = 0; *s && i < 4 && isdigit((unsigned char)*s); s++, i++)
+			v = (v * 10) + (*s - '0');
+		va[vi] = v;
+		if ((vi < 2 && *s == '-') ||
+		    (vi == 2 && (*s == 'T' || isspace((unsigned char)*s))) ||
+		    (vi > 2 && *s == ':'))
+			s++;
+	}
+
+	/* skip milliseconds in for example: "%Y-%m-%dT%H:%M:%S.000Z" */
+	if (*s == '.') {
+		for (s++; *s && isdigit((unsigned char)*s); s++)
+			;
 	}
 
 	/* invalid range */
@@ -510,7 +508,7 @@ time:
 
 	if (tp)
 		*tp = datetounix(va[0] - 1900, va[1] - 1, va[2], va[3], va[4], va[5]) -
-		      gettzoffset(end);
+		      gettzoffset(s);
 	return 0;
 }
 
