@@ -89,8 +89,8 @@ printfeed(FILE *fp, const char *feedname)
 		/* can't convert: default to formatted time for time_t 0. */
 		if (!gmtime_r(&parsedtime, &tm) ||
 		    !strftime(timebuf, sizeof(timebuf),
-		              "%a, %d %b %Y %H:%M +0000", &tm))
-			strlcpy(timebuf, "Thu, 01 Jan 1970 00:00 +0000",
+		              "%a, %d %b %Y %H:%M:%S +0000", &tm))
+			strlcpy(timebuf, "Thu, 01 Jan 1970 00:00:00 +0000",
 		                sizeof(timebuf));
 
 		/* mbox + mail header */
