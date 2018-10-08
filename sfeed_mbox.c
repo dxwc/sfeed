@@ -86,16 +86,17 @@ printfeed(FILE *fp, const char *feedname)
 		parsedtime = 0;
 		if (strtotime(fields[FieldUnixTimestamp], &parsedtime))
 			continue;
-		/* can't convert: default to formatted time for time_t 0. */
-		if (!gmtime_r(&parsedtime, &tm) ||
-		    !strftime(timebuf, sizeof(timebuf),
-		              "%a, %d %b %Y %H:%M:%S +0000", &tm))
-			strlcpy(timebuf, "Thu, 01 Jan 1970 00:00:00 +0000",
-		                sizeof(timebuf));
 
 		/* mbox + mail header */
 		printf("From MAILER-DAEMON %s\n", mtimebuf);
-		printf("Date: %s\n", timebuf);
+		/* can't convert: default to formatted time for time_t 0. */
+		if (gmtime_r(&parsedtime, &tm) &&
+		    strftime(timebuf, sizeof(timebuf),
+		              "%a, %d %b %Y %H:%M:%S +0000", &tm))
+			printf("Date: %s\n", timebuf);
+		else
+			printf("Date: Thu, 01 Jan 1970 00:00:00 +0000\n");
+
 		printf("From: %s <sfeed@>\n", fields[FieldAuthor][0] ? fields[FieldAuthor] : "unknown");
 		printf("To: %s <%s@%s>\n", user, user, host);
 		if (feedname[0])
