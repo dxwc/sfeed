@@ -120,7 +120,7 @@ feed() {
 }
 
 cleanup() {
-	# remove temporary files.
+	# remove temporary directory with feed files.
 	rm -rf "${sfeedtmpdir}"
 }
 
@@ -147,7 +147,7 @@ trap -- "sighandler 2" "INT"
 trap -- "sighandler 15" "TERM"
 # load config file.
 loadconfig "$1"
-# fetch feeds and store in temporary file.
+# fetch feeds and store in temporary directory.
 sfeedtmpdir="$(mktemp -d '/tmp/sfeed_XXXXXX')"
 # make sure path exists.
 mkdir -p "${sfeedpath}"
