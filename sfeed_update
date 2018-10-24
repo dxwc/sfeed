@@ -5,9 +5,6 @@
 # defaults
 sfeedpath="$HOME/.sfeed/feeds"
 
-# temporary directory.
-sfeedtmpdir="/tmp/sfeed_$$"
-
 # used for processing feeds concurrently: wait until ${maxjobs} amount of
 # feeds are finished at a time.
 maxjobs=8
@@ -150,8 +147,9 @@ trap -- "sighandler 2" "INT"
 trap -- "sighandler 15" "TERM"
 # load config file.
 loadconfig "$1"
-# make sure sfeed path and temporary directory exist.
-mkdir -m 700 -p "${sfeedtmpdir}"
+# fetch feeds and store in temporary file.
+sfeedtmpdir="$(mktemp -d '/tmp/sfeed_XXXXXX')"
+# make sure path exists.
 mkdir -p "${sfeedpath}"
 # fetch feeds specified in config file.
 feeds
