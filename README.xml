@@ -29,7 +29,7 @@ Supports
 - Helper function (xml_entitytostr) to convert XML 1.0 / HTML 2.0 named entities
   and numeric entities to UTF-8.
 - Reading XML from a fd, string buffer or implement a custom reader:
-  see: XMLParser.getnext and XMLParser.getnext_data.
+  see: XMLParser.getnext.
 
 
 Caveats
