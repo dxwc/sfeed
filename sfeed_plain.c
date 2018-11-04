@@ -31,7 +31,7 @@ printfeed(FILE *fp, const char *feedname)
 		parsedtime = 0;
 		if (strtotime(fields[FieldUnixTimestamp], &parsedtime))
 			continue;
-	        if (!(tm = localtime(&parsedtime)))
+		if (!(tm = localtime(&parsedtime)))
 			err(1, "localtime");
 
 		if (parsedtime >= comparetime)
@@ -44,7 +44,7 @@ printfeed(FILE *fp, const char *feedname)
 			fputs("  ", stdout);
 		}
 
-	        fprintf(stdout, "%04d-%02d-%02d %02d:%02d  ",
+		fprintf(stdout, "%04d-%02d-%02d %02d:%02d  ",
 		        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 		        tm->tm_hour, tm->tm_min);
 		printutf8pad(stdout, fields[FieldTitle], 70, ' ');

@@ -106,7 +106,7 @@ printfeed(FILE *fp, const char *feedname)
 			fputs("  ", stdout);
 		}
 
-	        fprintf(stdout, "%04d-%02d-%02d %02d:%02d  ",
+		fprintf(stdout, "%04d-%02d-%02d %02d:%02d  ",
 		        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 		        tm->tm_hour, tm->tm_min);
 		printutf8pad(stdout, fields[FieldTitle], 70, ' ');
@@ -147,7 +147,7 @@ main(int argc, char *argv[])
 			if (!(fp = fopen(argv[i], "r"))) {
 				if (firsttime)
 					err(1, "fopen: %s", argv[i]);
-				/* NOTE: don't report when the file is missing */
+				/* don't report when the file is missing after the first run */
 				continue;
 			}
 			if (fstat(fileno(fp), &st) == -1) {
