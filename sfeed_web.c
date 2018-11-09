@@ -94,5 +94,5 @@ main(int argc, char *argv[])
 	parser.getnext = getchar;
 	xml_parse(&parser);
 
-	return found > 0 ? 0: 1;
+	return found > 0 ? 0 : 1;
 }
