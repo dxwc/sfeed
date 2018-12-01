@@ -24,8 +24,8 @@ loadconfig() {
 
 # escape(s)
 escape() {
-	printf '%s' "$1" | sed -e 's@"@\&quot;@g' -e "s@'@\&#39;@g"\
-		-e 's@<@\&lt;@g' -e 's@>@\&gt;@g'
+	printf '%s' "$1" | sed -e 's@&@\&amp;@g' -e 's@"@\&quot;@g'\
+		-e "s@'@\&#39;@g" -e 's@<@\&lt;@g' -e 's@>@\&gt;@g'
 }
 
 # override feeds function to ouput opml XML.
