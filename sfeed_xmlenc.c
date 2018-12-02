@@ -11,37 +11,31 @@
 #include "xml.h"
 
 static XMLParser parser;
-static int isxmlpi, tags;
+static int tags;
 
 static void
-xmltagstart(XMLParser *p, const char *tag, size_t taglen)
+xmltagstart(XMLParser *p, const char *t, size_t tl)
 {
-	/* optimization: try to find processing instruction at start */
-	if (tags > 3)
+	/* optimization: try to find a processing instruction only at the
+	   start of the data. */
+	if (tags++ > 3)
 		exit(1);
-	isxmlpi = (!strncasecmp(tag, "?xml", taglen)) ? 1 : 0;
-	tags++;
 }
 
 static void
-xmltagend(XMLParser *p, const char *tag, size_t taglen, int isshort)
+xmlattr(XMLParser *p, const char *t, size_t tl, const char *n,
+	size_t nl, const char *v, size_t vl)
 {
-	isxmlpi = 0;
-}
+	if (strcasecmp(t, "?xml") || strcasecmp(n, "encoding"))
+		return;
 
-static void
-xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
-	size_t namelen, const char *value, size_t valuelen)
-{
-	if (isxmlpi && !strcasecmp(name, "encoding")) {
-		if (*value) {
-			/* output lowercase */
-			for (; *value; value++)
-				putchar(tolower((unsigned char)*value));
-			putchar('\n');
-		}
-		exit(0);
+	/* output lowercase, no control characters */
+	for (; *v; v++) {
+		if (!iscntrl((unsigned char)*v))
+			putchar(tolower((unsigned char)*v));
 	}
+	putchar('\n');
+	exit(0);
 }
 
 int
@@ -51,7 +45,6 @@ main(void)
 		err(1, "pledge");
 
 	parser.xmlattr = xmlattr;
-	parser.xmltagend = xmltagend;
 	parser.xmltagstart = xmltagstart;
 
 	parser.getnext = getchar;
