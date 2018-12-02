@@ -334,8 +334,8 @@ xml_entitytostr(const char *e, char *buf, size_t bufsiz)
 void
 xml_parse(XMLParser *x)
 {
-	int c, ispi;
-	size_t datalen, tagdatalen, taglen;
+	size_t datalen, tagdatalen;
+	int c, isend;
 
 	if (!x->getnext)
 		return;
@@ -367,30 +367,32 @@ xml_parse(XMLParser *x)
 					}
 				}
 			} else {
-				x->tag[0] = '\0';
-				x->taglen = 0;
-
 				/* normal tag (open, short open, close), processing instruction. */
-				if (isspace(c))
-					while ((c = x->getnext()) != EOF && isspace(c))
-						;
-				if (c == EOF)
-					return;
 				x->tag[0] = c;
-				ispi = (c == '?') ? 1 : 0;
-				x->isshorttag = ispi;
-				taglen = 1;
+				x->taglen = 1;
+				x->isshorttag = isend = 0;
+
+				/* treat processing instruction as shorttag, don't strip "?" prefix. */
+				if (c == '?') {
+					x->isshorttag = 1;
+				} else if (c == '/') {
+					if ((c = x->getnext()) == EOF)
+						return;
+					x->tag[0] = c;
+					isend = 1;
+				}
+
 				while ((c = x->getnext()) != EOF) {
 					if (c == '/')
 						x->isshorttag = 1; /* short tag */
 					else if (c == '>' || isspace(c)) {
-						x->tag[taglen] = '\0';
-						if (x->tag[0] == '/') { /* end tag, starts with </ */
-							x->taglen = --taglen; /* len -1 because of / */
-							if (taglen && x->xmltagend)
-								x->xmltagend(x, &(x->tag)[1], x->taglen, 0);
+						x->tag[x->taglen] = '\0';
+						if (isend) { /* end tag, starts with </ */
+							if (x->xmltagend)
+								x->xmltagend(x, x->tag, x->taglen, x->isshorttag);
+							x->tag[0] = '\0';
+							x->taglen = 0;
 						} else {
-							x->taglen = taglen;
 							/* start tag */
 							if (x->xmltagstart)
 								x->xmltagstart(x, x->tag, x->taglen);
@@ -400,11 +402,15 @@ xml_parse(XMLParser *x)
 								x->xmltagstartparsed(x, x->tag, x->taglen, x->isshorttag);
 						}
 						/* call tagend for shortform or processing instruction */
-						if ((x->isshorttag || ispi) && x->xmltagend)
-							x->xmltagend(x, x->tag, x->taglen, 1);
+						if (x->isshorttag) {
+							if (x->xmltagend)
+								x->xmltagend(x, x->tag, x->taglen, x->isshorttag);
+							x->tag[0] = '\0';
+							x->taglen = 0;
+						}
 						break;
-					} else if (taglen < sizeof(x->tag) - 1)
-						x->tag[taglen++] = c; /* NOTE: tag name truncation */
+					} else if (x->taglen < sizeof(x->tag) - 1)
+						x->tag[x->taglen++] = c; /* NOTE: tag name truncation */
 				}
 			}
 		} else {
