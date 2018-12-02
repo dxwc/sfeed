@@ -1,4 +1,4 @@
-.Dd December 25, 2014
+.Dd December 2, 2018
 .Dt SFEED_XMLENC 1
 .Os
 .Sh NAME
@@ -9,6 +9,7 @@
 .Sh DESCRIPTION
 .Nm
 reads XML data from stdin and writes the found text\-encoding to stdout.
+It translates the characters to lowercase and strips control characters.
 .Sh EXAMPLES
 Get text\-encoding from xkcd Atom feed:
 .Bd -literal
