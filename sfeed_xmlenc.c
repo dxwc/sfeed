@@ -19,7 +19,7 @@ xmltagstart(XMLParser *p, const char *t, size_t tl)
 	/* optimization: try to find a processing instruction only at the
 	   start of the data. */
 	if (tags++ > 3)
-		exit(1);
+		exit(0);
 }
 
 static void
@@ -50,5 +50,5 @@ main(void)
 	parser.getnext = getchar;
 	xml_parse(&parser);
 
-	return 1;
+	return 0;
 }
