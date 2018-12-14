@@ -18,9 +18,8 @@ Initial setup:
 
 	mkdir -p "$HOME/.sfeed/feeds"
 	cp sfeedrc.example "$HOME/.sfeed/sfeedrc"
-	cp style.css "$HOME/.sfeed/style.css"
 
-Edit the configuration file and append any RSS/Atom feeds:
+Edit the configuration file and change any RSS/Atom feeds:
 
 	$EDITOR "$HOME/.sfeed/sfeedrc"
 
@@ -40,6 +39,7 @@ Plain-text list:
 
 HTML view (no frames), copy style.css for a default style:
 
+	cp style.css "$HOME/.sfeed/style.css"
 	sfeed_html $HOME/.sfeed/feeds/* > "$HOME/.sfeed/feeds.html"
 
 HTML view with frames and content, copy style.css for a default style:
