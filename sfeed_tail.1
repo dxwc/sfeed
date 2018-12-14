@@ -1,4 +1,4 @@
-.Dd August 22, 2018
+.Dd December 14, 2018
 .Dt SFEED_TAIL 1
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@ will also only process and show items that are considered new: the item
 timestamp is not older than a day ago.
 .Sh IMPLEMENTATION NOTES
 .Nm
-checks for file modifications each second by checking the filesize and
+checks for file modifications every 10 seconds by checking the filesize and
 modification time.
 Keep in mind that because
 .Nm

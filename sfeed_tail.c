@@ -158,7 +158,7 @@ main(int argc, char *argv[])
 				continue;
 			}
 
-			/* did the file change? by size, modification */
+			/* did the file change? by size or modification time */
 			if (stfiles[i - 1].st_size != st.st_size ||
 			    stfiles[i - 1].st_mtime != st.st_mtime) {
 				name = ((name = strrchr(argv[i], '/'))) ? name + 1 : argv[i];
@@ -177,8 +177,8 @@ main(int argc, char *argv[])
 			changed = 0;
 			slept = 0;
 		}
-		sleep(1);
-		slept++;
+		sleep(10);
+		slept += 10;
 		firsttime = 0;
 	}
 	return 0;
