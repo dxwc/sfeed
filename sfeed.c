@@ -641,7 +641,7 @@ xml_handler_data(XMLParser *p, const char *s, size_t len)
 static void
 xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
 {
-	char buffer[16];
+	char buf[16];
 	ssize_t len;
 
 	if (!ctx.field)
@@ -649,13 +649,8 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
 
 	/* try to translate entity, else just pass as data to
 	 * xml_data_handler. */
-	len = xml_entitytostr(data, buffer, sizeof(buffer));
-	/* this should never happen (buffer too small) */
-	if (len < 0)
-		return;
-
-	if (len > 0)
-		xml_handler_data(p, buffer, (size_t)len);
+	if ((len = xml_entitytostr(data, buf, sizeof(buf))) > 0)
+		xml_handler_data(p, buf, (size_t)len);
 	else
 		xml_handler_data(p, data, datalen);
 }
