@@ -247,29 +247,25 @@ static int
 namedentitytostr(const char *e, char *buf, size_t bufsiz)
 {
 	static const struct {
-		char *entity;
+		const char *entity;
 		int c;
 	} entities[] = {
-		{ "&amp;",  '&'  },
-		{ "&lt;",   '<'  },
-		{ "&gt;",   '>'  },
-		{ "&apos;", '\'' },
-		{ "&quot;", '"'  },
-		{ "&AMP;",  '&'  },
-		{ "&LT;",   '<'  },
-		{ "&GT;",   '>'  },
-		{ "&APOS;", '\'' },
-		{ "&QUOT;", '"'  }
+		{ "amp;",  '&'  },
+		{ "lt;",   '<'  },
+		{ "gt;",   '>'  },
+		{ "apos;", '\'' },
+		{ "quot;", '"'  },
+		{ "AMP;",  '&'  },
+		{ "LT;",   '<'  },
+		{ "GT;",   '>'  },
+		{ "APOS;", '\'' },
+		{ "QUOT;", '"'  }
 	};
 	size_t i;
 
 	/* buffer is too small */
 	if (bufsiz < 2)
 		return -1;
-
-	/* doesn't start with &: can't match */
-	if (*e != '&')
-		return 0;
 
 	for (i = 0; i < sizeof(entities) / sizeof(*entities); i++) {
 		if (!strcmp(e, entities[i].entity)) {
@@ -292,12 +288,6 @@ numericentitytostr(const char *e, char *buf, size_t bufsiz)
 	if (bufsiz < 5)
 		return -1;
 
-	/* not a numeric entity */
-	if (e[0] != '&' || e[1] != '#')
-		return 0;
-
-	/* e[1] == '#', numeric / hexadecimal entity */
-	e += 2; /* skip "&#" */
 	errno = 0;
 	/* hex (16) or decimal (10) */
 	if (*e == 'x')
@@ -318,17 +308,14 @@ numericentitytostr(const char *e, char *buf, size_t bufsiz)
 int
 xml_entitytostr(const char *e, char *buf, size_t bufsiz)
 {
-	/* buffer is too small */
-	if (bufsiz < 5)
-		return -1;
 	/* doesn't start with & */
 	if (e[0] != '&')
 		return 0;
-	/* named entity */
-	if (e[1] != '#')
-		return namedentitytostr(e, buf, bufsiz);
-	else /* numeric entity */
-		return numericentitytostr(e, buf, bufsiz);
+	/* numeric entity */
+	if (e[1] == '#')
+		return numericentitytostr(e + 2, buf, bufsiz);
+	else /* named entity */
+		return namedentitytostr(e + 1, buf, bufsiz);
 }
 
 void
