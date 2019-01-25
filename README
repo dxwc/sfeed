@@ -49,7 +49,7 @@ HTML view (no frames), copy style.css for a default style:
 	cp style.css "$HOME/.sfeed/style.css"
 	sfeed_html $HOME/.sfeed/feeds/* > "$HOME/.sfeed/feeds.html"
 
-HTML view with frames and content, copy style.css for a default style:
+HTML view with the menu as frames, copy style.css for a default style:
 
 	mkdir -p "$HOME/.sfeed/frames"
 	cd "$HOME/.sfeed/frames" && sfeed_frames $HOME/.sfeed/feeds/*
@@ -190,7 +190,7 @@ Format the feeds files:
 	sfeed_plain $HOME/.sfeed/feeds/* > $HOME/.sfeed/feeds.txt
 	# HTML view (no frames), copy style.css for a default style.
 	sfeed_html $HOME/.sfeed/feeds/* > $HOME/.sfeed/feeds.html
-	# HTML view with frames and content, copy style.css for a default style.
+	# HTML view with the menu as frames, copy style.css for a default style.
 	mkdir -p somedir && cd somedir && sfeed_frames $HOME/.sfeed/feeds/*
 
 View in your browser:
