@@ -1,4 +1,4 @@
-.Dd September 28, 2018
+.Dd January 25, 2019
 .Dt SFEED_UPDATE 1
 .Os
 .Sh NAME
@@ -32,33 +32,45 @@ This file is evaluated as a shellscript in
 .Pp
 Atleast the following functions can be overridden per feed:
 .Bl -tag -width 17n
-.It fetchfeed
+.It Fn fetchfeed
 to use
 .Xr wget 1 ,
 OpenBSD
 .Xr ftp 1
 or an other download program.
-.It merge
+.It Fn merge
 to change the merge logic.
-.It filter
+.It Fn filter
 to filter on fields.
-.It order
+.It Fn order
 to change the sort order.
 .El
 .Pp
-The function feeds() is called to fetch the feeds.
-The function feed() can safely be executed concurrently as a background job in
+The function
+.Fn feeds
+is called to process the feeds.
+The default
+.Fn feed
+is executed concurrently as a background job in
 your
 .Xr sfeedrc 5
 config file to make updating faster.
+The variable
+.Va maxjobs
+can be changed to limit or increase the amount of concurrent jobs (8 by
+default).
 .El
 .Sh FILES WRITTEN
 .Bl -tag -width 17n
 .It feedname
 TAB-separated format containing all items per feed.
-The sfeed_update script merges new items with this file.
+The
+.Nm
+script merges new items with this file.
 .It feedname.new
-Temporary file used by sfeed_update to merge items.
+Temporary file used by
+.Nm
+to merge items.
 .El
 .Sh EXAMPLES
 To update your feeds and format them in various formats:

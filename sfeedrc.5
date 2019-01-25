@@ -1,4 +1,4 @@
-.Dd January 30, 2016
+.Dd January 25, 2019
 .Dt SFEEDRC 5
 .Os
 .Sh NAME
@@ -17,27 +17,27 @@ by default this is
 .
 .Sh FUNCTIONS
 The following functions must be defined in a
-.Xr sfeedrc 5
+.Nm
 file:
 .Bl -tag -width Ds
-.It feeds
+.It Fn feeds
 This function is like a "main" function called from
 .Xr sfeed_update 1 .
-.It feed
+.It Fn feed "name" "feedurl" "basesiteurl" "encoding"
 Function to process the feed, its arguments are in the order:
 .Bl -tag -width Ds
-.It name
+.It Fa name
 Name of the feed, this is also used as the filename for the TAB-separated
 feed file.
-.It feedurl
+.It Fa feedurl
 Uri to fetch the RSS/Atom data from, usually a HTTP or HTTPS uri.
-.It Op basesiteurl
+.It Op Fa basesiteurl
 Baseurl of the feed links.
 This argument allows to fix relative item links.
 .Pp
 According to the RSS and Atom specification feeds should always have absolute
 urls, however this is not always the case in practise.
-.It Op encoding
+.It Op Fa encoding
 Feeds are decoded from this name to UTF-8, the name should be a usable
 character-set for the
 .Xr iconv 1
@@ -50,38 +50,52 @@ Because
 is a shellscript each function can be overridden to change its behaviour,
 notable functions are:
 .Bl -tag -width Ds
-.It fetchfeed
+.It Fn fetchfeed "name" "uri" "feedfile"
 Fetch feed from url and writes data to stdout, its arguments are:
 .Bl -tag -width Ds
-.It uri
-Uri to fetch.
-.It name
+.It Fa name
 Specified name in configuration file (useful for logging).
-.It feedfile
+.It Fa uri
+Uri to fetch.
+.It Fa feedfile
 Used feedfile (useful for comparing modification times).
 .El
-.It merge
+.It Fn merge "name" "oldfile" "newfile"
 Merge data of oldfile with newfile and writes it to stdout, its arguments are:
 .Bl -tag -width Ds
-.It oldfile
+.It Fa name
+Feed name.
+.It Fa oldfile
 Old file.
-.It newfile
+.It Fa newfile
 New file.
 .El
-.It convertencoding
+.It Fn filter "name"
+Filter
+.Xr sfeed 5
+data from stdin, write to stdout, its arguments are:
+.Bl -tag -width Ds
+.It Fa name
+Feed name.
+.El
+.It Fn order "name"
+Sort
+.Xr sfeed 5
+data from stdin, write to stdout, its arguments are:
+.Bl -tag -width Ds
+.It Fa name
+Feed name.
+.El
+.It Fn convertencoding "from" "to"
 Convert from text-encoding to another and writes it to stdout, its arguments
 are:
 .Bl -tag -width Ds
-.It from
+.It Fa from
 From text-encoding.
-.It to
+.It Fa to
 To text-encoding.
 .El
 .El
-.Pp
-See the convertencoding() function in the script
-.Xr sfeed_update 1
-for more details.
 .Sh EXAMPLES
 An example configuration file is included named sfeedrc.example and also
 shown below:
@@ -91,14 +105,16 @@ shown below:
 # list of feeds to fetch:
 feeds() {
 	# feed <name> <feedurl> [basesiteurl] [encoding]
-	feed "codemadness" "http://www.codemadness.nl/rss.xml"
+	feed "codemadness" "https://www.codemadness.nl/atom.xml"
 	feed "explosm" "http://feeds.feedburner.com/Explosm"
-	feed "linux kernel" "http://kernel.org/kdist/rss.xml" "http://kernel.org"
+	feed "golang github releases" "https://github.com/golang/go/releases.atom"
+	feed "linux kernel" "https://www.kernel.org/feeds/kdist.xml" "https://www.kernel.org"
+	feed "reddit openbsd" "https://old.reddit.com/r/openbsd/.rss"
 	feed "slashdot" "http://rss.slashdot.org/Slashdot/slashdot" "http://slashdot.org"
 	feed "tweakers" "http://feeds.feedburner.com/tweakers/mixed" "http://tweakers.net" "iso-8859-1"
 	# get youtube Atom feed: curl -s -L 'https://www.youtube.com/user/gocoding/videos' | sfeed_web | cut -f 1
-	feed "yt golang" "https://www.youtube.com/feeds/videos.xml?channel_id=UCO3LEtymiLrgvpb59cNsb8A"
-	feed "xkcd" "http://xkcd.com/atom.xml" "http://xkcd.com"
+	feed "youtube golang" "https://www.youtube.com/feeds/videos.xml?channel_id=UCO3LEtymiLrgvpb59cNsb8A"
+	feed "xkcd" "https://xkcd.com/atom.xml" "https://xkcd.com"
 }
 .Ed
 .Sh SEE ALSO

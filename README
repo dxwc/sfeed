@@ -19,13 +19,20 @@ Initial setup:
 	mkdir -p "$HOME/.sfeed/feeds"
 	cp sfeedrc.example "$HOME/.sfeed/sfeedrc"
 
-Edit the configuration file and change any RSS/Atom feeds:
+Edit the sfeedrc(5) configuration file and change any RSS/Atom feeds. This file
+is included and evaluated as a shellscript for sfeed_update, so it's functions
+and behaviour can be overridden:
 
 	$EDITOR "$HOME/.sfeed/sfeedrc"
 
 or you can import existing OPML subscriptions using sfeed_opml_import(1):
 
 	sfeed_opml_import < file.opml > "$HOME/sfeed/sfeedrc"
+
+an example to export from an other RSS/Atom reader called newsboat and import
+for sfeed_update:
+
+	newsboat -e | sfeed_opml_import > "$HOME/.sfeed/sfeedrc"
 
 Update feeds, this script merges the new items:
 
@@ -71,12 +78,12 @@ Dependencies
 Optional dependencies
 ---------------------
 
-- make(1) (for Makefile).
+- POSIX make(1) (for Makefile).
 - POSIX sh(1),
   used by sfeed_update(1) and sfeed_opml_export(1).
 - curl(1) binary: http://curl.haxx.se/ ,
   used by sfeed_update(1), can be replaced with any tool like wget(1),
-  OpenBSD ftp(1).
+  OpenBSD ftp(1) or hurl(1): https://git.codemadness.org/hurl/
 - iconv(1) command-line utilities,
   used by sfeed_update(1). If the text in your RSS/Atom feeds are already UTF-8
   encoded then you don't need this. For an alternative minimal iconv
@@ -136,9 +143,10 @@ Atleast the following functions can be overridden per feed:
 - filter: to filter on fields.
 - order: to change the sort order.
 
-The function feeds() is called to fetch the feeds. The function feed() can
-safely be executed concurrently as a background job in your sfeedrc(5) config
-file to make updating faster.
+The function feeds() is called to process the feeds. The default feed()
+function is executed concurrently as a background job in your sfeedrc(5) config
+file to make updating faster. The variable maxjobs can be changed to limit or
+increase the amount of concurrent jobs (8 by default).
 
 
 Files written at runtime by sfeed_update(1)
@@ -218,6 +226,10 @@ argument is optional):
 
 - - -
 
+The filter function can be overridden in your sfeedrc file. This allows
+filtering items per feed. It can be used to shorten urls, filter away
+advertisements, strip tracking parameters and more.
+
 # filter fields.
 # filter(name)
 filter() {
@@ -262,6 +274,22 @@ filter() {
 
 			print $0;
 		}'
+}
+
+- - -
+
+The fetchfeed function can be overridden in your sfeedrc file. This allows to
+replace the default curl(1) for sfeed_update with any other client to fetch the
+RSS/Atom data:
+
+# fetch a feed via HTTP/HTTPS etc.
+# fetchfeed(name, url, feedfile)
+fetchfeed() {
+	if hurl -m 1048576 -t 15 "$2" 2>/dev/null; then
+		printf "  OK %s %s\n" "$(date +'%H:%M:%S')" "$1" >&2
+	else
+		printf "FAIL %s %s\n" "$(date +'%H:%M:%S')" "$1" >&2
+	fi
 }
 
 - - -
@@ -324,6 +352,10 @@ Now compile and run:
 	$ ./sfeed_archive 20150101 < feeds > feeds.new
 	$ mv feeds feeds.bak
 	$ mv feeds.new feeds
+
+This could also be run weekly in a crontab to archive the feeds. Like throwing
+away old newspapers. It keeps the feeds list tidy and the formatted output
+small.
 
 - - -
 
