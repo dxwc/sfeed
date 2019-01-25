@@ -1,3 +1,5 @@
+.POSIX:
+
 include config.mk
 
 NAME = sfeed
@@ -58,10 +60,10 @@ OBJ = ${SRC:.c=.o} ${LIBXMLOBJ} ${LIBUTILOBJ}
 ${OBJ}: config.mk ${HDR}
 
 .o:
-	${CC} ${LDFLAGS} -o $@ $< ${LIB}
+	${CC} ${SFEED_LDFLAGS} -o $@ $< ${LIB}
 
 .c.o:
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ -c $<
+	${CC} ${SFEED_CFLAGS} ${SFEED_CPPFLAGS} -o $@ -c $<
 
 ${LIBUTIL}: ${LIBUTILOBJ}
 	${AR} rc $@ $?

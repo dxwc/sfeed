@@ -9,16 +9,20 @@ CC = cc
 AR = ar
 RANLIB = ranlib
 
+# use system flags.
+SFEED_CFLAGS = ${CFLAGS}
+SFEED_LDFLAGS = ${LDFLAGS}
+SFEED_CPPFLAGS = -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -D_BSD_SOURCE
+
 # debug
-#CFLAGS = -fstack-protector-all -O0 -g -std=c99 -Wall -Wextra -pedantic
-#LDFLAGS =
+#SFEED_CFLAGS = -fstack-protector-all -O0 -g -std=c99 -Wall -Wextra -pedantic \
+#               -Wno-unused-parameter
+#SFEED_LDFLAGS =
 
 # optimized
-CFLAGS = -O2 -std=c99
-LDFLAGS = -s
+#SFEED_CFLAGS = -O2 -std=c99
+#SFEED_LDFLAGS = -s
 
 # optimized static
-#CFLAGS = -static -O2 -std=c99
-#LDFLAGS = -static -s
-
-CPPFLAGS = -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -D_BSD_SOURCE
+#SFEED_CFLAGS = -static -O2 -std=c99
+#SFEED_LDFLAGS = -static -s
