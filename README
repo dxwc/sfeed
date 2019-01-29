@@ -143,7 +143,9 @@ Atleast the following functions can be overridden per feed:
 - filter: to filter on fields.
 - order: to change the sort order.
 
-The function feeds() is called to process the feeds. The default feed()
+See also the sfeedrc(5) man page documentation for more details.
+
+The feeds() function is called to process the feeds. The default feed()
 function is executed concurrently as a background job in your sfeedrc(5) config
 file to make updating faster. The variable maxjobs can be changed to limit or
 increase the amount of concurrent jobs (8 by default).
