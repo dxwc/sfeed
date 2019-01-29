@@ -97,19 +97,18 @@ static void string_buffer_realloc(String *, size_t);
 static void string_clear(String *);
 static void string_print_encoded(String *);
 static void string_print_trimmed(String *);
-static void xml_handler_attr(XMLParser *, const char *, size_t,
-                             const char *, size_t, const char *, size_t);
-static void xml_handler_attr_end(XMLParser *, const char *, size_t,
-                                 const char *, size_t);
-static void xml_handler_attr_start(XMLParser *, const char *, size_t,
-                                   const char *, size_t);
-static void xml_handler_cdata(XMLParser *, const char *, size_t);
-static void xml_handler_data(XMLParser *, const char *, size_t);
-static void xml_handler_data_entity(XMLParser *, const char *, size_t);
-static void xml_handler_end_el(XMLParser *, const char *, size_t, int);
-static void xml_handler_start_el(XMLParser *, const char *, size_t);
-static void xml_handler_start_el_parsed(XMLParser *, const char *,
-                                        size_t, int);
+static void xmlattr(XMLParser *, const char *, size_t, const char *, size_t,
+                    const char *, size_t);
+static void xmlattrend(XMLParser *, const char *, size_t, const char *,
+                       size_t);
+static void xmlattrstart(XMLParser *, const char *, size_t, const char *,
+                         size_t);
+static void xmlcdata(XMLParser *, const char *, size_t);
+static void xmldata(XMLParser *, const char *, size_t);
+static void xmldataentity(XMLParser *, const char *, size_t);
+static void xmltagend(XMLParser *, const char *, size_t, int);
+static void xmltagstart(XMLParser *, const char *, size_t);
+static void xmltagstartparsed(XMLParser *, const char *, size_t, int);
 
 /* map tag name to tagid */
 /* RSS, alphabetical order */
@@ -557,14 +556,14 @@ isattr(const char *name, size_t len, const char *name2, size_t len2)
 }
 
 static void
-xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
+xmlattr(XMLParser *p, const char *tag, size_t taglen,
 	const char *name, size_t namelen, const char *value,
 	size_t valuelen)
 {
 	/* handles transforming inline XML to data */
 	if (ISINCONTENT(ctx)) {
 		if (ctx.contenttype == ContentTypeHTML)
-			xml_handler_data(p, value, valuelen);
+			xmldata(p, value, valuelen);
 		return;
 	}
 
@@ -589,19 +588,19 @@ xml_handler_attr(XMLParser *p, const char *tag, size_t taglen,
 }
 
 static void
-xml_handler_attr_end(XMLParser *p, const char *tag, size_t taglen,
+xmlattrend(XMLParser *p, const char *tag, size_t taglen,
 	const char *name, size_t namelen)
 {
 	if (!ISINCONTENT(ctx) || ctx.contenttype != ContentTypeHTML)
 		return;
 
 	/* handles transforming inline XML to data */
-	xml_handler_data(p, "\"", 1);
+	xmldata(p, "\"", 1);
 	ctx.attrcount = 0;
 }
 
 static void
-xml_handler_attr_start(XMLParser *p, const char *tag, size_t taglen,
+xmlattrstart(XMLParser *p, const char *tag, size_t taglen,
 	const char *name, size_t namelen)
 {
 	if (!ISINCONTENT(ctx) || ctx.contenttype != ContentTypeHTML)
@@ -609,14 +608,14 @@ xml_handler_attr_start(XMLParser *p, const char *tag, size_t taglen,
 
 	/* handles transforming inline XML to data */
 	if (!ctx.attrcount)
-		xml_handler_data(p, " ", 1);
+		xmldata(p, " ", 1);
 	ctx.attrcount++;
-	xml_handler_data(p, name, namelen);
-	xml_handler_data(p, "=\"", 2);
+	xmldata(p, name, namelen);
+	xmldata(p, "=\"", 2);
 }
 
 static void
-xml_handler_cdata(XMLParser *p, const char *s, size_t len)
+xmlcdata(XMLParser *p, const char *s, size_t len)
 {
 	if (!ctx.field)
 		return;
@@ -627,7 +626,7 @@ xml_handler_cdata(XMLParser *p, const char *s, size_t len)
 /* NOTE: this handler can be called multiple times if the data in this
  *       block is bigger than the buffer. */
 static void
-xml_handler_data(XMLParser *p, const char *s, size_t len)
+xmldata(XMLParser *p, const char *s, size_t len)
 {
 	if (!ctx.field)
 		return;
@@ -639,7 +638,7 @@ xml_handler_data(XMLParser *p, const char *s, size_t len)
 }
 
 static void
-xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
+xmldataentity(XMLParser *p, const char *data, size_t datalen)
 {
 	char buf[16];
 	ssize_t len;
@@ -650,21 +649,21 @@ xml_handler_data_entity(XMLParser *p, const char *data, size_t datalen)
 	/* try to translate entity, else just pass as data to
 	 * xml_data_handler. */
 	if ((len = xml_entitytostr(data, buf, sizeof(buf))) > 0)
-		xml_handler_data(p, buf, (size_t)len);
+		xmldata(p, buf, (size_t)len);
 	else
-		xml_handler_data(p, data, datalen);
+		xmldata(p, data, datalen);
 }
 
 static void
-xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
+xmltagstart(XMLParser *p, const char *name, size_t namelen)
 {
 	enum TagId tagid;
 
 	if (ISINCONTENT(ctx)) {
 		ctx.attrcount = 0;
 		if (ctx.contenttype == ContentTypeHTML) {
-			xml_handler_data(p, "<", 1);
-			xml_handler_data(p, name, namelen);
+			xmldata(p, "<", 1);
+			xmldata(p, name, namelen);
 		}
 		return;
 	}
@@ -707,8 +706,7 @@ xml_handler_start_el(XMLParser *p, const char *name, size_t namelen)
 }
 
 static void
-xml_handler_start_el_parsed(XMLParser *p, const char *tag, size_t taglen,
-	int isshort)
+xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort)
 {
 	if (ctx.iscontenttag) {
 		ctx.iscontent = 1;
@@ -720,13 +718,13 @@ xml_handler_start_el_parsed(XMLParser *p, const char *tag, size_t taglen,
 		return;
 
 	if (isshort)
-		xml_handler_data(p, "/>", 2);
+		xmldata(p, "/>", 2);
 	else
-		xml_handler_data(p, ">", 1);
+		xmldata(p, ">", 1);
 }
 
 static void
-xml_handler_end_el(XMLParser *p, const char *name, size_t namelen, int isshort)
+xmltagend(XMLParser *p, const char *name, size_t namelen, int isshort)
 {
 	size_t i;
 
@@ -737,9 +735,9 @@ xml_handler_end_el(XMLParser *p, const char *name, size_t namelen, int isshort)
 		/* not close content field */
 		if (gettag(ctx.feedtype, name, namelen) != ctx.tagid) {
 			if (!isshort && ctx.contenttype == ContentTypeHTML) {
-				xml_handler_data(p, "</", 2);
-				xml_handler_data(p, name, namelen);
-				xml_handler_data(p, ">", 1);
+				xmldata(p, "</", 2);
+				xmldata(p, name, namelen);
+				xmldata(p, ">", 1);
 			}
 			return;
 		}
@@ -779,15 +777,15 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		baseurl = argv[1];
 
-	parser.xmlattr = xml_handler_attr;
-	parser.xmlattrend = xml_handler_attr_end;
-	parser.xmlattrstart = xml_handler_attr_start;
-	parser.xmlcdata = xml_handler_cdata;
-	parser.xmldata = xml_handler_data;
-	parser.xmldataentity = xml_handler_data_entity;
-	parser.xmltagend = xml_handler_end_el;
-	parser.xmltagstart = xml_handler_start_el;
-	parser.xmltagstartparsed = xml_handler_start_el_parsed;
+	parser.xmlattr = xmlattr;
+	parser.xmlattrend = xmlattrend;
+	parser.xmlattrstart = xmlattrstart;
+	parser.xmlcdata = xmlcdata;
+	parser.xmldata = xmldata;
+	parser.xmldataentity = xmldataentity;
+	parser.xmltagend = xmltagend;
+	parser.xmltagstart = xmltagstart;
+	parser.xmltagstartparsed = xmltagstartparsed;
 
 	parser.getnext = getchar;
 	xml_parse(&parser);
