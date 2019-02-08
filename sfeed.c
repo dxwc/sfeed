@@ -96,7 +96,9 @@ static void string_append(String *, const char *, size_t);
 static void string_buffer_realloc(String *, size_t);
 static void string_clear(String *);
 static void string_print_encoded(String *);
+static void string_print_timestamp(String *);
 static void string_print_trimmed(String *);
+static void string_print_uri(String *);
 static void xmlattr(XMLParser *, const char *, size_t, const char *, size_t,
                     const char *, size_t);
 static void xmlattrend(XMLParser *, const char *, size_t, const char *,
@@ -200,6 +202,24 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 	}
 }
 
+static char *
+ltrim(const char *s)
+{
+	for (; *s && isspace((unsigned char)*s); s++)
+		;
+	return (char *)s;
+}
+
+static char *
+rtrim(const char *s)
+{
+	const char *e;
+
+	for (e = s + strlen(s); e > s && isspace((unsigned char)*(e - 1)); e--)
+		;
+	return (char *)e;
+}
+
 /* Clear string only; don't free, prevents unnecessary reallocation. */
 static void
 string_clear(String *s)
@@ -245,12 +265,8 @@ string_print_encoded(String *s)
 	if (!s->data || !s->len)
 		return;
 
-	/* skip leading whitespace */
-	for (p = s->data; *p && isspace((unsigned char)*p); p++)
-		;
-	/* seek location of trailing whitespace */
-	for (e = s->data + s->len; e > p && isspace((unsigned char)*(e - 1)); e--)
-		;
+	p = ltrim(s->data);
+	e = rtrim(p);
 
 	for (; *p && p != e; p++) {
 		switch (*p) {
@@ -271,17 +287,13 @@ string_print_encoded(String *s)
 static void
 string_print_trimmed(String *s)
 {
-	const char *p, *e;
+	char *p, *e;
 
 	if (!s->data || !s->len)
 		return;
 
-	/* skip leading whitespace */
-	for (p = s->data; *p && isspace((unsigned char)*p); p++)
-		;
-	/* seek location of trailing whitespace */
-	for (e = s->data + s->len; e > p && isspace((unsigned char)*(e - 1)); e--)
-		;
+	p = ltrim(s->data);
+	e = rtrim(p);
 
 	for (; *p && p != e; p++) {
 		if (isspace((unsigned char)*p))
@@ -290,6 +302,38 @@ string_print_trimmed(String *s)
 			/* ignore other control chars */
 			putchar(*p);
 	}
+}
+
+/* always print absolute urls (using global baseurl) */
+void
+string_print_uri(String *s)
+{
+	char link[4096], *p, *e;
+	int c;
+
+	if (!s->data || !s->len)
+		return;
+
+	p = ltrim(s->data);
+	e = rtrim(p);
+	c = *e;
+	*e = '\0';
+	if (absuri(link, sizeof(link), p, baseurl) != -1)
+		fputs(link, stdout);
+	*e = c; /* restore */
+}
+
+/* print as UNIX timestamp, print nothing if the parsed time is invalid */
+void
+string_print_timestamp(String *s)
+{
+	time_t t;
+
+	if (!s->data || !s->len)
+		return;
+
+	if (parsetime(ltrim(s->data), &t) != -1)
+		printf("%lld", (long long)t);
 }
 
 long long
@@ -427,8 +471,6 @@ parsetime(const char *s, time_t *tp)
 	int va[6] = { 0 }, i, j, v, vi;
 	size_t m;
 
-	for (; *s && isspace((unsigned char)*s); s++)
-		;
 	if (!isdigit((unsigned char)*s) && !isalpha((unsigned char)*s))
 		return -1;
 
@@ -514,24 +556,11 @@ parsetime(const char *s, time_t *tp)
 static void
 printfields(void)
 {
-	char link[4096];
-	time_t t;
-	int r = -1;
-
-	/* parse time, timestamp and formatted timestamp field is empty
-	 * if the parsed time is invalid */
-	if (ctx.fields[FeedFieldTime].str.data)
-		r = parsetime(ctx.fields[FeedFieldTime].str.data, &t);
-	if (r != -1)
-		printf("%lld", (long long)t);
+	string_print_timestamp(&ctx.fields[FeedFieldTime].str);
 	putchar(FieldSeparator);
 	string_print_trimmed(&ctx.fields[FeedFieldTitle].str);
 	putchar(FieldSeparator);
-	/* always print absolute urls */
-	if (ctx.fields[FeedFieldLink].str.data &&
-	    absuri(link, sizeof(link), ctx.fields[FeedFieldLink].str.data,
-	           baseurl) != -1)
-		fputs(link, stdout);
+	string_print_uri(&ctx.fields[FeedFieldLink].str);
 	putchar(FieldSeparator);
 	string_print_encoded(&ctx.fields[FeedFieldContent].str);
 	putchar(FieldSeparator);
