@@ -132,7 +132,7 @@ static FeedTag atomtags[] = {
 	{ STRP("author"),            AtomTagAuthor           },
 	{ STRP("content"),           AtomTagContent          },
 	{ STRP("id"),                AtomTagId               },
-	/* <link href="" /> */
+	/* Atom: <link href="" />, RSS has <link></link> */
 	{ STRP("link"),              AtomTagLink             },
 	{ STRP("media:description"), AtomTagMediaDescription },
 	{ STRP("published"),         AtomTagPublished        },
@@ -739,6 +739,10 @@ xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort)
 		ctx.iscontenttag = 0;
 		return;
 	}
+
+	/* don't read field value in Atom <link> tag */
+	if (ctx.tagid == AtomTagLink)
+		ctx.field = NULL;
 
 	if (!ISINCONTENT(ctx) || ctx.contenttype != ContentTypeHTML)
 		return;
