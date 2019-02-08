@@ -556,40 +556,38 @@ isattr(const char *name, size_t len, const char *name2, size_t len2)
 }
 
 static void
-xmlattr(XMLParser *p, const char *tag, size_t taglen,
-	const char *name, size_t namelen, const char *value,
-	size_t valuelen)
+xmlattr(XMLParser *p, const char *t, size_t tl, const char *n, size_t nl,
+	const char *v, size_t vl)
 {
 	/* handles transforming inline XML to data */
 	if (ISINCONTENT(ctx)) {
 		if (ctx.contenttype == ContentTypeHTML)
-			xmldata(p, value, valuelen);
+			xmldata(p, v, vl);
 		return;
 	}
 
 	if (ctx.feedtype == FeedTypeAtom) {
 		if (ISCONTENTTAG(ctx)) {
-			if (isattr(name, namelen, STRP("type")) &&
-			   (isattr(value, valuelen, STRP("xhtml")) ||
-			    isattr(value, valuelen, STRP("text/xhtml")) ||
-			    isattr(value, valuelen, STRP("html")) ||
-			    isattr(value, valuelen, STRP("text/html"))))
+			if (isattr(n, nl, STRP("type")) &&
+			   (isattr(v, vl, STRP("xhtml")) ||
+			    isattr(v, vl, STRP("text/xhtml")) ||
+			    isattr(v, vl, STRP("html")) ||
+			    isattr(v, vl, STRP("text/html"))))
 			{
 				ctx.contenttype = ContentTypeHTML;
 			}
 		} else if (ctx.tagid == AtomTagLink &&
-			   isattr(name, namelen, STRP("href")) &&
-			   ctx.field)
+		           isattr(n, nl, STRP("href")) &&
+		           ctx.field)
 		{
 			/* link href attribute */
-			string_append(ctx.field, value, valuelen);
+			string_append(ctx.field, v, vl);
 		}
 	}
 }
 
 static void
-xmlattrend(XMLParser *p, const char *tag, size_t taglen,
-	const char *name, size_t namelen)
+xmlattrend(XMLParser *p, const char *t, size_t tl, const char *n, size_t nl)
 {
 	if (!ISINCONTENT(ctx) || ctx.contenttype != ContentTypeHTML)
 		return;
@@ -600,8 +598,7 @@ xmlattrend(XMLParser *p, const char *tag, size_t taglen,
 }
 
 static void
-xmlattrstart(XMLParser *p, const char *tag, size_t taglen,
-	const char *name, size_t namelen)
+xmlattrstart(XMLParser *p, const char *t, size_t tl, const char *n, size_t nl)
 {
 	if (!ISINCONTENT(ctx) || ctx.contenttype != ContentTypeHTML)
 		return;
@@ -610,7 +607,7 @@ xmlattrstart(XMLParser *p, const char *tag, size_t taglen,
 	if (!ctx.attrcount)
 		xmldata(p, " ", 1);
 	ctx.attrcount++;
-	xmldata(p, name, namelen);
+	xmldata(p, n, nl);
 	xmldata(p, "=\"", 2);
 }
 
@@ -655,7 +652,7 @@ xmldataentity(XMLParser *p, const char *data, size_t datalen)
 }
 
 static void
-xmltagstart(XMLParser *p, const char *name, size_t namelen)
+xmltagstart(XMLParser *p, const char *t, size_t tl)
 {
 	enum TagId tagid;
 
@@ -663,19 +660,19 @@ xmltagstart(XMLParser *p, const char *name, size_t namelen)
 		ctx.attrcount = 0;
 		if (ctx.contenttype == ContentTypeHTML) {
 			xmldata(p, "<", 1);
-			xmldata(p, name, namelen);
+			xmldata(p, t, tl);
 		}
 		return;
 	}
 
 	/* start of RSS or Atom item / entry */
 	if (ctx.feedtype == FeedTypeNone) {
-		if (istag(name, namelen, STRP("entry"))) {
+		if (istag(t, tl, STRP("entry"))) {
 			/* Atom */
 			ctx.feedtype = FeedTypeAtom;
 			/* default content type for Atom */
 			ctx.contenttype = ContentTypePlain;
-		} else if (istag(name, namelen, STRP("item"))) {
+		} else if (istag(t, tl, STRP("item"))) {
 			/* RSS */
 			ctx.feedtype = FeedTypeRSS;
 			/* default content type for RSS */
@@ -689,7 +686,7 @@ xmltagstart(XMLParser *p, const char *name, size_t namelen)
 		return;
 
 	/* in item */
-	tagid = gettag(ctx.feedtype, name, namelen);
+	tagid = gettag(ctx.feedtype, t, tl);
 	ctx.tagid = tagid;
 
 	/* map tag type to field: unknown or lesser priority is ignored,
@@ -724,7 +721,7 @@ xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort)
 }
 
 static void
-xmltagend(XMLParser *p, const char *name, size_t namelen, int isshort)
+xmltagend(XMLParser *p, const char *t, size_t tl, int isshort)
 {
 	size_t i;
 
@@ -733,18 +730,18 @@ xmltagend(XMLParser *p, const char *name, size_t namelen, int isshort)
 
 	if (ISINCONTENT(ctx)) {
 		/* not close content field */
-		if (gettag(ctx.feedtype, name, namelen) != ctx.tagid) {
+		if (gettag(ctx.feedtype, t, tl) != ctx.tagid) {
 			if (!isshort && ctx.contenttype == ContentTypeHTML) {
 				xmldata(p, "</", 2);
-				xmldata(p, name, namelen);
+				xmldata(p, t, tl);
 				xmldata(p, ">", 1);
 			}
 			return;
 		}
 	} else if (!ctx.tagid && ((ctx.feedtype == FeedTypeAtom &&
-	   istag(name, namelen, STRP("entry"))) || /* Atom */
+	   istag(t, tl, STRP("entry"))) || /* Atom */
 	   (ctx.feedtype == FeedTypeRSS &&
-	   istag(name, namelen, STRP("item"))))) /* RSS */
+	   istag(t, tl, STRP("item"))))) /* RSS */
 	{
 		/* end of RSS or Atom entry / item */
 		printfields();
@@ -758,7 +755,7 @@ xmltagend(XMLParser *p, const char *name, size_t namelen, int isshort)
 		/* allow parsing of Atom and RSS in one XML stream. */
 		ctx.feedtype = FeedTypeNone;
 	} else if (!ctx.tagid ||
-	           gettag(ctx.feedtype, name, namelen) != ctx.tagid) {
+	           gettag(ctx.feedtype, t, tl) != ctx.tagid) {
 		/* not end of field */
 		return;
 	}

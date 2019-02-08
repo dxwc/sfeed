@@ -27,20 +27,20 @@ printfeedtype(const char *s, FILE *fp)
 }
 
 static void
-xmltagstart(XMLParser *p, const char *tag, size_t taglen)
+xmltagstart(XMLParser *p, const char *t, size_t tl)
 {
 	isbase = islink = isfeedlink = 0;
-	if (taglen != 4) /* optimization */
+	if (tl != 4) /* optimization */
 		return;
 
-	if (!strcasecmp(tag, "base"))
+	if (!strcasecmp(t, "base"))
 		isbase = 1;
-	else if (!strcasecmp(tag, "link"))
+	else if (!strcasecmp(t, "link"))
 		islink = 1;
 }
 
 static void
-xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort)
+xmltagstartparsed(XMLParser *p, const char *t, size_t tl, int isshort)
 {
 	if (!isfeedlink)
 		return;
@@ -56,24 +56,25 @@ xmltagstartparsed(XMLParser *p, const char *tag, size_t taglen, int isshort)
 }
 
 static void
-xmlattr(XMLParser *p, const char *tag, size_t taglen, const char *name,
-        size_t namelen, const char *value, size_t valuelen)
+xmlattr(XMLParser *p, const char *t, size_t tl, const char *n, size_t nl,
+	const char *v, size_t vl)
 {
-	if (namelen != 4) /* optimization */
+	if (nl != 4) /* optimization */
 		return;
+
 	if (isbase) {
-		if (!strcasecmp(name, "href"))
-			strlcpy(basehref, value, sizeof(basehref));
+		if (!strcasecmp(n, "href"))
+			strlcpy(basehref, v, sizeof(basehref));
 	} else if (islink) {
-		if (!strcasecmp(name, "type")) {
-			if (!strncasecmp(value, STRP("application/atom")) ||
-			   !strncasecmp(value, STRP("application/xml")) ||
-			   !strncasecmp(value, STRP("application/rss"))) {
+		if (!strcasecmp(n, "type")) {
+			if (!strncasecmp(v, STRP("application/atom")) ||
+			    !strncasecmp(v, STRP("application/xml"))  ||
+			    !strncasecmp(v, STRP("application/rss"))) {
 				isfeedlink = 1;
-				strlcpy(feedtype, value, sizeof(feedtype));
+				strlcpy(feedtype, v, sizeof(feedtype));
 			}
-		} else if (!strcasecmp(name, "href")) {
-			strlcpy(feedlink, value, sizeof(feedlink));
+		} else if (!strcasecmp(n, "href")) {
+			strlcpy(feedlink, v, sizeof(feedlink));
 		}
 	}
 }
