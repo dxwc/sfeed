@@ -3,6 +3,7 @@
 # paths
 PREFIX = /usr/local
 MANPREFIX = ${PREFIX}/man
+DOCPREFIX = ${PREFIX}/share/doc/sfeed
 
 # compiler and linker
 CC = cc

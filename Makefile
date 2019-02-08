@@ -4,6 +4,7 @@ include config.mk
 
 NAME = sfeed
 VERSION = 0.9.7
+
 BIN = \
 	sfeed\
 	sfeed_frames\
@@ -95,12 +96,12 @@ install: all
 	cp -f ${BIN} ${SCRIPTS} "${DESTDIR}${PREFIX}/bin"
 	for f in ${BIN} ${SCRIPTS}; do chmod 755 "${DESTDIR}${PREFIX}/bin/$$f"; done
 	# installing example files.
-	mkdir -p "${DESTDIR}${PREFIX}/share/${NAME}"
+	mkdir -p "${DESTDIR}${DOCPREFIX}"
 	cp -f sfeedrc.example\
 		style.css\
 		README\
 		README.xml\
-		"${DESTDIR}${PREFIX}/share/${NAME}"
+		"${DESTDIR}${DOCPREFIX}"
 	# installing manual pages for general commands: section 1.
 	mkdir -p "${DESTDIR}${MANPREFIX}/man1"
 	cp -f ${MAN1} "${DESTDIR}${MANPREFIX}/man1"
@@ -115,11 +116,11 @@ uninstall:
 	for f in ${BIN} ${SCRIPTS}; do rm -f "${DESTDIR}${PREFIX}/bin/$$f"; done
 	# removing example files.
 	rm -f \
-		"${DESTDIR}${PREFIX}/share/${NAME}/sfeedrc.example"\
-		"${DESTDIR}${PREFIX}/share/${NAME}/style.css"\
-		"${DESTDIR}${PREFIX}/share/${NAME}/README"\
-		"${DESTDIR}${PREFIX}/share/${NAME}/README.xml"
-	-rmdir "${DESTDIR}${PREFIX}/share/${NAME}"
+		"${DESTDIR}${DOCPREFIX}/sfeedrc.example"\
+		"${DESTDIR}${DOCPREFIX}/style.css"\
+		"${DESTDIR}${DOCPREFIX}/README"\
+		"${DESTDIR}${DOCPREFIX}/README.xml"
+	-rmdir "${DESTDIR}${DOCPREFIX}"
 	# removing manual pages.
 	for m in ${MAN1}; do rm -f "${DESTDIR}${MANPREFIX}/man1/$$m"; done
 	for m in ${MAN5}; do rm -f "${DESTDIR}${MANPREFIX}/man5/$$m"; done
