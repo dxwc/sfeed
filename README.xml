@@ -5,7 +5,7 @@ XML parser
 Dependencies
 ------------
 
-- C compiler (C99 expected).
+- C compiler (C99).
 
 
 Features
@@ -36,6 +36,8 @@ Caveats
 -------
 
 - It is not a compliant XML parser.
+- Performance: data is buffered even if a handler is not set: to make parsing
+  faster change this code from xml.c.
 - The XML is not checked for errors so it will continue parsing XML data, this
   is by design.
 - Internally fixed-size buffers are used, callbacks like XMLParser.xmldata are
