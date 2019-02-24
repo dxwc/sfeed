@@ -402,7 +402,6 @@ gettzoffset(const char *s)
 		size_t len;
 		const int offhour;
 	} tzones[] = {
-		{ STRP("A"),   -1 * 3600 },
 		{ STRP("CDT"), -5 * 3600 },
 		{ STRP("CST"), -6 * 3600 },
 		{ STRP("EDT"), -4 * 3600 },
@@ -411,12 +410,9 @@ gettzoffset(const char *s)
 		{ STRP("MST"), -7 * 3600 },
 		{ STRP("PDT"), -7 * 3600 },
 		{ STRP("PST"), -8 * 3600 },
-		{ STRP("M"),   -2 * 3600 },
-		{ STRP("N"),    1 * 3600 },
-		{ STRP("Y"),   12 * 3600 },
 	};
 	const char *p;
-	int tzhour = 0, tzmin = 0;
+	int tzhour = 0, tzmin = 0, c;
 	size_t i, namelen;
 
 	for (; *s && isspace((unsigned char)*s); s++)
@@ -438,6 +434,23 @@ gettzoffset(const char *s)
 		/* optimization: these are always non-matching */
 		if (namelen < 1 || namelen > 3)
 			return 0;
+		/* ANSI and military zones, defined wrong in RFC822,
+		   see RFC2822 4.3 page 32.
+		   NOTE: zone J is ambiguous (unused/local observed time) and
+		   handled as UTC+0. */
+		if (namelen == 1) {
+			c = (int)*s;
+			/* NOTE: J is not handled: unused / observer local time */
+			if (c >= 'A' && c <= 'I')
+				return c - 'A' + 1; /* +1 through +9 */
+			else if (c >= 'K' && c <= 'M')
+				return c - 'K' + 10; /* 10 through 12 */
+			else if (c >= 'N' && c <= 'Y')
+				return ('Y' - c) - 12; /* -1 through -12 */
+			else
+				return 0;
+		}
+
 		/* compare tz and adjust offset relative to UTC */
 		for (i = 0; i < sizeof(tzones) / sizeof(*tzones); i++) {
 			if (tzones[i].len == namelen &&
