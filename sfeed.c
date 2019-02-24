@@ -54,6 +54,7 @@ enum TagId {
 	AtomTagMediaDescription, AtomTagSummary, AtomTagContent,
 	AtomTagId,
 	AtomTagLink,
+	AtomTagLinkAlternate,
 	AtomTagAuthor,
 	TagLast
 };
@@ -141,8 +142,10 @@ static FeedTag atomtags[] = {
 	{ STRP("updated"),           AtomTagUpdated          }
 };
 
-/* map tagid type to RSS/Atom field */
+/* map tagid type to RSS/Atom field
+   NOTE: all tags must be defined */
 static int fieldmap[TagLast] = {
+	[TagUnknown]              = -1,
 	/* RSS */
 	[RSSTagDcdate]            = FeedFieldTime,
 	[RSSTagPubdate]           = FeedFieldTime,
@@ -162,7 +165,8 @@ static int fieldmap[TagLast] = {
 	[AtomTagSummary]          = FeedFieldContent,
 	[AtomTagContent]          = FeedFieldContent,
 	[AtomTagId]               = FeedFieldId,
-	[AtomTagLink]             = FeedFieldLink,
+	[AtomTagLink]             = -1,
+	[AtomTagLinkAlternate]    = FeedFieldLink,
 	[AtomTagAuthor]           = FeedFieldAuthor
 };
 
@@ -171,6 +175,9 @@ static const char *baseurl = "";
 
 static FeedContext ctx;
 static XMLParser parser; /* XML parser state */
+
+static String atomlink;
+static int atomlinktype;
 
 /* Unique tagid for parsed tag name. */
 static enum TagId
@@ -619,11 +626,16 @@ xmlattr(XMLParser *p, const char *t, size_t tl, const char *n, size_t nl,
 				ctx.contenttype = ContentTypeHTML;
 			}
 		} else if (ctx.tagid == AtomTagLink &&
-		           isattr(n, nl, STRP("href")) &&
-		           ctx.field)
-		{
-			/* link href attribute */
-			string_append(ctx.field, v, vl);
+		           isattr(n, nl, STRP("rel"))) {
+			/* empty or "alternate": other types could be
+			   "enclosure", "related", "self" or "via" */
+			if (!vl || isattr(v, vl, STRP("alternate")))
+				atomlinktype = AtomTagLinkAlternate;
+			else
+				atomlinktype = 0;
+		} else if (ctx.tagid == AtomTagLink &&
+		           isattr(n, nl, STRP("href"))) {
+			string_append(&atomlink, v, vl);
 		}
 	}
 }
@@ -731,12 +743,19 @@ xmltagstart(XMLParser *p, const char *t, size_t tl)
 	tagid = gettag(ctx.feedtype, t, tl);
 	ctx.tagid = tagid;
 
+	/* without a rel attribute the default link type is "alternate" */
+	if (tagid == AtomTagLink) {
+		atomlinktype = AtomTagLinkAlternate;
+		string_clear(&atomlink); /* reuse and clear temporary link */
+	}
+
 	/* map tag type to field: unknown or lesser priority is ignored,
 	   when tags of the same type are repeated only the first is used. */
-	if (tagid == TagUnknown || tagid <= ctx.fields[fieldmap[tagid]].tagid) {
+	if (fieldmap[tagid] == -1 || tagid <= ctx.fields[fieldmap[tagid]].tagid) {
 		ctx.field = NULL;
 		return;
 	}
+
 	ctx.iscontenttag = (fieldmap[ctx.tagid] == FeedFieldContent);
 	ctx.field = &(ctx.fields[fieldmap[ctx.tagid]].str);
 	ctx.fields[fieldmap[ctx.tagid]].tagid = tagid;
@@ -783,6 +802,14 @@ xmltagend(XMLParser *p, const char *t, size_t tl, int isshort)
 				xmldata(p, ">", 1);
 			}
 			return;
+		}
+	} else if (ctx.tagid == AtomTagLink) {
+		/* map tag type to field: unknown or lesser priority is ignored,
+		   when tags of the same type are repeated only the first is used. */
+		if (atomlinktype && atomlinktype > ctx.fields[fieldmap[atomlinktype]].tagid) {
+			string_append(&ctx.fields[fieldmap[atomlinktype]].str,
+			              atomlink.data, atomlink.len);
+			ctx.fields[fieldmap[atomlinktype]].tagid = atomlinktype;
 		}
 	} else if (!ctx.tagid && ((ctx.feedtype == FeedTypeAtom &&
 	   istag(t, tl, STRP("entry"))) || /* Atom */
