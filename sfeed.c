@@ -825,7 +825,7 @@ xmltagend(XMLParser *p, const char *t, size_t tl, int isshort)
 			ctx.fields[i].tagid = TagUnknown;
 		}
 		ctx.contenttype = ContentTypeNone;
-		/* allow parsing of Atom and RSS in one XML stream. */
+		/* allow parsing of Atom and RSS concatenated in one XML stream. */
 		ctx.feedtype = FeedTypeNone;
 	} else if (!ctx.tagid ||
 	           gettag(ctx.feedtype, t, tl) != ctx.tagid) {
