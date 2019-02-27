@@ -178,7 +178,7 @@ static FeedContext ctx;
 static XMLParser parser; /* XML parser state */
 
 static String atomlink;
-static int atomlinktype;
+static enum TagId atomlinktype;
 static int rssidpermalink;
 
 /* Unique tagid for parsed tag name. */
@@ -640,7 +640,7 @@ xmlattr(XMLParser *p, const char *t, size_t tl, const char *n, size_t nl,
 			if (!vl || isattr(v, vl, STRP("alternate")))
 				atomlinktype = AtomTagLinkAlternate;
 			else
-				atomlinktype = 0;
+				atomlinktype = TagUnknown;
 		} else if (ctx.tagid == AtomTagLink &&
 		           isattr(n, nl, STRP("href"))) {
 			string_append(&atomlink, v, vl);
