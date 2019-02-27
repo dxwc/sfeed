@@ -49,7 +49,7 @@ parseuri(const char *s, struct uri *u, int rel)
 	/* IPv6 address */
 	if (*p == '[') {
 		/* bracket not found or host too long */
-		if (!(b = strchr(p, ']')) || (size_t)(b - p) >= (ssize_t)sizeof(u->host))
+		if (!(b = strchr(p, ']')) || (size_t)(b - p) >= sizeof(u->host))
 			return -1;
 		memcpy(u->host, p + 1, b - p - 1);
 		u->host[b - p - 1] = '\0';
