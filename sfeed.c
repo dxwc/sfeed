@@ -46,6 +46,7 @@ enum TagId {
 	RSSTagTitle,
 	RSSTagMediaDescription, RSSTagDescription, RSSTagContentEncoded,
 	RSSTagGuid,
+	/* must be defined after GUID, because it can be a link (isPermaLink) */
 	RSSTagLink,
 	RSSTagAuthor, RSSTagDccreator,
 	/* Atom */
@@ -178,6 +179,7 @@ static XMLParser parser; /* XML parser state */
 
 static String atomlink;
 static int atomlinktype;
+static int rssidpermalink;
 
 /* Unique tagid for parsed tag name. */
 static enum TagId
@@ -615,7 +617,13 @@ xmlattr(XMLParser *p, const char *t, size_t tl, const char *n, size_t nl,
 		return;
 	}
 
-	if (ctx.feedtype == FeedTypeAtom) {
+	if (ctx.feedtype == FeedTypeRSS) {
+		if (ctx.tagid == RSSTagGuid) {
+			if (isattr(n, nl, STRP("ispermalink")) &&
+			    !isattr(v, vl, STRP("true")))
+				rssidpermalink = 0;
+		}
+	} else if (ctx.feedtype == FeedTypeAtom) {
 		if (ISCONTENTTAG(ctx)) {
 			if (isattr(n, nl, STRP("type")) &&
 			   (isattr(v, vl, STRP("xhtml")) ||
@@ -747,6 +755,9 @@ xmltagstart(XMLParser *p, const char *t, size_t tl)
 	if (tagid == AtomTagLink) {
 		atomlinktype = AtomTagLinkAlternate;
 		string_clear(&atomlink); /* reuse and clear temporary link */
+	} else if (tagid == RSSTagGuid) {
+		/* without a ispermalink attribute the default value is "true" */
+		rssidpermalink = 1;
 	}
 
 	/* map tag type to field: unknown or lesser priority is ignored,
@@ -810,6 +821,14 @@ xmltagend(XMLParser *p, const char *t, size_t tl, int isshort)
 			string_append(&ctx.fields[fieldmap[atomlinktype]].str,
 			              atomlink.data, atomlink.len);
 			ctx.fields[fieldmap[atomlinktype]].tagid = atomlinktype;
+		}
+	} else if (ctx.tagid == RSSTagGuid && rssidpermalink) {
+		if (ctx.tagid > ctx.fields[FeedFieldLink].tagid) {
+			string_clear(&ctx.fields[FeedFieldLink].str);
+			string_append(&ctx.fields[FeedFieldLink].str,
+			             ctx.fields[FeedFieldId].str.data,
+			             ctx.fields[FeedFieldId].str.len);
+			ctx.fields[FeedFieldLink].tagid = ctx.tagid;
 		}
 	} else if (!ctx.tagid && ((ctx.feedtype == FeedTypeAtom &&
 	   istag(t, tl, STRP("entry"))) || /* Atom */
