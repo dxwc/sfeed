@@ -34,7 +34,6 @@ loadconfig() {
 # convert encoding from one encoding to another.
 # convertencoding(from, to)
 convertencoding() {
-	# if from != to
 	if [ "$1" != "" ] && [ "$2" != "" ] && [ "$1" != "$2" ]; then
 		iconv -cs -f "$1" -t "$2" 2> /dev/null
 	else
