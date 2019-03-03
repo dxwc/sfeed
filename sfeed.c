@@ -433,7 +433,7 @@ gettzoffset(const char *s)
 	case '+':
 		for (i = 0, p = s + 1; i < 2 && *p && isdigit((unsigned char)*p); i++, p++)
 			tzhour = (tzhour * 10) + (*p - '0');
-		if (*p && !isdigit((unsigned char)*p))
+		if (*p == ':')
 			p++;
 		for (i = 0; i < 2 && *p && isdigit((unsigned char)*p); i++, p++)
 			tzmin = (tzmin * 10) + (*p - '0');
