@@ -196,7 +196,7 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 		for (i = 0; i < sizeof(rsstags) / sizeof(rsstags[0]); i++)
 			if (istag(rsstags[i].name, rsstags[i].len, name, namelen))
 				return rsstags[i].id;
-		return TagUnknown;
+		break;
 	case FeedTypeAtom:
 		/* optimization: these are always non-matching */
 		if (namelen < 2 || namelen > 17)
@@ -205,10 +205,12 @@ gettag(enum FeedType feedtype, const char *name, size_t namelen)
 		for (i = 0; i < sizeof(atomtags) / sizeof(atomtags[0]); i++)
 			if (istag(atomtags[i].name, atomtags[i].len, name, namelen))
 				return atomtags[i].id;
-		return TagUnknown;
+		break;
 	default:
-		return TagUnknown;
+		break;
 	}
+
+	return TagUnknown;
 }
 
 static char *
