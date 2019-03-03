@@ -343,7 +343,7 @@ string_print_timestamp(String *s)
 	if (!s->data || !s->len)
 		return;
 
-	if (parsetime(ltrim(s->data), &t) != -1)
+	if (parsetime(s->data, &t) != -1)
 		printf("%lld", (long long)t);
 }
 
@@ -495,6 +495,8 @@ parsetime(const char *s, time_t *tp)
 	int va[6] = { 0 }, i, j, v, vi;
 	size_t m;
 
+	for (; *s && isspace((unsigned char)*s); s++)
+		;
 	if (!isdigit((unsigned char)*s) && !isalpha((unsigned char)*s))
 		return -1;
 
