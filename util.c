@@ -149,7 +149,7 @@ absuri(char *buf, size_t bufsiz, const char *link, const char *base)
 		host,
 		port[0] ? ":" : "",
 		port);
-	if (r == -1 || (size_t)r >= sizeof(tmp))
+	if (r < 0 || (size_t)r >= sizeof(tmp))
 		return -1; /* error or truncation */
 
 	/* relative to root */
