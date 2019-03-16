@@ -1,3 +1,6 @@
+#ifndef _XML_H
+#define _XML_H
+
 typedef struct xmlparser {
 	/* handlers */
 	void (*xmlattr)(struct xmlparser *, const char *, size_t,
@@ -23,6 +26,9 @@ typedef struct xmlparser {
 	void (*xmltagstartparsed)(struct xmlparser *, const char *,
 	      size_t, int);
 
+#ifndef GETNEXT
+#define GETNEXT (x)->getnext
+#endif
 	int (*getnext)(void);
 
 	/* current tag */
@@ -38,3 +44,4 @@ typedef struct xmlparser {
 
 int xml_entitytostr(const char *, char *, size_t);
 void xml_parse(XMLParser *);
+#endif

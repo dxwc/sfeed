@@ -15,7 +15,7 @@ xml_parseattrs(XMLParser *x)
 	size_t namelen = 0, valuelen;
 	int c, endsep, endname = 0, valuestart = 0;
 
-	while ((c = x->getnext()) != EOF) {
+	while ((c = GETNEXT()) != EOF) {
 		if (isspace(c)) {
 			if (namelen)
 				endname = 1;
@@ -51,7 +51,7 @@ xml_parseattrs(XMLParser *x)
 				goto startvalue;
 			}
 
-			while ((c = x->getnext()) != EOF) {
+			while ((c = GETNEXT()) != EOF) {
 startvalue:
 				if (c == '&') { /* entities */
 					x->data[valuelen] = '\0';
@@ -60,7 +60,7 @@ startvalue:
 						x->xmlattr(x, x->tag, x->taglen, x->name, namelen, x->data, valuelen);
 					x->data[0] = c;
 					valuelen = 1;
-					while ((c = x->getnext()) != EOF) {
+					while ((c = GETNEXT()) != EOF) {
 						if (c == endsep || (endsep == ' ' && (c == '>' || isspace(c))))
 							break;
 						if (valuelen < sizeof(x->data) - 1)
@@ -124,7 +124,7 @@ xml_parsecomment(XMLParser *x)
 
 	if (x->xmlcommentstart)
 		x->xmlcommentstart(x);
-	while ((c = x->getnext()) != EOF) {
+	while ((c = GETNEXT()) != EOF) {
 		if (c == '-' || c == '>') {
 			if (x->xmlcomment) {
 				x->data[datalen] = '\0';
@@ -173,7 +173,7 @@ xml_parsecdata(XMLParser *x)
 
 	if (x->xmlcdatastart)
 		x->xmlcdatastart(x);
-	while ((c = x->getnext()) != EOF) {
+	while ((c = GETNEXT()) != EOF) {
 		if (c == ']' || c == '>') {
 			if (x->xmlcdata) {
 				x->data[datalen] = '\0';
@@ -324,18 +324,16 @@ xml_parse(XMLParser *x)
 	size_t datalen, tagdatalen;
 	int c, isend;
 
-	if (!x->getnext)
-		return;
-	while ((c = x->getnext()) != EOF && c != '<')
+	while ((c = GETNEXT()) != EOF && c != '<')
 		; /* skip until < */
 
 	while (c != EOF) {
 		if (c == '<') { /* parse tag */
-			if ((c = x->getnext()) == EOF)
+			if ((c = GETNEXT()) == EOF)
 				return;
 
 			if (c == '!') { /* cdata and comments */
-				for (tagdatalen = 0; (c = x->getnext()) != EOF;) {
+				for (tagdatalen = 0; (c = GETNEXT()) != EOF;) {
 					/* NOTE: sizeof(x->data) must be atleast sizeof("[CDATA[") */
 					if (tagdatalen <= sizeof("[CDATA[") - 1)
 						x->data[tagdatalen++] = c;
@@ -363,13 +361,13 @@ xml_parse(XMLParser *x)
 				if (c == '?') {
 					x->isshorttag = 1;
 				} else if (c == '/') {
-					if ((c = x->getnext()) == EOF)
+					if ((c = GETNEXT()) == EOF)
 						return;
 					x->tag[0] = c;
 					isend = 1;
 				}
 
-				while ((c = x->getnext()) != EOF) {
+				while ((c = GETNEXT()) != EOF) {
 					if (c == '/')
 						x->isshorttag = 1; /* short tag */
 					else if (c == '>' || isspace(c)) {
@@ -405,7 +403,7 @@ xml_parse(XMLParser *x)
 			datalen = 0;
 			if (x->xmldatastart)
 				x->xmldatastart(x);
-			while ((c = x->getnext()) != EOF) {
+			while ((c = GETNEXT()) != EOF) {
 				if (c == '&') {
 					if (datalen) {
 						x->data[datalen] = '\0';
@@ -414,7 +412,7 @@ xml_parse(XMLParser *x)
 					}
 					x->data[0] = c;
 					datalen = 1;
-					while ((c = x->getnext()) != EOF) {
+					while ((c = GETNEXT()) != EOF) {
 						if (c == '<')
 							break;
 						if (datalen < sizeof(x->data) - 1)
