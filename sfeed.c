@@ -181,36 +181,34 @@ static String atomlink;
 static enum TagId atomlinktype;
 static int rssidpermalink;
 
+int
+tagcmp(const void *v1, const void *v2)
+{
+	return strcasecmp(((FeedTag *)v1)->name, ((FeedTag *)v2)->name);
+}
+
 /* Unique tagid for parsed tag name. */
 static enum TagId
 gettag(enum FeedType feedtype, const char *name, size_t namelen)
 {
-	size_t i;
+	FeedTag f, *r = NULL;
+
+	f.name = (char *)name;
 
 	switch (feedtype) {
 	case FeedTypeRSS:
-		/* optimization: these are always non-matching */
-		if (namelen < 4 || namelen > 17)
-			return TagUnknown;
-
-		for (i = 0; i < sizeof(rsstags) / sizeof(rsstags[0]); i++)
-			if (istag(rsstags[i].name, rsstags[i].len, name, namelen))
-				return rsstags[i].id;
+		r = bsearch(&f, rsstags, sizeof(rsstags) / sizeof(rsstags[0]),
+		        sizeof(rsstags[0]), tagcmp);
 		break;
 	case FeedTypeAtom:
-		/* optimization: these are always non-matching */
-		if (namelen < 2 || namelen > 17)
-			return TagUnknown;
-
-		for (i = 0; i < sizeof(atomtags) / sizeof(atomtags[0]); i++)
-			if (istag(atomtags[i].name, atomtags[i].len, name, namelen))
-				return atomtags[i].id;
+		r = bsearch(&f, atomtags, sizeof(atomtags) / sizeof(atomtags[0]),
+		        sizeof(atomtags[0]), tagcmp);
 		break;
 	default:
 		break;
 	}
 
-	return TagUnknown;
+	return r ? r->id : TagUnknown;
 }
 
 static char *
