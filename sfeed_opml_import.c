@@ -97,7 +97,7 @@ main(void)
 	    "# list of feeds to fetch:\n"
 	    "feeds() {\n"
 	    "	# feed <name> <feedurl> [basesiteurl] [encoding]\n", stdout);
-	parser.getnext = getchar;
+	/* NOTE: getnext is defined in xml.h for inline optimization */
 	xml_parse(&parser);
 	fputs("}\n", stdout);
 

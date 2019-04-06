@@ -47,7 +47,7 @@ main(void)
 	parser.xmlattr = xmlattr;
 	parser.xmltagstart = xmltagstart;
 
-	parser.getnext = getchar;
+	/* NOTE: getnext is defined in xml.h for inline optimization */
 	xml_parse(&parser);
 
 	return 0;

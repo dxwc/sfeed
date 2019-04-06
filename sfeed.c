@@ -878,7 +878,7 @@ main(int argc, char *argv[])
 	parser.xmltagstart = xmltagstart;
 	parser.xmltagstartparsed = xmltagstartparsed;
 
-	parser.getnext = getchar;
+	/* NOTE: getnext is defined in xml.h for inline optimization */
 	xml_parse(&parser);
 
 	return 0;

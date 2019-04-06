@@ -27,9 +27,14 @@ typedef struct xmlparser {
 	      size_t, int);
 
 #ifndef GETNEXT
-#define GETNEXT (x)->getnext
-#endif
+	/* GETNEXT overridden for sfeed to reduce function call overhead and
+	   further context optimizations. */
+	#define GETNEXT getchar
+#if 0
+	#define GETNEXT (x)->getnext
 	int (*getnext)(void);
+#endif
+#endif
 
 	/* current tag */
 	char tag[1024];
