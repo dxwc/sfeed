@@ -98,7 +98,7 @@ encodeuri(char *buf, size_t bufsiz, const char *s)
 	size_t i, b;
 
 	for (i = 0, b = 0; s[i]; i++) {
-		if ((int)s[i] == ' ' ||
+		if (s[i] == ' ' ||
 		    (unsigned char)s[i] > 127 ||
 		    iscntrl((unsigned char)s[i])) {
 			if (b + 3 >= bufsiz)
@@ -126,7 +126,7 @@ absuri(char *buf, size_t bufsiz, const char *link, const char *base)
 {
 	struct uri ulink, ubase;
 	char tmp[4096], *host, *p, *port;
-	int r = -1, c;
+	int r, c;
 	size_t i;
 
 	buf[0] = '\0';
