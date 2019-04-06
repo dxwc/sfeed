@@ -29,8 +29,6 @@ HDR = \
 
 LIBUTIL = libutil.a
 LIBUTILSRC = \
-	strlcat.c\
-	strlcpy.c\
 	util.c
 LIBUTILOBJ = ${LIBUTILSRC:.c=.o}
 
@@ -39,7 +37,14 @@ LIBXMLSRC = \
 	xml.c
 LIBXMLOBJ = ${LIBXMLSRC:.c=.o}
 
-LIB = ${LIBUTIL} ${LIBXML}
+COMPATSRC = \
+	strlcat.c\
+	strlcpy.c
+COMPATOBJ =\
+	strlcat.o\
+	strlcpy.o
+
+LIB = ${LIBUTIL} ${LIBXML} ${COMPATOBJ}
 
 MAN1 = ${BIN:=.1}\
 	${SCRIPTS:=.1}
@@ -56,7 +61,7 @@ all: ${BIN}
 
 ${BIN}: ${LIB} ${@:=.o}
 
-OBJ = ${SRC:.c=.o} ${LIBXMLOBJ} ${LIBUTILOBJ}
+OBJ = ${SRC:.c=.o} ${LIBXMLOBJ} ${LIBUTILOBJ} ${COMPATOBJ}
 
 ${OBJ}: config.mk ${HDR}
 
