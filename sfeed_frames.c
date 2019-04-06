@@ -109,9 +109,13 @@ main(int argc, char *argv[])
 	if (pledge(argc == 1 ? "stdio" : "stdio rpath", NULL) == -1)
 		err(1, "pledge");
 
-	fputs("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />"
-	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /></head>"
-	      "<body class=\"frame\"><div id=\"items\"><pre>", fpitems);
+	fputs("<!DOCTYPE HTML>\n"
+	      "<html>\n"
+	      "\t<head>\n"
+	      "\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
+	      "\t<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />\n"
+	      "</head>\n"
+	      "<body class=\"frame\"><div id=\"items\"><pre>\n", fpitems);
 
 	if (argc == 1) {
 		if (!(feeds[0] = calloc(1, sizeof(struct feed))))
@@ -136,10 +140,13 @@ main(int argc, char *argv[])
 	fputs("</pre>\n</div></body>\n</html>\n", fpitems); /* div items */
 
 	if (showsidebar) {
-		fputs("<html><head>"
-		      "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />\n"
-		      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
-		      "</head><body class=\"frame\"><div id=\"sidebar\">", fpmenu);
+		fputs("<!DOCTYPE HTML>\n"
+		      "<html>\n"
+		      "<head>\n"
+		      "\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
+		      "\t<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />\n"
+		      "</head>\n"
+		      "<body class=\"frame\">\n<div id=\"sidebar\">\n", fpmenu);
 
 		for (i = 1; i < argc; i++) {
 			f = feeds[i - 1];
@@ -159,10 +166,11 @@ main(int argc, char *argv[])
 		}
 		fputs("</div></body></html>\n", fpmenu);
 	}
-	fputs("<!DOCTYPE html><html><head>\n\t<title>Newsfeed (", fpindex);
+	fputs("<!DOCTYPE html>\n<html>\n<head>\n"
+	      "\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
+	      "\t<title>Newsfeed (", fpindex);
 	fprintf(fpindex, "%lu", totalnew);
 	fputs(")</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />\n"
-	      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 	      "</head>\n", fpindex);
 	if (showsidebar) {
 		fputs("<frameset framespacing=\"0\" cols=\"250,*\" frameborder=\"1\">\n"

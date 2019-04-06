@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 		fputs("\t\t<div id=\"items\">\n", stdout);
 	else
 		fputs("\t\t<div id=\"items\" class=\"nosidebar\">\n", stdout);
-	fputs("<pre>", stdout);
+	fputs("<pre>\n", stdout);
 
 	if (argc == 1) {
 		if (!(feeds[0] = calloc(1, sizeof(struct feed))))
