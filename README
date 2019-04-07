@@ -34,7 +34,8 @@ for sfeed_update:
 
 	newsboat -e | sfeed_opml_import > "$HOME/.sfeed/sfeedrc"
 
-Update feeds, this script merges the new items:
+Update feeds, this script merges the new items, see sfeed_update(1) for more
+information what it can do:
 
 	sfeed_update
 
@@ -195,11 +196,11 @@ Format the feeds files:
 	# HTML view with the menu as frames, copy style.css for a default style.
 	mkdir -p somedir && cd somedir && sfeed_frames $HOME/.sfeed/feeds/*
 
-View in your browser:
+View formatted output in your browser:
 
 	$BROWSER "$HOME/.sfeed/feeds.html"
 
-View in your editor:
+View formatted output in your editor:
 
 	$EDITOR "$HOME/.sfeed/feeds.txt"
 
@@ -421,14 +422,13 @@ procmail_maildirs.sh file:
 	fi
 
 	find "${feedsdir}" -type f -exec printf '%s\n' {} \; | while read -r d; do
-		(name=$(basename "${d}")
+		name=$(basename "${d}")
 		mkdir -p "${maildir}/${name}/cur"
 		mkdir -p "${maildir}/${name}/new"
 		mkdir -p "${maildir}/${name}/tmp"
 		printf 'Mailbox %s\n' "${name}"
-		sfeed_mbox "${d}" | formail -s procmail "${procmailconfig}") &
+		sfeed_mbox "${d}" | formail -s procmail "${procmailconfig}"
 	done
-	wait
 
 Procmailrc(5) file:
 
