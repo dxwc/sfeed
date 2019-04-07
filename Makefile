@@ -83,7 +83,7 @@ dist:
 	rm -rf "${NAME}-${VERSION}"
 	mkdir -p "${NAME}-${VERSION}"
 	cp -f ${MAN1} ${MAN5} ${DOC} ${HDR} \
-		${SRC} ${LIBXMLSRC} ${LIBUTILSRC} ${SCRIPTS} \
+		${SRC} ${LIBXMLSRC} ${LIBUTILSRC} ${COMPATSRC} ${SCRIPTS} \
 		Makefile config.mk \
 		sfeedrc.example style.css \
 		"${NAME}-${VERSION}"
