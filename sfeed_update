@@ -31,6 +31,20 @@ loadconfig() {
 	fi
 }
 
+# log(name,s)
+log() {
+	printf '[%s] %-50.50s %s\n' "$(date +'%H:%M:%S')" "$1" "$2" >&2
+}
+
+# fetch a feed via HTTP/HTTPS etc.
+# fetchfeed(name, url, feedfile)
+fetchfeed() {
+	# fail on redirects,, hide User-Agent, timeout is 15 seconds,
+	# -z for If-Modified-Since.
+	curl -L --max-redirs 0 -H "User-Agent:" -f -s -m 15 \
+		-z "$3" "$2" 2>/dev/null
+}
+
 # convert encoding from one encoding to another.
 # convertencoding(from, to)
 convertencoding() {
@@ -40,12 +54,6 @@ convertencoding() {
 		# else no convert, just output
 		cat
 	fi
-}
-
-# merge raw files: unique sort by id, title, link.
-# merge(name, oldfile, newfile)
-merge() {
-	sort -t '	' -u -k6,6 -k2,2 -k3,3 "$2" "$3" 2>/dev/null
 }
 
 # filter fields.
@@ -60,15 +68,10 @@ order() {
 	sort -t '	' -k1rn,1
 }
 
-# fetch a feed via HTTP/HTTPS etc.
-# fetchfeed(name, url, feedfile)
-fetchfeed() {
-	if curl -L --max-redirs 0 -H "User-Agent:" -f -s -m 15 \
-		-z "$3" "$2" 2>/dev/null; then
-		printf "  OK %s %s\n" "$(date +'%H:%M:%S')" "$1" >&2
-	else
-		printf "FAIL %s %s\n" "$(date +'%H:%M:%S')" "$1" >&2
-	fi
+# merge raw files: unique sort by id, title, link.
+# merge(name, oldfile, newfile)
+merge() {
+	sort -t '	' -u -k6,6 -k2,2 -k3,3 "$2" "$3" 2>/dev/null
 }
 
 # fetch and parse feed.
@@ -85,37 +88,71 @@ feed() {
 	filename="$(printf '%s' "$1" | tr '/' '_')"
 	feedurl="$2"
 	basesiteurl="$3"
-	tmpfeedfile="${sfeedtmpdir}/${filename}"
-	tmpencfile=""
 	encoding="$4"
+
 	sfeedfile="${sfeedpath}/${filename}"
+	tmpfeedfile="${sfeedtmpdir}/${filename}"
 
-	if [ "${encoding}" != "" ]; then
-		fetchfeed "${name}" "${feedurl}" "${sfeedfile}" | \
-			convertencoding "${encoding}" "utf-8"
-	else # detect encoding.
-		tmpencfile="${tmpfeedfile}.enc"
-		fetchfeed "${name}" "${feedurl}" "${sfeedfile}" > "${tmpencfile}"
-		detectenc=$(sfeed_xmlenc < "${tmpencfile}")
-		convertencoding "${detectenc}" "utf-8" < "${tmpencfile}"
-	fi | sfeed "${basesiteurl}" | filter "${name}" > "${tmpfeedfile}"
+	if ! fetchfeed "${name}" "${feedurl}" "${sfeedfile}" > "${tmpfeedfile}.fetch"; then
+		log "${name}" "FAIL (FETCH)"
+		return
+	fi
 
-	# get new data and merge with old.
-	sfeedfilenew="${sfeedpath}/${filename}.new"
-	# new feed data is non-empty.
-	if [ -s "${tmpfeedfile}" ]; then
-		# if file exists, merge
-		if [ -e "${sfeedfile}" ]; then
-			merge "${name}" "${sfeedfile}" "${tmpfeedfile}" | \
-				order "${name}" > "${sfeedfilenew}"
+	# try to detect encoding (if not specified). if detecting the encoding fails assume utf-8.
+	[ "${encoding}" = "" ] && encoding=$(sfeed_xmlenc < "${tmpfeedfile}.fetch")
 
-			# overwrite old file with updated file
-			mv "${sfeedfilenew}" "${sfeedfile}"
-		else
-			merge "${name}" "/dev/null" "${tmpfeedfile}" | \
-				order "${name}" > "${sfeedfile}"
-		fi
-	fi) &
+	if ! convertencoding "${encoding}" "utf-8" < "${tmpfeedfile}.fetch" > "${tmpfeedfile}.utf8"; then
+		log "${name}" "FAIL (ENCODING)"
+		return
+	fi
+	rm -f "${tmpfeedfile}.fetch"
+
+	if ! sfeed "${basesiteurl}" < "${tmpfeedfile}.utf8" > "${tmpfeedfile}.tsv"; then
+		log "${name}" "FAIL (CONVERT)"
+		return
+	fi
+	rm -f "${tmpfeedfile}.enc"
+
+	if ! filter "${name}" < "${tmpfeedfile}.tsv" > "${tmpfeedfile}.filter"; then
+		log "${name}" "FAIL (FILTER)"
+		return
+	fi
+	rm -f "${tmpfeedfile}.tsv"
+
+	# new feed data is empty: no need for below stages.
+	if [ ! -s "${tmpfeedfile}.filter" ]; then
+		log "${name}" "OK"
+		return
+	fi
+
+	# if file does not exist yet "merge" with /dev/null.
+	if [ -e "${sfeedfile}" ]; then
+		oldfile="${sfeedfile}"
+	else
+		oldfile="/dev/null"
+	fi
+
+	if ! merge "${name}" "${oldfile}" "${tmpfeedfile}.filter" > "${tmpfeedfile}.merge"; then
+		log "${name}" "FAIL (MERGE)"
+		return
+	fi
+	rm -f "${tmpfeedfile}.filter"
+
+	if ! order "${name}" < "${tmpfeedfile}.merge" > "${tmpfeedfile}.order"; then
+		log "${name}" "FAIL (ORDER)"
+		return
+	fi
+	rm -f "${tmpfeedfile}.merge"
+
+	# atomic move.
+	if ! mv "${tmpfeedfile}.order" "${sfeedfile}"; then
+		log "${name}" "FAIL (MOVE)"
+		return
+	fi
+
+	# OK
+	log "${name}" "OK"
+	) &
 }
 
 cleanup() {
