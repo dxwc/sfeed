@@ -139,7 +139,7 @@ sfeedrc - Config file. This file is evaluated as a shellscript in
 
 Atleast the following functions can be overridden per feed:
 
-- fetchfeed: to use wget(1), OpenBSD ftp(1) or an other download program.
+- fetch: to use wget(1), OpenBSD ftp(1) or an other download program.
 - merge: to change the merge logic.
 - filter: to filter on fields.
 - order: to change the sort order.
@@ -281,18 +281,14 @@ filter() {
 
 - - -
 
-The fetchfeed function can be overridden in your sfeedrc file. This allows to
+The fetch function can be overridden in your sfeedrc file. This allows to
 replace the default curl(1) for sfeed_update with any other client to fetch the
 RSS/Atom data:
 
 # fetch a feed via HTTP/HTTPS etc.
-# fetchfeed(name, url, feedfile)
-fetchfeed() {
-	if hurl -m 1048576 -t 15 "$2" 2>/dev/null; then
-		printf "  OK %s %s\n" "$(date +'%H:%M:%S')" "$1" >&2
-	else
-		printf "FAIL %s %s\n" "$(date +'%H:%M:%S')" "$1" >&2
-	fi
+# fetch(name, url, feedfile)
+fetch() {
+	hurl -m 1048576 -t 15 "$2" 2>/dev/null
 }
 
 - - -

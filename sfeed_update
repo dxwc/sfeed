@@ -37,8 +37,8 @@ log() {
 }
 
 # fetch a feed via HTTP/HTTPS etc.
-# fetchfeed(name, url, feedfile)
-fetchfeed() {
+# fetch(name, url, feedfile)
+fetch() {
 	# fail on redirects,, hide User-Agent, timeout is 15 seconds,
 	# -z for If-Modified-Since.
 	curl -L --max-redirs 0 -H "User-Agent:" -f -s -m 15 \
@@ -93,7 +93,7 @@ feed() {
 	sfeedfile="${sfeedpath}/${filename}"
 	tmpfeedfile="${sfeedtmpdir}/${filename}"
 
-	if ! fetchfeed "${name}" "${feedurl}" "${sfeedfile}" > "${tmpfeedfile}.fetch"; then
+	if ! fetch "${name}" "${feedurl}" "${sfeedfile}" > "${tmpfeedfile}.fetch"; then
 		log "${name}" "FAIL (FETCH)"
 		return
 	fi
