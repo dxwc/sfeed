@@ -48,6 +48,7 @@ enum TagId {
 	RSSTagGuid,
 	/* must be defined after GUID, because it can be a link (isPermaLink) */
 	RSSTagLink,
+	RSSTagEnclosure,
 	RSSTagAuthor, RSSTagDccreator,
 	/* Atom */
 	AtomTagUpdated, AtomTagPublished,
@@ -56,6 +57,7 @@ enum TagId {
 	AtomTagId,
 	AtomTagLink,
 	AtomTagLinkAlternate,
+	AtomTagLinkEnclosure,
 	AtomTagAuthor,
 	TagLast
 };
@@ -73,7 +75,7 @@ typedef struct field {
 
 enum {
 	FeedFieldTime = 0, FeedFieldTitle, FeedFieldLink, FeedFieldContent,
-	FeedFieldId, FeedFieldAuthor, FeedFieldLast
+	FeedFieldId, FeedFieldAuthor, FeedFieldEnclosure, FeedFieldLast
 };
 
 typedef struct feedcontext {
@@ -122,6 +124,8 @@ static FeedTag rsstags[] = {
 	{ STRP("dc:creator"),        RSSTagDccreator         },
 	{ STRP("dc:date"),           RSSTagDcdate            },
 	{ STRP("description"),       RSSTagDescription       },
+	/* RSS: <enclosure url="" />, Atom has <link rel="enclosure" /> */
+	{ STRP("enclosure"),         RSSTagEnclosure         },
 	{ STRP("guid"),              RSSTagGuid              },
 	{ STRP("link"),              RSSTagLink              },
 	{ STRP("media:description"), RSSTagMediaDescription  },
@@ -156,6 +160,7 @@ static int fieldmap[TagLast] = {
 	[RSSTagContentEncoded]    = FeedFieldContent,
 	[RSSTagGuid]              = FeedFieldId,
 	[RSSTagLink]              = FeedFieldLink,
+	[RSSTagEnclosure]         = FeedFieldEnclosure,
 	[RSSTagAuthor]            = FeedFieldAuthor,
 	[RSSTagDccreator]         = FeedFieldAuthor,
 	/* Atom */
@@ -168,6 +173,7 @@ static int fieldmap[TagLast] = {
 	[AtomTagId]               = FeedFieldId,
 	[AtomTagLink]             = -1,
 	[AtomTagLinkAlternate]    = FeedFieldLink,
+	[AtomTagLinkEnclosure]    = FeedFieldEnclosure,
 	[AtomTagAuthor]           = FeedFieldAuthor
 };
 
@@ -593,6 +599,8 @@ printfields(void)
 	string_print_trimmed(&ctx.fields[FeedFieldId].str);
 	putchar(FieldSeparator);
 	string_print_trimmed(&ctx.fields[FeedFieldAuthor].str);
+	putchar(FieldSeparator);
+	string_print_uri(&ctx.fields[FeedFieldEnclosure].str);
 	putchar('\n');
 }
 
@@ -620,10 +628,13 @@ xmlattr(XMLParser *p, const char *t, size_t tl, const char *n, size_t nl,
 	}
 
 	if (ctx.feedtype == FeedTypeRSS) {
-		if (ctx.tagid == RSSTagGuid) {
-			if (isattr(n, nl, STRP("ispermalink")) &&
-			    !isattr(v, vl, STRP("true")))
-				rssidpermalink = 0;
+		if (ctx.tagid == RSSTagEnclosure &&
+		    isattr(n, nl, STRP("url")) && ctx.field) {
+			string_append(ctx.field, v, vl);
+		} else if (ctx.tagid == RSSTagGuid &&
+		           isattr(n, nl, STRP("ispermalink")) &&
+		           !isattr(v, vl, STRP("true"))) {
+			rssidpermalink = 0;
 		}
 	} else if (ctx.feedtype == FeedTypeAtom) {
 		if (ISCONTENTTAG(ctx)) {
@@ -641,6 +652,8 @@ xmlattr(XMLParser *p, const char *t, size_t tl, const char *n, size_t nl,
 			   "enclosure", "related", "self" or "via" */
 			if (!vl || isattr(v, vl, STRP("alternate")))
 				atomlinktype = AtomTagLinkAlternate;
+			else if (isattr(v, vl, STRP("enclosure")))
+				atomlinktype = AtomTagLinkEnclosure;
 			else
 				atomlinktype = TagUnknown;
 		} else if (ctx.tagid == AtomTagLink &&
