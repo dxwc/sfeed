@@ -43,15 +43,15 @@ RB_GENERATE_STATIC(linetree, line, entry, linecmp)
 static void
 gc(void)
 {
-	struct line *line, *tmp;
+	struct line *l, *tmp;
 
-	RB_FOREACH_SAFE(line, linetree, &head, tmp) {
-		if (line->timestamp < comparetime) {
-			free(line->id);
-			free(line->link);
-			free(line->title);
-			RB_REMOVE(linetree, &head, line);
-			free(line);
+	RB_FOREACH_SAFE(l, linetree, &head, tmp) {
+		if (l->timestamp < comparetime) {
+			free(l->id);
+			free(l->link);
+			free(l->title);
+			RB_REMOVE(linetree, &head, l);
+			free(l);
 		}
 	}
 }
