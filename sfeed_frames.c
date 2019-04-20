@@ -112,6 +112,7 @@ main(int argc, char *argv[])
 	fputs("<!DOCTYPE HTML>\n"
 	      "<html>\n"
 	      "\t<head>\n"
+	      "\t<meta name=\"referrer\" content=\"no-referrer\" />\n"
 	      "\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 	      "\t<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\" />\n"
 	      "</head>\n"
@@ -167,6 +168,7 @@ main(int argc, char *argv[])
 		fputs("</div></body></html>\n", fpmenu);
 	}
 	fputs("<!DOCTYPE html>\n<html>\n<head>\n"
+	      "\t<meta name=\"referrer\" content=\"no-referrer\" />\n"
 	      "\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 	      "\t<title>Newsfeed (", fpindex);
 	fprintf(fpindex, "%lu", totalnew);
