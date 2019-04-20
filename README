@@ -304,6 +304,28 @@ fetch() {
 
 - - -
 
+Aggregate feeds. This filters new entries (maximum one day old) and sorts them
+by newest first. Prefix the feed name in the title. Convert the TSV output data
+to an Atom XML feed (again):
+
+#!/bin/sh
+cd ~/.sfeed/feeds/ || exit 1
+
+LC_ALL=C awk -F '	' -v "old=$(($(date -j +'%s') - 86400))" '
+BEGIN {
+	OFS = "\t";
+}
+{
+	if (int($1) >= old) {
+		$2 = "[" FILENAME "] " $2;
+		print $0;
+	}
+}' * | \
+sort -k1,1rn | \
+sfeed_atom
+
+- - -
+
 Over time your feeds file might become quite big. You can archive items from a
 specific date by doing for example:
 
