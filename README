@@ -260,20 +260,30 @@ filter() {
 		sed 's@www.youtube.com/watch?v=@www.youtube.com/embed/@g' | \
 
 		LC_LOCALE=C awk -F '	' 'BEGIN { OFS = "	"; }
-		{
+		function filterlink(s) {
+			# protocol must start with http, https or gopher.
+			if (match(s, /^(http|https|gopher):\/\//) == 0) {
+				return "";
+			}
+
 			# shorten feedburner links.
-			if (match($3, /^(http|https):\/\/[^/]+\/~r\/.*\/~3\/[^\/]+\//)) {
-				$3 = substr($3, RSTART, RLENGTH);
+			if (match(s, /^(http|https):\/\/[^/]+\/~r\/.*\/~3\/[^\/]+\//)) {
+				s = substr($3, RSTART, RLENGTH);
 			}
 
 			# strip tracking parameters
-
 			# urchin, facebook, piwik, webtrekk and generic.
-			gsub(/\?(ad|campaign|pk|tm|wt)_([^&]+)/, "?", $3);
-			gsub(/&(ad|campaign|pk|tm|wt)_([^&]+)/, "", $3);
+			gsub(/\?(ad|campaign|pk|tm|wt)_([^&]+)/, "?", s);
+			gsub(/&(ad|campaign|pk|tm|wt)_([^&]+)/, "", s);
 
-			gsub(/\?&/, "?", $3);
-			gsub(/[\?&]+$/, "", $3);
+			gsub(/\?&/, "?", s);
+			gsub(/[\?&]+$/, "", s);
+
+			return s
+		}
+		{
+			$3 = filterlink($3); # link
+			$8 = filterlink($8); # enclosure
 
 			print $0;
 		}'
