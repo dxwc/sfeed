@@ -7,6 +7,7 @@ VERSION = 0.9.8
 
 BIN = \
 	sfeed\
+	sfeed_atom\
 	sfeed_frames\
 	sfeed_gph \
 	sfeed_html\
