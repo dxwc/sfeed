@@ -48,10 +48,11 @@ parseuri(const char *s, struct uri *u, int rel)
 	/* IPv6 address */
 	if (*p == '[') {
 		/* bracket not found or host too long */
-		if (!(b = strchr(p, ']')) || (size_t)(b - p) >= sizeof(u->host))
+		if (!(b = strchr(p, ']')) || (size_t)(b - p) < 3 ||
+		    (size_t)(b - p) >= sizeof(u->host))
 			return -1;
-		memcpy(u->host, p + 1, b - p - 1);
-		u->host[b - p - 1] = '\0';
+		memcpy(u->host, p, b - p + 1);
+		u->host[b - p + 1] = '\0';
 		p = b + 1;
 	} else {
 		/* domain / host part, skip until port, path or end. */
@@ -125,7 +126,7 @@ absuri(char *buf, size_t bufsiz, const char *link, const char *base)
 {
 	struct uri ulink, ubase;
 	char tmp[4096], *host, *p, *port;
-	int r, c;
+	int c, r;
 	size_t i;
 
 	buf[0] = '\0';
