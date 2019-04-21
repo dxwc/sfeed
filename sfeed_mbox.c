@@ -112,7 +112,10 @@ printfeed(FILE *fp, const char *feedname)
 		printf("Content-Transfer-Encoding: binary\n");
 		printf("X-Feedname: %s\n\n", feedname);
 
-		printf("%s\n\n", fields[FieldLink]);
+		printf("%s\n", fields[FieldLink]);
+		if (fields[FieldEnclosure][0])
+			printf("\nEnclosure:\n%s\n", fields[FieldEnclosure]);
+		fputs("\n", stdout);
 	}
 }
 
