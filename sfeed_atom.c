@@ -40,9 +40,12 @@ printfeed(FILE *fp, const char *feedname)
 			fputs("] ", stdout);
 		}
 		xmlencode(fields[FieldTitle], stdout);
-		fputs("</title>\n\t<link rel=\"alternate\" href=\"", stdout);
-		xmlencode(fields[FieldLink], stdout);
-		fputs("\" />\n", stdout);
+		fputs("</title>\n", stdout);
+		if (fields[FieldLink][0]) {
+			fputs("\t<link rel=\"alternate\" href=\"", stdout);
+			xmlencode(fields[FieldLink], stdout);
+			fputs("\" />\n", stdout);
+		}
 		if (fields[FieldEnclosure][0]) {
 			fputs("\t<link rel=\"enclosure\" href=\"", stdout);
 			xmlencode(fields[FieldEnclosure], stdout);
