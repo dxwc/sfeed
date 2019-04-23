@@ -226,8 +226,8 @@ strtotime(const char *s, time_t *t)
 void
 xmlencode(const char *s, FILE *fp)
 {
-	for (; *s; s++) {
-		switch(*s) {
+	for (; *s; ++s) {
+		switch (*s) {
 		case '<':  fputs("&lt;",   fp); break;
 		case '>':  fputs("&gt;",   fp); break;
 		case '\'': fputs("&#39;",  fp); break;
