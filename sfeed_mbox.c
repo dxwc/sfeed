@@ -1,7 +1,4 @@
-#include <sys/types.h>
-
 #include <err.h>
-#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,59 +11,14 @@
 static char *line;
 static size_t linesize;
 static char host[256], *user, mtimebuf[32];
-static const uint32_t seed = 1167266473;
 
-#define ROT32(x, y) ((x << y) | (x >> (32 - y)))
-
-static uint32_t
-murmur3_32(const char *key, uint32_t len, uint32_t seed)
+static unsigned long
+djb2(unsigned char *s, unsigned long hash)
 {
-	static const uint32_t c1 = 0xcc9e2d51;
-	static const uint32_t c2 = 0x1b873593;
-	static const uint32_t r1 = 15;
-	static const uint32_t r2 = 13;
-	static const uint32_t m = 5;
-	static const uint32_t n = 0xe6546b64;
-	uint32_t hash = seed;
-	const int nblocks = len / 4;
-	const uint32_t *blocks = (const uint32_t *) key;
-	int i;
-	uint32_t k, k1;
-	const uint8_t *tail;
+	int c;
 
-	for (i = 0; i < nblocks; i++) {
-		k = blocks[i];
-		k *= c1;
-		k = ROT32(k, r1);
-		k *= c2;
-
-		hash ^= k;
-		hash = ROT32(hash, r2) * m + n;
-	}
-	tail = (const uint8_t *) (key + nblocks * 4);
-
-	k1 = 0;
-	switch (len & 3) {
-	case 3:
-		k1 ^= tail[2] << 16;
-	case 2:
-		k1 ^= tail[1] << 8;
-	case 1:
-		k1 ^= tail[0];
-
-		k1 *= c1;
-		k1 = ROT32(k1, r1);
-		k1 *= c2;
-		hash ^= k1;
-	}
-
-	hash ^= len;
-	hash ^= (hash >> 16);
-	hash *= 0x85ebca6b;
-	hash ^= (hash >> 13);
-	hash *= 0xc2b2ae35;
-	hash ^= (hash >> 16);
-
+	while ((c = *s++))
+		hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 	return hash;
 }
 
@@ -76,11 +28,13 @@ printfeed(FILE *fp, const char *feedname)
 	struct tm tm;
 	char *fields[FieldLast], timebuf[32];
 	time_t parsedtime;
+	unsigned long hash;
 	ssize_t linelen;
 
 	while ((linelen = getline(&line, &linesize, fp)) > 0) {
 		if (line[linelen - 1] == '\n')
 			line[--linelen] = '\0';
+		hash = djb2((unsigned char *)line, 5381UL);
 		if (!parseline(line, fields))
 			break;
 		parsedtime = 0;
@@ -103,11 +57,10 @@ printfeed(FILE *fp, const char *feedname)
 			printf("Subject: [%s] %s\n", feedname, fields[FieldTitle]);
 		else
 			printf("Subject: %s\n", fields[FieldTitle]);
-		printf("Message-ID: <%s%s%"PRIu32"@%s>\n",
+		printf("Message-ID: <%s%s%lu@%s>\n",
 		       fields[FieldUnixTimestamp],
 		       fields[FieldUnixTimestamp][0] ? "." : "",
-		       murmur3_32(line, (size_t)linelen, seed),
-		       feedname);
+		       hash, feedname);
 		printf("Content-Type: text/plain; charset=\"utf-8\"\n");
 		printf("Content-Transfer-Encoding: binary\n");
 		printf("X-Feedname: %s\n\n", feedname);
