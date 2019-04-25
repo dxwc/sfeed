@@ -14,6 +14,29 @@ static char *line;
 static size_t linesize;
 
 static void
+printcontent(const char *s)
+{
+	for (; *s; ++s) {
+		switch (*s) {
+		case '<':  fputs("&lt;",   stdout); break;
+		case '>':  fputs("&gt;",   stdout); break;
+		case '\'': fputs("&#39;",  stdout); break;
+		case '&':  fputs("&amp;",  stdout); break;
+		case '"':  fputs("&quot;", stdout); break;
+		case '\\':
+			s++;
+			switch (*s) {
+			case 'n':  putchar('\n'); break;
+			case '\\': putchar('\\'); break;
+			case 't':  putchar('\t'); break;
+			}
+			break;
+		default:  putchar(*s);
+		}
+	}
+}
+
+static void
 printfeed(FILE *fp, const char *feedname)
 {
 	char *fields[FieldLast];
@@ -58,6 +81,18 @@ printfeed(FILE *fp, const char *feedname)
 			fputs("\t<author><name>", stdout);
 			xmlencode(fields[FieldAuthor], stdout);
 			fputs("</name></author>\n", stdout);
+		}
+		if (fields[FieldContent][0]) {
+			if (!strcmp(fields[FieldContentType], "html")) {
+				fputs("\t<content type=\"html\">", stdout);
+			} else {
+				/* NOTE: an RSS/Atom viewer may or may not format
+				   whitespace such as newlines.
+				   Workaround: type="html" and <![CDATA[<pre></pre>]]> */
+				fputs("\t<content type=\"text\">", stdout);
+			}
+			printcontent(fields[FieldContent]);
+			fputs("</content>\n", stdout);
 		}
 		fputs("</entry>\n", stdout);
 	}
