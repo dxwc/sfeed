@@ -21,7 +21,7 @@ printfeed(FILE *fp, struct feed *f)
 	char *fields[FieldLast];
 	struct tm *tm;
 	time_t parsedtime;
-	unsigned int islink, isnew;
+	unsigned int isnew;
 	ssize_t linelen;
 
 	if (f->name[0]) {
@@ -47,8 +47,6 @@ printfeed(FILE *fp, struct feed *f)
 			err(1, "localtime");
 
 		isnew = (parsedtime >= comparetime) ? 1 : 0;
-		islink = fields[FieldLink][0] ? 1 : 0;
-
 		totalnew += isnew;
 		f->totalnew += isnew;
 		f->total++;
@@ -58,14 +56,15 @@ printfeed(FILE *fp, struct feed *f)
 		        tm->tm_hour, tm->tm_min);
 		if (isnew)
 			fputs("<b><u>", stdout);
-		if (islink) {
+		if (fields[FieldLink][0]) {
 			fputs("<a href=\"", stdout);
 			xmlencode(fields[FieldLink], stdout);
 			fputs("\">", stdout);
-		}
-		xmlencode(fields[FieldTitle], stdout);
-		if (islink)
+			xmlencode(fields[FieldTitle], stdout);
 			fputs("</a>", stdout);
+		} else {
+			xmlencode(fields[FieldTitle], stdout);
+		}
 		if (isnew)
 			fputs("</u></b>", stdout);
 		fputs("\n", stdout);
