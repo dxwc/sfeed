@@ -75,14 +75,20 @@ printfeed(FILE *fpitems, FILE *fpin, struct feed *f)
 		f->totalnew += isnew;
 		f->total++;
 
-		fputs("[h|", fpitems);
-		fprintf(fpitems, "%04d-%02d-%02d %02d:%02d ",
-		        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-		        tm->tm_hour, tm->tm_min);
-		gphlink(fpitems, fields[FieldTitle], strlen(fields[FieldTitle]));
-		fputs("|URL:", fpitems);
-		gphlink(fpitems, fields[FieldLink], strlen(fields[FieldLink]));
-		fputs("|server|port]\n", fpitems);
+		if (fields[FieldLink][0]) {
+			fputs("[h|", fpitems);
+			fprintf(fpitems, "%04d-%02d-%02d %02d:%02d ",
+			        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+			        tm->tm_hour, tm->tm_min);
+			gphlink(fpitems, fields[FieldTitle], strlen(fields[FieldTitle]));
+			fputs("|URL:", fpitems);
+			gphlink(fpitems, fields[FieldLink], strlen(fields[FieldLink]));
+			fputs("|server|port]\n", fpitems);
+		} else {
+			fprintf(fpitems, "%04d-%02d-%02d %02d:%02d %s\n",
+			        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+			        tm->tm_hour, tm->tm_min, fields[FieldTitle]);
+		}
 	}
 }
 
