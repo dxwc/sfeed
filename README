@@ -3,6 +3,12 @@ sfeed
 
 RSS and Atom parser (and some format programs).
 
+It converts RSS or Atom feeds from XML to a TAB-separated file.
+There are format programs included to format this TAB-separated format to
+various other formats.
+There are also some programs and scripts included to import and export OPML and
+to update, sort, filter and merge feed items.
+
 
 Build and install
 -----------------
@@ -240,7 +246,7 @@ advertisements, strip tracking parameters and more.
 filter() {
 	case "$1" in
 	"tweakers")
-		LC_LOCALE=C awk -F '	' 'BEGIN { OFS = "	"; }
+		LC_LOCALE=C awk -F '\t' 'BEGIN { OFS = "\t"; }
 		# skip ads.
 		$2 ~ /^ADV:/ {
 			next;
@@ -254,14 +260,14 @@ filter() {
 		}';;
 	"yt BSDNow")
 		# filter only BSD Now from channel.
-		LC_LOCALE=C awk -F '	' '$2 ~ / \| BSD Now/';;
+		LC_LOCALE=C awk -F '\t' '$2 ~ / \| BSD Now/';;
 	*)
 		cat;;
 	esac | \
 		# replace youtube links with embed links.
 		sed 's@www.youtube.com/watch?v=@www.youtube.com/embed/@g' | \
 
-		LC_LOCALE=C awk -F '	' 'BEGIN { OFS = "	"; }
+		LC_LOCALE=C awk -F '\t' 'BEGIN { OFS = "\t"; }
 		function filterlink(s) {
 			# protocol must start with http, https or gopher.
 			if (match(s, /^(http|https|gopher):\/\//) == 0) {
@@ -312,7 +318,7 @@ to an Atom XML feed (again):
 #!/bin/sh
 cd ~/.sfeed/feeds/ || exit 1
 
-LC_ALL=C awk -F '	' -v "old=$(($(date -j +'%s') - 86400))" '
+LC_ALL=C awk -F '\t' -v "old=$(($(date -j +'%s') - 86400))" '
 BEGIN {
 	OFS = "\t";
 }
@@ -324,6 +330,21 @@ BEGIN {
 }' * | \
 sort -k1,1rn | \
 sfeed_atom
+
+- - -
+
+For some podcast feed the following code can be used to filter the latest
+enclosure url (probably some audio file):
+
+LC_ALL=C awk -F "\t" 'BEGIN { latest = 0; }
+length($8) {
+	ts = int($1);
+	if (ts > latest) {
+		url = $8;
+		latest = ts;
+	}
+}
+END { if (length(url)) { print url; } }'
 
 - - -
 
