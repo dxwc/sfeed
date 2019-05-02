@@ -60,15 +60,16 @@ HTML view with the menu as frames, copy style.css for a default style:
 	mkdir -p "$HOME/.sfeed/frames"
 	cd "$HOME/.sfeed/frames" && sfeed_frames $HOME/.sfeed/feeds/*
 
-To automatically update your feeds periodically and format them in a view you
+To automatically update your feeds periodically and format them in a way you
 like you can make a wrapper script and add it as a cronjob.
 
 Most protocols are supported because curl(1) is used by default, therefore
 proxy settings from the environment (such as $http_proxy environment variable)
 are used.
 
-The sfeed(1) program itself is just a parser and therefore protocol-agnostic.
-It can be used for HTTP, HTTPs, Gopher, SSH, etc.
+The sfeed(1) program itself is just a parser that parses XML data from stdin
+and is therefore protocol-agnostic. It can be used with HTTP, HTTPs, Gopher,
+SSH, etc.
 
 See the section "Usage and examples" below and the man-pages for more
 information how to use sfeed(1) and the additional tools.
