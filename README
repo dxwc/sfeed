@@ -32,7 +32,7 @@ and behaviour can be overridden:
 
 or you can import existing OPML subscriptions using sfeed_opml_import(1):
 
-	sfeed_opml_import < file.opml > "$HOME/sfeed/sfeedrc"
+	sfeed_opml_import < file.opml > "$HOME/.sfeed/sfeedrc"
 
 an example to export from an other RSS/Atom reader called newsboat and import
 for sfeed_update:
