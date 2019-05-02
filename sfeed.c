@@ -116,8 +116,8 @@ static void xmltagend(XMLParser *, const char *, size_t, int);
 static void xmltagstart(XMLParser *, const char *, size_t);
 static void xmltagstartparsed(XMLParser *, const char *, size_t, int);
 
-/* map tag name to tagid */
-/* RSS, alphabetical order */
+/* map tag name to TagId type */
+/* RSS, must be alphabetical order */
 static FeedTag rsstags[] = {
 	{ STRP("author"),            RSSTagAuthor            },
 	{ STRP("content:encoded"),   RSSTagContentEncoded    },
@@ -132,7 +132,7 @@ static FeedTag rsstags[] = {
 	{ STRP("pubdate"),           RSSTagPubdate           },
 	{ STRP("title"),             RSSTagTitle             }
 };
-/* Atom, alphabetical order */
+/* Atom, must be alphabetical order */
 static FeedTag atomtags[] = {
 	/* <author><name></name></author> */
 	{ STRP("author"),            AtomTagAuthor           },
@@ -147,8 +147,7 @@ static FeedTag atomtags[] = {
 	{ STRP("updated"),           AtomTagUpdated          }
 };
 
-/* map tagid type to RSS/Atom field
-   NOTE: all tags must be defined */
+/* map TagId type to RSS/Atom field, all tags must be defined */
 static int fieldmap[TagLast] = {
 	[TagUnknown]              = -1,
 	/* RSS */
@@ -627,6 +626,27 @@ xmlattr(XMLParser *p, const char *t, size_t tl, const char *n, size_t nl,
 		return;
 	}
 
+	if (ctx.feedtype == FeedTypeNone)
+		return;
+
+	/* content-type may be: Atom: text, xhtml, html or mime-type.
+	   MRSS (media:description): plain, html. */
+	if (ISCONTENTTAG(ctx)) {
+		if (isattr(n, nl, STRP("type"))) {
+			if (isattr(v, vl, STRP("html")) ||
+			    isattr(v, vl, STRP("xhtml")) ||
+			    isattr(v, vl, STRP("text/html")) ||
+			    isattr(v, vl, STRP("text/xhtml"))) {
+				ctx.contenttype = ContentTypeHTML;
+			} else if (isattr(v, vl, STRP("text")) ||
+			           isattr(v, vl, STRP("plain")) ||
+				   isattr(v, vl, STRP("text/plain"))) {
+				ctx.contenttype = ContentTypePlain;
+			}
+		}
+		return;
+	}
+
 	if (ctx.feedtype == FeedTypeRSS) {
 		if (ctx.tagid == RSSTagEnclosure &&
 		    isattr(n, nl, STRP("url")) && ctx.field) {
@@ -637,16 +657,7 @@ xmlattr(XMLParser *p, const char *t, size_t tl, const char *n, size_t nl,
 			rssidpermalink = 0;
 		}
 	} else if (ctx.feedtype == FeedTypeAtom) {
-		if (ISCONTENTTAG(ctx)) {
-			if (isattr(n, nl, STRP("type")) &&
-			   (isattr(v, vl, STRP("xhtml")) ||
-			    isattr(v, vl, STRP("text/xhtml")) ||
-			    isattr(v, vl, STRP("html")) ||
-			    isattr(v, vl, STRP("text/html"))))
-			{
-				ctx.contenttype = ContentTypeHTML;
-			}
-		} else if (ctx.tagid == AtomTagLink &&
+		if (ctx.tagid == AtomTagLink &&
 		           isattr(n, nl, STRP("rel"))) {
 			/* empty or "alternate": other types could be
 			   "enclosure", "related", "self" or "via" */
@@ -707,7 +718,7 @@ xmldata(XMLParser *p, const char *s, size_t len)
 
 	/* add only data from <name> inside <author> tag
 	 * or any other non-<author> tag */
-	if (ctx.tagid != AtomTagAuthor || istag(p->tag, p->taglen, "name", 4))
+	if (ctx.tagid != AtomTagAuthor || istag(p->tag, p->taglen, STRP("name")))
 		string_append(ctx.field, s, len);
 }
 
@@ -744,17 +755,10 @@ xmltagstart(XMLParser *p, const char *t, size_t tl)
 
 	/* start of RSS or Atom item / entry */
 	if (ctx.feedtype == FeedTypeNone) {
-		if (istag(t, tl, STRP("entry"))) {
-			/* Atom */
+		if (istag(t, tl, STRP("entry")))
 			ctx.feedtype = FeedTypeAtom;
-			/* default content type for Atom */
-			ctx.contenttype = ContentTypePlain;
-		} else if (istag(t, tl, STRP("item"))) {
-			/* RSS */
+		else if (istag(t, tl, STRP("item")))
 			ctx.feedtype = FeedTypeRSS;
-			/* default content type for RSS */
-			ctx.contenttype = ContentTypeHTML;
-		}
 		return;
 	}
 
@@ -782,7 +786,21 @@ xmltagstart(XMLParser *p, const char *t, size_t tl)
 		return;
 	}
 
-	ctx.iscontenttag = (fieldmap[ctx.tagid] == FeedFieldContent);
+	if (fieldmap[ctx.tagid] == FeedFieldContent) {
+		/* handle default content-type per tag, Atom, RSS, MRSS. */
+		switch (tagid) {
+		case RSSTagContentEncoded:
+		case RSSTagDescription:
+			ctx.contenttype = ContentTypeHTML;
+			break;
+		default:
+			ctx.contenttype = ContentTypePlain;
+		}
+		ctx.iscontenttag = 1;
+	} else {
+		ctx.iscontenttag = 0;
+	}
+
 	ctx.field = &(ctx.fields[fieldmap[ctx.tagid]].str);
 	ctx.fields[fieldmap[ctx.tagid]].tagid = tagid;
 	/* clear field */
