@@ -39,10 +39,9 @@ log() {
 # fetch a feed via HTTP/HTTPS etc.
 # fetch(name, url, feedfile)
 fetch() {
-	# fail on redirects, hide User-Agent, timeout is 15 seconds,
-	# -z for If-Modified-Since.
+	# fail on redirects, hide User-Agent, timeout is 15 seconds.
 	curl -L --max-redirs 0 -H "User-Agent:" -f -s -m 15 \
-		-z "$3" "$2" 2>/dev/null
+		"$2" 2>/dev/null
 }
 
 # convert encoding from one encoding to another.
