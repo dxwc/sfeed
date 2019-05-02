@@ -3,11 +3,10 @@ sfeed
 
 RSS and Atom parser (and some format programs).
 
-It converts RSS or Atom feeds from XML to a TAB-separated file.
-There are format programs included to format this TAB-separated format to
-various other formats.
-There are also some programs and scripts included to import and export OPML and
-to update, sort, filter and merge feed items.
+It converts RSS or Atom feeds from XML to a TAB-separated file. There are
+formatting programs included to convert this TAB-separated format to various
+other formats. There are also some programs and scripts included to import and
+export OPML and to update, sort, filter and merge feed items.
 
 
 Build and install
@@ -506,6 +505,52 @@ Now run:
 	$ procmail_maildirs.sh
 
 Now you can view feeds in mutt(1) for example.
+
+
+Security considerations
+-----------------------
+
+About automated remote resource loading and content execution:
+
+Some feeds will use a tracking pixel (1x1 image size) in HTML content with some
+unique ID. Some even have embedded Javascript code, iframes, CSS. Opening such
+content and loading these resources automatically may leak unwanted
+information.
+
+For example on Slashdot:
+<img src="http://feeds.feedburner.com/~r/Slashdot/slashdot/~4/someid"
+     height="1" width="1" alt=""/>
+
+If such content is opened in a typical webbrowser configuration this is
+insecure. Be aware opening a link in a page generated on the local filesystem
+or network has different privileges than one on a non-local domain.
+
+Recommendation:
+Do not handle content as HTML and avoid automated remote resource loading in
+content. Convert all content to plain-text in your formatting program.
+
+
+About handling links:
+
+Be careful about handling feed links.
+
+A malicious link could be: tel:some-phonenumber, file:// or some other protocol
+scheme which depending on the viewing program and system can have an action
+assigned.
+
+Another malicious link could be pointing to a local device, for example an
+(insecure) router: http://192.168.0.1/?reboot
+
+Recommendation:
+Filter specific by protocol and non-local domain. This can be done using a grep
+or awk filter or as a setting in your viewing program.
+
+See also:
+- RFC4287 (Atom): 8. Security Considerations:
+  https://tools.ietf.org/html/rfc4287#section-8
+- RFC2854: 7. Security Considerations:
+  https://tools.ietf.org/html/rfc2854
+- Filter examples: see the sfeed README file.
 
 
 License
