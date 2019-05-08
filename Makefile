@@ -53,8 +53,7 @@ MAN5 = \
 DOC = \
 	LICENSE\
 	README\
-	README.xml\
-	TODO
+	README.xml
 
 all: ${BIN}
 
