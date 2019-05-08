@@ -240,61 +240,61 @@ The filter function can be overridden in your sfeedrc file. This allows
 filtering items per feed. It can be used to shorten urls, filter away
 advertisements, strip tracking parameters and more.
 
-# filter fields.
-# filter(name)
-filter() {
-	case "$1" in
-	"tweakers")
-		LC_LOCALE=C awk -F '\t' 'BEGIN { OFS = "\t"; }
-		# skip ads.
-		$2 ~ /^ADV:/ {
-			next;
-		}
-		# shorten link.
-		{
-			if (match($3, /^https:\/\/tweakers\.net\/[a-z]+\/[0-9]+\//)) {
-				$3 = substr($3, RSTART, RLENGTH);
+	# filter fields.
+	# filter(name)
+	filter() {
+		case "$1" in
+		"tweakers")
+			LC_LOCALE=C awk -F '\t' 'BEGIN { OFS = "\t"; }
+			# skip ads.
+			$2 ~ /^ADV:/ {
+				next;
 			}
-			print $0;
-		}';;
-	"yt BSDNow")
-		# filter only BSD Now from channel.
-		LC_LOCALE=C awk -F '\t' '$2 ~ / \| BSD Now/';;
-	*)
-		cat;;
-	esac | \
-		# replace youtube links with embed links.
-		sed 's@www.youtube.com/watch?v=@www.youtube.com/embed/@g' | \
+			# shorten link.
+			{
+				if (match($3, /^https:\/\/tweakers\.net\/[a-z]+\/[0-9]+\//)) {
+					$3 = substr($3, RSTART, RLENGTH);
+				}
+				print $0;
+			}';;
+		"yt BSDNow")
+			# filter only BSD Now from channel.
+			LC_LOCALE=C awk -F '\t' '$2 ~ / \| BSD Now/';;
+		*)
+			cat;;
+		esac | \
+			# replace youtube links with embed links.
+			sed 's@www.youtube.com/watch?v=@www.youtube.com/embed/@g' | \
 
-		LC_LOCALE=C awk -F '\t' 'BEGIN { OFS = "\t"; }
-		function filterlink(s) {
-			# protocol must start with http, https or gopher.
-			if (match(s, /^(http|https|gopher):\/\//) == 0) {
-				return "";
+			LC_LOCALE=C awk -F '\t' 'BEGIN { OFS = "\t"; }
+			function filterlink(s) {
+				# protocol must start with http, https or gopher.
+				if (match(s, /^(http|https|gopher):\/\//) == 0) {
+					return "";
+				}
+
+				# shorten feedburner links.
+				if (match(s, /^(http|https):\/\/[^/]+\/~r\/.*\/~3\/[^\/]+\//)) {
+					s = substr($3, RSTART, RLENGTH);
+				}
+
+				# strip tracking parameters
+				# urchin, facebook, piwik, webtrekk and generic.
+				gsub(/\?(ad|campaign|pk|tm|wt)_([^&]+)/, "?", s);
+				gsub(/&(ad|campaign|pk|tm|wt)_([^&]+)/, "", s);
+
+				gsub(/\?&/, "?", s);
+				gsub(/[\?&]+$/, "", s);
+
+				return s
 			}
+			{
+				$3 = filterlink($3); # link
+				$8 = filterlink($8); # enclosure
 
-			# shorten feedburner links.
-			if (match(s, /^(http|https):\/\/[^/]+\/~r\/.*\/~3\/[^\/]+\//)) {
-				s = substr($3, RSTART, RLENGTH);
-			}
-
-			# strip tracking parameters
-			# urchin, facebook, piwik, webtrekk and generic.
-			gsub(/\?(ad|campaign|pk|tm|wt)_([^&]+)/, "?", s);
-			gsub(/&(ad|campaign|pk|tm|wt)_([^&]+)/, "", s);
-
-			gsub(/\?&/, "?", s);
-			gsub(/[\?&]+$/, "", s);
-
-			return s
-		}
-		{
-			$3 = filterlink($3); # link
-			$8 = filterlink($8); # enclosure
-
-			print $0;
-		}'
-}
+				print $0;
+			}'
+	}
 
 - - -
 
@@ -302,11 +302,11 @@ The fetch function can be overridden in your sfeedrc file. This allows to
 replace the default curl(1) for sfeed_update with any other client to fetch the
 RSS/Atom data:
 
-# fetch a feed via HTTP/HTTPS etc.
-# fetch(name, url, feedfile)
-fetch() {
-	hurl -m 1048576 -t 15 "$2" 2>/dev/null
-}
+	# fetch a feed via HTTP/HTTPS etc.
+	# fetch(name, url, feedfile)
+	fetch() {
+		hurl -m 1048576 -t 15 "$2" 2>/dev/null
+	}
 
 - - -
 
@@ -314,36 +314,70 @@ Aggregate feeds. This filters new entries (maximum one day old) and sorts them
 by newest first. Prefix the feed name in the title. Convert the TSV output data
 to an Atom XML feed (again):
 
-#!/bin/sh
-cd ~/.sfeed/feeds/ || exit 1
+	#!/bin/sh
+	cd ~/.sfeed/feeds/ || exit 1
 
-LC_ALL=C awk -F '\t' -v "old=$(($(date -j +'%s') - 86400))" '
-BEGIN {
-	OFS = "\t";
-}
-{
-	if (int($1) >= old) {
-		$2 = "[" FILENAME "] " $2;
-		print $0;
+	LC_ALL=C awk -F '\t' -v "old=$(($(date -j +'%s') - 86400))" '
+	BEGIN {
+		OFS = "\t";
 	}
-}' * | \
-sort -k1,1rn | \
-sfeed_atom
+	{
+		if (int($1) >= old) {
+			$2 = "[" FILENAME "] " $2;
+			print $0;
+		}
+	}' * | \
+	sort -k1,1rn | \
+	sfeed_atom
+
+- - -
+
+To have a FIFO stream filtering for new unique feed items and showing them as
+plain-text per line similar to sfeed_plain(1):
+
+Create a FIFO:
+
+	fifo="/tmp/sfeed_fifo"
+	mkfifo "$fifo"
+
+On the reading side:
+
+	# This keeps track of unique lines so might consume much memory.
+	# It tries to reopen the $fifo after 1 second if it fails.
+	while :; do cat "$fifo" || sleep 1; done | awk '!x[$0]++'
+
+On the writing side:
+
+	feedsdir="$HOME/.sfeed/feeds/"
+	cd "$feedsdir" || exit 1
+	test -p "$fifo" || exit 1
+
+	# 1 day is old news, don't write older items.
+	LC_ALL=C awk -v "old=$(($(date -j +'%s') - 86400))" '
+	BEGIN { FS = OFS = "\t"; }
+	{
+		if (int($1) >= old) {
+			$2 = "[" FILENAME "] " $2;
+			print $0;
+		}
+	}' * | sort -k1,1n | sfeed_plain | cut -b 3- > "$fifo"
+
+cut -b is used to trim the "N " prefix of sfeed_plain(1).
 
 - - -
 
 For some podcast feed the following code can be used to filter the latest
 enclosure url (probably some audio file):
 
-LC_ALL=C awk -F "\t" 'BEGIN { latest = 0; }
-length($8) {
-	ts = int($1);
-	if (ts > latest) {
-		url = $8;
-		latest = ts;
+	LC_ALL=C awk -F "\t" 'BEGIN { latest = 0; }
+	length($8) {
+		ts = int($1);
+		if (ts > latest) {
+			url = $8;
+			latest = ts;
+		}
 	}
-}
-END { if (length(url)) { print url; } }'
+	END { if (length(url)) { print url; } }'
 
 - - -
 
