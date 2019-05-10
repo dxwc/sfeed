@@ -22,21 +22,11 @@ loadconfig() {
 	fi
 }
 
-# escape(s)
-escape() {
-	printf '%s' "$1" | sed -e 's@&@\&amp;@g' -e 's@"@\&quot;@g'\
-		-e "s@'@\&#39;@g" -e 's@<@\&lt;@g' -e 's@>@\&gt;@g'
-}
-
 # override feeds function to ouput opml XML.
 # feed(name, feedurl, [basesiteurl], [encoding])
 feed() {
-	name=$(escape "$1")
-	xmlurl=$(escape "$2")
-	htmlurl=$(escape "$3")
-
-	printf '\t<outline title="%s" text="%s" xmlUrl="%s" htmlUrl="%s"/>\n' \
-		"${name}" "${name}" "${xmlurl}" "${htmlurl}"
+	# NOTE: TABs in field values are unsupported, be sane.
+	echo "$1	$2	$3"
 }
 
 # load config file.
@@ -51,9 +41,18 @@ cat <<!
 <body>
 !
 
-feeds
-# wait till all items are processed (concurrently).
-wait
+feeds | LC_ALL=C awk 'BEGIN {
+	FS = OFS = "\t";
+}
+{
+	gsub("&", "\\&amp;");
+	gsub("\"", "\\&quot;");
+	gsub("'"'"'", "\\&#39;");
+	gsub("<", "\\&lt;");
+	gsub(">", "\\&gt;");
+
+	print "\t<outline title=\"" $1 "\" text=\""$1"\" xmlUrl=\""$2"\" htmlUrl=\""$3"\"/>";
+}'
 
 cat <<!
 </body>
