@@ -39,14 +39,13 @@ printfeed(FILE *fp, const char *feedname)
 		else
 			fputs("  ", stdout);
 
+		fprintf(stdout, "%04d-%02d-%02d %02d:%02d  ",
+		        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+		        tm->tm_hour, tm->tm_min);
 		if (feedname[0]) {
 			printutf8pad(stdout, feedname, 15, ' ');
 			fputs("  ", stdout);
 		}
-
-		fprintf(stdout, "%04d-%02d-%02d %02d:%02d  ",
-		        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-		        tm->tm_hour, tm->tm_min);
 		printutf8pad(stdout, fields[FieldTitle], 70, ' ');
 		printf(" %s\n", fields[FieldLink]);
 	}
