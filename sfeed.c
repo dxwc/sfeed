@@ -406,28 +406,29 @@ datetounix(long long year, int mon, int day, int hour, int min, int sec)
 }
 
 /* Get timezone from string, return time offset in seconds from UTC.
- * NOTE: only parses timezones in RFC-822, other timezones are ambiguous
- * anyway. If needed you can add some yourself, like "cest", "cet" etc. */
+ * NOTE: only parses timezones in RFC-822, many other timezone names are
+ * ambiguous anyway.
+ * ANSI and military zones are defined wrong in RFC822 and are unsupported,
+ * see note on RFC2822 4.3 page 32. */
 static long long
 gettzoffset(const char *s)
 {
 	static struct {
 		char *name;
-		size_t len;
 		const int offhour;
 	} tzones[] = {
-		{ STRP("CDT"), -5 * 3600 },
-		{ STRP("CST"), -6 * 3600 },
-		{ STRP("EDT"), -4 * 3600 },
-		{ STRP("EST"), -5 * 3600 },
-		{ STRP("MDT"), -6 * 3600 },
-		{ STRP("MST"), -7 * 3600 },
-		{ STRP("PDT"), -7 * 3600 },
-		{ STRP("PST"), -8 * 3600 },
+		{ "CDT", -5 * 3600 },
+		{ "CST", -6 * 3600 },
+		{ "EDT", -4 * 3600 },
+		{ "EST", -5 * 3600 },
+		{ "MDT", -6 * 3600 },
+		{ "MST", -7 * 3600 },
+		{ "PDT", -7 * 3600 },
+		{ "PST", -8 * 3600 },
 	};
 	const char *p;
 	int tzhour = 0, tzmin = 0, c;
-	size_t i, namelen;
+	size_t i;
 
 	for (; *s && isspace((unsigned char)*s); s++)
 		;
@@ -444,31 +445,11 @@ gettzoffset(const char *s)
 	default: /* timezone name */
 		for (i = 0; *s && isalpha((unsigned char)s[i]); i++)
 			;
-		namelen = i; /* end of name */
-		/* optimization: these are always non-matching */
-		if (namelen < 1 || namelen > 3)
+		if (i != 3)
 			return 0;
-		/* ANSI and military zones, defined wrong in RFC822,
-		   see RFC2822 4.3 page 32.
-		   NOTE: zone J is ambiguous (unused/local observed time) and
-		   handled as UTC+0. */
-		if (namelen == 1) {
-			c = (int)*s;
-			/* NOTE: J is not handled: unused / observer local time */
-			if (c >= 'A' && c <= 'I')
-				return c - 'A' + 1; /* +1 through +9 */
-			else if (c >= 'K' && c <= 'M')
-				return c - 'K' + 10; /* 10 through 12 */
-			else if (c >= 'N' && c <= 'Y')
-				return ('Y' - c) - 12; /* -1 through -12 */
-			else
-				return 0;
-		}
-
 		/* compare tz and adjust offset relative to UTC */
 		for (i = 0; i < sizeof(tzones) / sizeof(*tzones); i++) {
-			if (tzones[i].len == namelen &&
-			    !strncmp(s, tzones[i].name, namelen))
+			if (!memcmp(s, tzones[i].name, 3))
 				return tzones[i].offhour;
 		}
 	}
