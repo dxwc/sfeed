@@ -427,7 +427,7 @@ gettzoffset(const char *s)
 		{ "PST", -8 * 3600 },
 	};
 	const char *p;
-	int tzhour = 0, tzmin = 0, c;
+	int tzhour = 0, tzmin = 0;
 	size_t i;
 
 	for (; *s && isspace((unsigned char)*s); s++)

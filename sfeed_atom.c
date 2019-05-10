@@ -9,7 +9,6 @@
 
 #include "util.h"
 
-static time_t comparetime;
 static char *line;
 static size_t linesize;
 
