@@ -88,14 +88,14 @@ Optional dependencies
 - POSIX make(1) (for Makefile).
 - POSIX sh(1),
   used by sfeed_update(1) and sfeed_opml_export(1).
-- curl(1) binary: http://curl.haxx.se/ ,
+- curl(1) binary: https://curl.haxx.se/ ,
   used by sfeed_update(1), can be replaced with any tool like wget(1),
   OpenBSD ftp(1) or hurl(1): https://git.codemadness.org/hurl/
 - iconv(1) command-line utilities,
   used by sfeed_update(1). If the text in your RSS/Atom feeds are already UTF-8
-  encoded then you don't need this. For an alternative minimal iconv
-  implementation: http://git.etalabs.net/cgit/noxcuse/tree/src/iconv.c
-- mandoc for documentation: http://mdocml.bsd.lv/ .
+  encoded then you don't need this. For a minimal iconv implementation:
+  https://git.etalabs.net/cgit/noxcuse/tree/src/iconv.c
+- mandoc for documentation: https://mdocml.bsd.lv/
 
 
 OS tested
