@@ -3,7 +3,7 @@
 include config.mk
 
 NAME = sfeed
-VERSION = 0.9.10
+VERSION = 0.9.11
 
 BIN = \
 	sfeed\
