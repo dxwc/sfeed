@@ -110,7 +110,7 @@ feed() {
 		log "${name}" "FAIL (CONVERT)"
 		return
 	fi
-	rm -f "${tmpfeedfile}.enc"
+	rm -f "${tmpfeedfile}.utf8"
 
 	if ! filter "${name}" < "${tmpfeedfile}.tsv" > "${tmpfeedfile}.filter"; then
 		log "${name}" "FAIL (FILTER)"
