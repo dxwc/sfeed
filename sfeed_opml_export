@@ -51,7 +51,7 @@ feeds | LC_ALL=C awk 'BEGIN {
 	gsub("<", "\\&lt;");
 	gsub(">", "\\&gt;");
 
-	print "\t<outline title=\"" $1 "\" text=\""$1"\" xmlUrl=\""$2"\" htmlUrl=\""$3"\"/>";
+	print "\t<outline title=\"" $1 "\" text=\"" $1 "\" xmlUrl=\"" $2 "\" htmlUrl=\"" $3 "\"/>";
 }'
 
 cat <<!
