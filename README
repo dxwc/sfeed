@@ -6,7 +6,7 @@ RSS and Atom parser (and some format programs).
 It converts RSS or Atom feeds from XML to a TAB-separated file. There are
 formatting programs included to convert this TAB-separated format to various
 other formats. There are also some programs and scripts included to import and
-export OPML and to update, sort, filter and merge feed items.
+export OPML and to fetch, filter, merge and order feed items.
 
 
 Build and install
@@ -147,8 +147,8 @@ sfeedrc - Config file. This file is evaluated as a shellscript in
 Atleast the following functions can be overridden per feed:
 
 - fetch: to use wget(1), OpenBSD ftp(1) or an other download program.
-- merge: to change the merge logic.
 - filter: to filter on fields.
+- merge: to change the merge logic.
 - order: to change the sort order.
 
 See also the sfeedrc(5) man page documentation for more details.

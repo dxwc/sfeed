@@ -61,16 +61,16 @@ filter() {
 	cat
 }
 
-# order by timestamp (descending).
-# order(name)
-order() {
-	sort -t '	' -k1rn,1
-}
-
 # merge raw files: unique sort by id, title, link.
 # merge(name, oldfile, newfile)
 merge() {
 	sort -t '	' -u -k6,6 -k2,2 -k3,3 "$2" "$3" 2>/dev/null
+}
+
+# order by timestamp (descending).
+# order(name)
+order() {
+	sort -t '	' -k1rn,1
 }
 
 # fetch and parse feed.
